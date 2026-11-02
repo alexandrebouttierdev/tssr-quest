@@ -1,0 +1,594 @@
+<title>TSSR Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: un bureau de nuit vu du dessus (canvas pixel) + journal de tickets ; missions en fiches ticket par-dessus */
+:root{
+  color-scheme:dark;
+  --bg:#0f1319; --panel:#171d26; --panel2:#1f2733; --line:#2c3644;
+  --fg:#e7e2d8; --muted:#97a1ae; --amber:#f2b54a; --ok:#6fd08c; --err:#ef6b5e; --cyan:#7ccbe0; --term:#090c10; --termfg:#cfe7d4;
+  --display:'Silkscreen',ui-monospace,monospace;
+  --body:'Atkinson Hyperlegible',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.app{max-width:1140px;margin:0 auto;display:grid;gap:16px 20px;grid-template-columns:minmax(0,1fr) 310px;grid-template-areas:"hud hud" "stage log"}
+@media (max-width:880px){.app{grid-template-columns:minmax(0,1fr);grid-template-areas:"hud" "stage" "log"}}
+
+.hud{grid-area:hud;display:flex;flex-wrap:wrap;align-items:center;gap:10px 20px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.brand{font-family:var(--display);font-size:24px;line-height:1;color:var(--amber);letter-spacing:.03em;margin:0}
+.brand small{display:block;font-family:var(--body);font-size:12px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.prog{flex:1 1 260px;min-width:0;display:grid;gap:6px}
+.prog-top{display:flex;justify-content:space-between;gap:12px;font-size:14px}
+.rank{font-weight:700}
+.nums{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.xpbar{height:10px;background:var(--panel2);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.xpbar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--amber) 0 6px,#d99a2e 6px 8px);transition:width .5s}
+.ghost{background:transparent;border:1px solid var(--line);border-radius:4px;padding:6px 12px;font-size:13px;color:var(--muted)}
+.ghost:hover{color:var(--fg);border-color:var(--muted)}
+
+.stage{grid-area:stage;min-width:0;display:grid;gap:8px;align-content:start}
+canvas{display:block;width:100%;max-width:100%;height:auto;aspect-ratio:640/448;background:#0a0d12;border:1px solid var(--line);border-radius:4px;touch-action:manipulation;cursor:pointer}
+.tip{font-size:13px;color:var(--muted);margin:0}
+.tip kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:3px;padding:0 4px;background:var(--panel)}
+
+.log{grid-area:log;min-width:0}
+.log h2{font-family:var(--display);font-size:14px;letter-spacing:.06em;color:var(--muted);margin:0 0 10px;font-weight:400}
+.mlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.mi{width:100%;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:9px 10px}
+.mi:hover:not(:disabled){border-color:var(--muted)}
+.mi:disabled{cursor:default}
+.mi .no{font-family:var(--mono);font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mi .t{font-weight:700;font-size:14px;line-height:1.25}
+.mi .s{display:block;font-size:12px;color:var(--muted);font-weight:400}
+.pill{font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid currentColor;white-space:nowrap}
+.pill.todo{color:var(--amber)} .pill.done{color:var(--ok)} .pill.lock{color:#5d6876}
+.mi.is-lock{opacity:.6}
+.mi.is-todo{border-color:#5a4a2a;background:linear-gradient(90deg,rgba(242,181,74,.08),transparent 60%),var(--panel)}
+
+/* Modale ticket */
+.modal{position:fixed;inset:0;z-index:20;background:rgba(4,6,9,.74);display:flex;align-items:center;justify-content:center;
+  padding:max(12px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+.sheet{width:min(700px,100%);max-height:100%;overflow:auto;background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--amber);border-radius:4px;padding:18px 20px 22px;display:grid;gap:14px}
+.tk-meta{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tk-meta b{color:var(--amber);font-weight:600}
+.x{background:none;border:1px solid var(--line);border-radius:3px;width:32px;height:32px;color:var(--muted);flex:none}
+.sheet h2{font-family:var(--display);font-weight:400;font-size:20px;line-height:1.2;margin:0;text-wrap:balance}
+.who{font-size:14px;color:var(--muted);margin:-6px 0 0}
+.pips{display:flex;gap:4px}
+.pips i{height:4px;flex:1;background:var(--panel2);border-radius:1px}
+.pips i.on{background:var(--amber)} .pips i.cur{background:var(--cyan)}
+.say{background:var(--panel2);border-left:3px solid var(--cyan);padding:10px 12px;border-radius:0 4px 4px 0;margin:0}
+.say b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--cyan);margin-bottom:2px}
+.q{font-weight:700;margin:0;font-size:17px;line-height:1.4}
+.doc{font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;word-break:break-word;background:var(--term);border:1px solid var(--line);border-radius:4px;padding:10px 12px;color:var(--termfg);margin:0}
+.opts{display:grid;gap:8px}
+.opt{display:grid;grid-template-columns:26px minmax(0,1fr);gap:10px;align-items:start;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;line-height:1.4}
+.opt .k{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:3px;text-align:center;line-height:22px}
+.opt:hover:not(:disabled){border-color:var(--muted)}
+.opt.right{border-color:var(--ok);background:rgba(111,208,140,.12)}
+.opt.right .k{color:var(--ok);border-color:var(--ok)}
+.opt.wrong{border-color:var(--err);opacity:.7;text-decoration:line-through;text-decoration-color:rgba(239,107,94,.6)}
+.opt:disabled{cursor:default}
+.fb{border-radius:4px;padding:10px 12px;font-size:15px;display:grid;gap:10px}
+.fb.good{background:rgba(111,208,140,.1);border:1px solid rgba(111,208,140,.4)}
+.fb.bad{background:rgba(239,107,94,.1);border:1px solid rgba(239,107,94,.4)}
+.fb p{margin:0}
+.fb strong{color:var(--ok)} .fb.bad strong{color:var(--err)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--panel2);border-radius:4px;padding:10px 16px;font-weight:700}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#1a1307}
+.btn.primary:hover{background:#ffc766}
+.field{display:flex;gap:8px;flex-wrap:wrap}
+.field input{flex:1 1 200px;min-width:0;font:16px var(--mono);background:var(--term);color:var(--fg);border:1px solid var(--line);border-radius:4px;padding:10px 12px}
+
+.term{background:var(--term);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);font-size:13px;overflow:hidden}
+.term-out{margin:0;padding:12px;height:min(260px,40vh);overflow:auto;white-space:pre-wrap;word-break:break-word;color:var(--termfg)}
+.term-line{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);background:#0d1116}
+.term-line span{color:var(--amber);white-space:nowrap;max-width:45%;overflow:hidden;text-overflow:ellipsis}
+.term-in{flex:1;min-width:0;background:transparent;border:0;color:var(--fg);font:16px var(--mono);outline:none;padding:0}
+.objs{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14px}
+.objs li{display:flex;gap:8px;align-items:baseline;color:var(--muted)}
+.objs li::before{content:"[ ]";font-family:var(--mono);font-size:12px}
+.objs li.ok{color:var(--ok)} .objs li.ok::before{content:"[x]"}
+
+.slots{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.slot{min-height:64px;border:1px dashed var(--line);border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;padding:4px 2px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.slot.filled{border-style:solid;border-color:var(--ok)}
+.slot .sw{width:100%;flex:1;min-height:24px;border-radius:2px}
+.pool{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:5px 12px 5px 5px;font-size:14px}
+.chip .sw{width:22px;height:22px;border-radius:50%;border:1px solid rgba(0,0,0,.4)}
+.chip.shake{animation:shake .35s;border-color:var(--err)}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.recap{margin:0;padding-left:20px;display:grid;gap:6px}
+.big{font-family:var(--display);font-size:28px;color:var(--amber);margin:0}
+.cert{border:1px solid var(--amber);outline:1px solid var(--amber);outline-offset:4px;padding:18px;text-align:center;display:grid;gap:8px}
+.cert .stats{display:flex;justify-content:center;gap:24px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.cert .stats b{display:block;font-family:var(--display);font-size:22px;color:var(--fg);font-weight:400}
+.cert .stats span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--amber);color:#1a1307;font-weight:700;padding:10px 18px;border-radius:4px;box-shadow:0 6px 24px rgba(0,0,0,.4);max-width:calc(100% - 32px);text-align:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app">
+  <header class="hud">
+    <h1 class="brand">TSSR Quest<small>Stage chez LabCorp · services informatiques</small></h1>
+    <div class="prog">
+      <div class="prog-top"><span class="rank" id="rank">Stagiaire</span><span class="nums" id="nums">0 XP</span></div>
+      <div class="xpbar" aria-hidden="true"><i id="xpfill"></i></div>
+    </div>
+    <button class="ghost" id="resetBtn" type="button">Recommencer</button>
+  </header>
+  <main class="stage">
+    <canvas id="map" width="1280" height="896" aria-label="Plan du bureau. Touchez un collègue pour lui parler."></canvas>
+    <p class="tip">Touchez un sol pour vous déplacer, un collègue pour lui parler. Au clavier : <kbd>flèches</kbd> + <kbd>Entrée</kbd>. Le <b style="color:var(--amber)">!</b> indique la prochaine mission.</p>
+  </main>
+  <aside class="log">
+    <h2>Tickets du jour</h2>
+    <ul class="mlist" id="mlist"></ul>
+  </aside>
+</div>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Données ---------- */
+const MAP=[
+"####################",
+"#......#.....#S.S.S#",
+"#.TT...#.T.T.#S.S.S#",
+"#......#.....#.....#",
+"#P.....#.T.T.#S...S#",
+"###.######.#####.###",
+"#..................#",
+"#..................#",
+"###.#####.######.###",
+"#WW....#......#....#",
+"#......#.TTTT.#.T..#",
+"#W.....#......#....#",
+"#P....W#......#...P#",
+"####################"];
+const W=20,H=14,T=32;
+const ROOMS=[
+ {n:'Accueil',x1:1,y1:1,x2:6,y2:4,c:'#2a2633'},
+ {n:'Open space',x1:8,y1:1,x2:12,y2:4,c:'#232e38'},
+ {n:'Salle serveurs',x1:14,y1:1,x2:18,y2:4,c:'#1b252e',grid:1},
+ {n:'Atelier',x1:1,y1:9,x2:6,y2:12,c:'#2b2a24'},
+ {n:'Salle de réunion',x1:8,y1:9,x2:13,y2:12,c:'#262a37'},
+ {n:'Bureau RSSI',x1:15,y1:9,x2:18,y2:12,c:'#2e2527'}];
+const CORRIDOR='#252930';
+
+const NPCS=[
+ {id:'dsi',name:'Mme Garnier',role:'DSI',x:2,y:7,body:'#8b6fd6',hair:'#3a2a20',skin:'#e7c09a'},
+ {id:'martine',name:'Martine',role:'Accueil',x:4,y:3,body:'#e07a8f',hair:'#c9a26b',skin:'#f0caa6',mission:'imprimante'},
+ {id:'karim',name:'Karim',role:'Commercial',x:12,y:2,body:'#4f9fd8',hair:'#1b1b1b',skin:'#c99167',mission:'dhcp'},
+ {id:'nadia',name:'Nadia',role:'Ressources humaines',x:8,y:1,body:'#d8a14f',hair:'#2a1810',skin:'#a8744e',mission:'ad'},
+ {id:'lucas',name:'Lucas',role:'Technicien atelier',x:3,y:10,body:'#6fae6a',hair:'#d8c48a',skin:'#f2cfae',mission:'atelier'},
+ {id:'sophie',name:'Sophie',role:'Cheffe de projet',x:11,y:9,body:'#c06fd0',hair:'#6b3a1e',skin:'#e9bf98',mission:'adressage'},
+ {id:'hugo',name:'Hugo',role:'Admin systèmes',x:16,y:3,body:'#e0884f',hair:'#2b2b2b',skin:'#d6a27c',mission:'linux'},
+ {id:'leroy',name:'M. Leroy',role:'RSSI',x:17,y:10,body:'#5a6e8c',hair:'#bdbdbd',skin:'#e3b993',mission:'secu'}];
+
+const pingOk=ip=>`\nEnvoi d'une requête 'Ping'  ${ip} avec 32 octets de données :\n`+Array(4).fill(`Réponse de ${ip} : octets=32 temps<1ms TTL=64`).join('\n')+`\n\nStatistiques Ping pour ${ip}:\n    Paquets : envoyés = 4, reçus = 4, perdus = 0 (perte 0%),`;
+const pingKo=ip=>`\nEnvoi d'une requête 'Ping'  ${ip} avec 32 octets de données :\n`+Array(4).fill(`Délai d'attente de la demande dépassé.`).join('\n')+`\n\nStatistiques Ping pour ${ip}:\n    Paquets : envoyés = 4, reçus = 0, perdus = 4 (perte 100%),`;
+const WSWAP=c=>['#f3efe6',c];
+
+const MISSIONS={
+imprimante:{n:2041,title:"L'imprimante de l'accueil ne répond plus",npc:'martine',prio:'Moyenne',module:'Support utilisateurs · réseau',
+ intro:"Bonjour ! Depuis ce matin, plus rien ne sort de l'imprimante. Les badges visiteurs s'accumulent, tu peux regarder ?",
+ steps:[
+ {type:'term',os:'win',prompt:'C:\\Users\\martine>',goal:"Vérifie la configuration IP du poste, puis teste la connexion vers l'imprimante (192.168.1.50).",
+  need:[{k:'ip',l:'Afficher la configuration IP du poste'},{k:'ping',l:"Tester la connexion vers l'imprimante"}],
+  hints:["ipconfig           affiche la configuration IP","ping <adresse>     teste si une machine répond"],
+  cmds:[
+   {re:/^ipconfig(\s+\/all)?$/i,k:'ip',out:`\nConfiguration IP de Windows\n\nCarte Ethernet Ethernet :\n\n   Suffixe DNS propre à la connexion. . . : lab.local\n   Adresse IPv4. . . . . . . . . . . . . .: 192.168.1.23\n   Masque de sous-réseau. . . . . . . . . : 255.255.255.0\n   Passerelle par défaut. . . . . . . . . : 192.168.1.254`},
+   {re:/^ping\s+192\.168\.1\.50$/i,k:'ping',out:pingKo('192.168.1.50')},
+   {re:/^ping\s+192\.168\.1\.254$/i,out:pingOk('192.168.1.254')},
+   {re:/^ping\s+(8\.8\.8\.8|1\.1\.1\.1)$/i,out:s=>pingOk(s.arg)}],
+  success:"La passerelle répond, l'imprimante non."},
+ {type:'choice',q:"Le poste a une IP correcte et la passerelle répond. L'imprimante, elle, reste muette. Que vérifies-tu en premier ?",
+  o:["Réinstaller le pilote d'impression sur le poste","Aller voir l'imprimante : allumée ? câble réseau branché ? voyant de lien ?","Redémarrer le serveur d'impression","Changer l'adresse IP du poste de Martine"],a:1,
+  ex:"On remonte le modèle OSI par le bas : couche physique d'abord (alimentation, câble, voyant de lien). Un pilote ne sert à rien si les paquets n'arrivent pas."},
+ {type:'choice',q:"L'imprimante est allumée. Son menu affiche 192.168.2.50 / 255.255.255.0 : quelqu'un l'a reconfigurée. Pourquoi le poste ne la joint pas ?",
+  o:["Elle n'est plus dans le même réseau : 192.168.1.0/24 et 192.168.2.0/24 sont deux réseaux différents","Le masque 255.255.255.0 est trop grand","Il faut un câble croisé entre le poste et l'imprimante","Le serveur DNS est en panne"],a:0,
+  ex:"Avec un /24, les trois premiers octets désignent le réseau. 192.168.1.x et 192.168.2.x ne se parlent pas sans routeur. On remet l'imprimante en 192.168.1.50, idéalement avec une réservation DHCP."}],
+ recap:["Dépanner du bas vers le haut : physique, puis réseau, puis applicatif.","ipconfig lit la configuration IP, ping teste la joignabilité.","Même masque ne suffit pas : il faut aussi la même partie réseau."]},
+
+dhcp:{n:2042,title:"Pas d'Internet sur le poste de Karim",npc:'karim',prio:'Haute',module:'Réseau · DHCP / DNS',
+ intro:"Plus d'Internet, plus d'intranet, rien ! Mon devis doit partir avant midi…",
+ steps:[
+ {type:'term',os:'win',prompt:'C:\\Users\\karim>',goal:"Regarde la configuration IP du poste de Karim.",
+  need:[{k:'ip',l:'Afficher la configuration IP'}],hints:["ipconfig           affiche la configuration IP"],
+  cmds:[{re:/^ipconfig(\s+\/all)?$/i,k:'ip',out:`\nConfiguration IP de Windows\n\nCarte Ethernet Ethernet :\n\n   Adresse IPv4 de configuration automatique: 169.254.88.12\n   Masque de sous-réseau. . . . . . . . . : 255.255.0.0\n   Passerelle par défaut. . . . . . . . . :`}],
+  success:"Adresse étrange repérée."},
+ {type:'choice',q:"Une adresse en 169.254.x.x, ça signifie…",
+  o:["Le poste est connecté au Wi-Fi invité","Le poste n'a reçu aucune réponse d'un serveur DHCP et s'est attribué une adresse APIPA","Le DNS ne résout plus les noms","C'est l'adresse réservée à la passerelle"],a:1,
+  ex:"APIPA (169.254.0.0/16) : faute de réponse DHCP, Windows s'auto-attribue une adresse. Le poste ne peut parler qu'aux machines dans le même cas. Hugo vient de relancer le service DHCP, qui était arrêté."},
+ {type:'choice',q:"Dans quel ordre se déroule l'échange entre un client et le serveur DHCP ?",
+  o:["Discover → Offer → Request → Ack","Request → Offer → Discover → Ack","Offer → Discover → Ack → Request","Discover → Request → Offer → Ack"],a:0,
+  ex:"DORA : le client cherche (Discover, en broadcast), le serveur propose (Offer), le client demande (Request), le serveur confirme (Ack)."},
+ {type:'term',os:'win',prompt:'C:\\Users\\karim>',goal:"Libère puis renouvelle le bail DHCP, et vérifie que le nom intranet.lab.local se résout.",
+  need:[{k:'release',l:'Libérer le bail'},{k:'renew',l:'Renouveler le bail'},{k:'dns',l:'Résoudre intranet.lab.local'}],
+  hints:["ipconfig /release  libère l'adresse actuelle","ipconfig /renew    redemande une adresse au DHCP","nslookup <nom>     interroge le serveur DNS"],
+  cmds:[
+   {re:/^ipconfig\s+\/release$/i,k:'release',out:`\nConfiguration IP de Windows\n\nCarte Ethernet Ethernet :\n   Adresse IPv4 libérée.`},
+   {re:/^ipconfig\s+\/renew$/i,k:'renew',out:`\nConfiguration IP de Windows\n\nCarte Ethernet Ethernet :\n\n   Adresse IPv4. . . . . . . . . . . . . .: 192.168.1.42\n   Masque de sous-réseau. . . . . . . . . : 255.255.255.0\n   Passerelle par défaut. . . . . . . . . : 192.168.1.254`},
+   {re:/^ipconfig(\s+\/all)?$/i,out:s=>s.done.has('renew')?`\n   Adresse IPv4. . . . . . . . . . . . . .: 192.168.1.42\n   Masque de sous-réseau. . . . . . . . . : 255.255.255.0\n   Passerelle par défaut. . . . . . . . . : 192.168.1.254\n   Serveurs DNS. . . . . . . . . . . . . .: 192.168.1.10`:`\n   Adresse IPv4 de configuration automatique: 169.254.88.12\n   Masque de sous-réseau. . . . . . . . . : 255.255.0.0`},
+   {re:/^nslookup\s+intranet(\.lab\.local)?\.?$/i,k:'dns',req:['renew'],fail:`DNS request timed out.\n    timeout was 2 seconds.\n*** Le poste n'a pas encore de serveur DNS valide.`,out:`Serveur :   srv-dc01.lab.local\nAddress:  192.168.1.10\n\nNom :    intranet.lab.local\nAddress:  192.168.1.20`},
+   {re:/^ping\s+(\S+)$/i,out:s=>s.done.has('renew')?pingOk(s.arg):`La requête Ping n'a pas pu trouver l'hôte ${s.arg}.`}],
+  success:"Karim a de nouveau accès au réseau."}],
+ recap:["169.254.x.x = APIPA : le DHCP n'a pas répondu.","Échange DHCP : Discover, Offer, Request, Ack.","ipconfig /release puis /renew ; nslookup pour tester le DNS."]},
+
+ad:{n:2043,title:"Arrivée de Julie Martin en comptabilité",npc:'nadia',prio:'Normale',module:'Windows Server · Active Directory',
+ intro:"Julie Martin commence lundi au service comptabilité. Il lui faut un compte et l'accès au dossier partagé Compta.",
+ steps:[
+ {type:'choice',q:"Où crées-tu le compte de Julie dans l'annuaire lab.local ?",
+  o:["Dans le conteneur Users, par défaut","Dans l'unité d'organisation (OU) Comptabilité","Sur son poste, en compte local","Dans l'OU Domain Controllers"],a:1,
+  ex:"Les OU servent à ranger les objets pour leur appliquer des GPO et déléguer l'administration. Le conteneur Users n'accepte pas de GPO liée, et un compte local n'est pas centralisé."},
+ {type:'input',q:"Convention de l'entreprise : prénom.nom en minuscules, sans accent. Quel identifiant de connexion pour Julie Martin ?",ans:['julie.martin'],hint:"Prénom, un point, nom, le tout en minuscules."},
+ {type:'choice',q:"Julie doit pouvoir modifier les fichiers de \\\\srv-fic01\\Compta. Quelle méthode applique la bonne pratique AGDLP ?",
+  o:["Ajouter le compte de Julie directement dans les droits NTFS du dossier","Julie → groupe global GG_Comptables → groupe domaine local DL_Compta_RW → droit NTFS « Modification » sur le dossier","Ajouter Julie au groupe Admins du domaine","Partager le dossier avec « Tout le monde » en contrôle total"],a:1,
+  ex:"AGDLP : Accounts dans des groupes Globaux, eux-mêmes dans des groupes Domaine Local, qui portent les Permissions. Quand une comptable part ou arrive, on touche seulement l'appartenance aux groupes."},
+ {type:'choice',q:"Le lecteur réseau Z: doit apparaître automatiquement pour tous les comptables. Tu…",
+  o:["crées une GPO de mappage de lecteur et la lies à l'OU Comptabilité","configures le lecteur à la main sur chaque poste","lies la GPO à l'OU Domain Controllers","déposes un script dans le dossier Téléchargements de Julie"],a:0,
+  ex:"Une GPO (Configuration utilisateur › Préférences › Mappages de lecteurs) liée à l'OU s'applique à chaque ouverture de session. On vérifie avec gpresult /r sur le poste."},
+ {type:'choice',q:"Mardi, un appel : « C'est Julie, mon compte est verrouillé, tu peux me donner un nouveau mot de passe ? » Bonne réaction ?",
+  o:["Supprimer et recréer son compte","Vérifier l'identité de l'appelant, déverrouiller le compte et réinitialiser avec « changer le mot de passe à la prochaine ouverture de session »","Lui donner ton propre mot de passe pour dépanner","Désactiver le verrouillage de compte sur tout le domaine"],a:1,
+  ex:"Vérifier l'identité protège contre l'ingénierie sociale : un attaquant peut se faire passer pour Julie. Recréer le compte ferait perdre son SID et donc ses droits."}],
+ recap:["Ranger les comptes dans des OU pour les GPO et la délégation.","AGDLP : compte → groupe global → groupe domaine local → permission.","Toujours vérifier l'identité avant une réinitialisation de mot de passe."]},
+
+atelier:{n:2044,title:"Journée à l'atelier avec Lucas",npc:'lucas',prio:'Normale',module:'Matériel · câblage',
+ intro:"Trois PC en panne et un rouleau de câble. Viens, je te montre le métier côté matériel.",
+ steps:[
+ {type:'choice',q:"Un PC fixe s'allume, les ventilateurs tournent, mais écran noir et une série de bips au démarrage. Suspect n°1 ?",
+  o:["La carte réseau","La mémoire vive : barrette mal insérée ou défectueuse","Le système d'exploitation","Le clavier"],a:1,
+  ex:"Les bips viennent du POST, le test matériel du BIOS/UEFI, avant même le chargement de l'OS. On consulte la doc du fabricant pour décoder, et on commence souvent par réinsérer la RAM."},
+ {type:'choice',q:"Avant d'ouvrir le boîtier pour changer une barrette, tu…",
+  o:["débranches le secteur et portes un bracelet antistatique relié à la masse","laisses le PC branché pour garder la masse","mets des gants en laine","souffles dans les slots pour les dépoussiérer"],a:0,
+  ex:"L'électricité statique (ESD) peut détruire un composant sans trace visible. Bracelet relié au châssis ou tapis antistatique, et alimentation coupée."},
+ {type:'order',q:"Sertis un câble RJ45 en norme T568B : touche les fils dans l'ordre, de la broche 1 à la broche 8.",
+  items:[{l:'Blanc-orange',sw:WSWAP('#f08a24')},{l:'Orange',sw:['#f08a24']},{l:'Blanc-vert',sw:WSWAP('#3fae5a')},{l:'Bleu',sw:['#2f6fd6']},{l:'Blanc-bleu',sw:WSWAP('#2f6fd6')},{l:'Vert',sw:['#3fae5a']},{l:'Blanc-marron',sw:WSWAP('#8a5a3a')},{l:'Marron',sw:['#8a5a3a']}],
+  ex:"T568B : blanc-orange, orange, blanc-vert, bleu, blanc-bleu, vert, blanc-marron, marron. Le T568A inverse simplement les paires orange et verte."},
+ {type:'choice',q:"Pour relier un PC à un switch, quel câble ?",
+  o:["Un câble droit : même norme aux deux extrémités","Un câble croisé","Le câble console bleu","Un câble coaxial"],a:0,
+  ex:"Câble droit entre équipements de types différents (PC ↔ switch). Le croisé servait entre équipements semblables ; aujourd'hui l'auto-MDIX des ports le rend presque inutile."},
+ {type:'choice',q:"Le NAS a deux disques en RAID 1. L'un tombe en panne. Que se passe-t-il ?",
+  o:["Toutes les données sont perdues","Le NAS continue sur le disque restant ; on remplace le disque HS pour reconstruire le miroir","Rien, et on peut attendre la prochaine panne","Il faut restaurer la sauvegarde tout de suite"],a:1,
+  ex:"RAID 1 = miroir : il tolère la perte d'un disque. Mais RAID n'est pas une sauvegarde : une suppression ou un ransomware est recopié sur les deux disques."}],
+ recap:["Bips au POST : penser RAM, puis carte graphique.","T568B : BO, O, BV, B, BB, V, BM, M.","RAID protège d'une panne disque, pas d'une erreur ou d'une attaque."]},
+
+adressage:{n:2045,title:"Plan d'adressage de la nouvelle agence",npc:'sophie',prio:'Normale',module:'Réseau · adressage IP & VLAN',
+ intro:"On ouvre une agence à Rennes. J'ai besoin de ton plan d'adressage pour la réunion de 14h. Calculatrice interdite, évidemment !",
+ steps:[
+ {type:'input',q:"Le réseau des postes sera 192.168.10.0/26. Quel est le masque en notation décimale pointée ?",ans:['255.255.255.192'],hint:"26 bits à 1 = 8 + 8 + 8 + 2. Dans le dernier octet, les deux premiers bits valent 128 + 64."},
+ {type:'input',q:"Combien d'adresses d'hôtes utilisables dans ce /26 ?",ans:['62'],hint:"2^(32−26) adresses au total, moins l'adresse réseau et l'adresse de broadcast."},
+ {type:'input',q:"Quelle est l'adresse de broadcast de 192.168.10.0/26 ?",ans:['192.168.10.63'],hint:"Le sous-réseau compte 64 adresses à partir de .0. La dernière est le broadcast."},
+ {type:'input',q:"L'atelier de production aura 100 postes. Quel préfixe CIDR donne le plus petit réseau suffisant ? (ex : /24)",ans:['/25','25'],hint:"Il faut au moins 102 adresses (100 + réseau + broadcast). 2^6 = 64 ne suffit pas, 2^7 = 128 oui."},
+ {type:'choice',q:"On veut séparer la téléphonie IP et le Wi-Fi invité du réseau des postes, sur les mêmes switchs. Solution ?",
+  o:["Créer des VLAN distincts et filtrer les flux entre eux sur le routeur ou le pare-feu","Remplacer les switchs par des hubs","Changer les mots de passe Wi-Fi","Acheter un switch par service sans les relier"],a:0,
+  ex:"Un VLAN découpe un switch en plusieurs réseaux logiques (domaines de broadcast). Le passage entre VLAN passe par un routeur ou un pare-feu, où l'on contrôle les flux."},
+ {type:'choice',q:"Le port qui relie deux switchs doit transporter plusieurs VLAN. C'est un port…",
+  o:["access","trunk (802.1Q)","console","PoE"],a:1,
+  ex:"Un port trunk étiquette les trames avec leur numéro de VLAN (tag 802.1Q). Un port access n'appartient qu'à un seul VLAN, typiquement pour un poste."}],
+ recap:["/26 = 255.255.255.192 = 64 adresses, 62 hôtes.","Hôtes utilisables = 2^(32 − préfixe) − 2.","VLAN pour isoler, trunk 802.1Q pour les transporter entre switchs."]},
+
+linux:{n:2046,title:"L'intranet est tombé",npc:'hugo',prio:'Critique',module:'Linux · services',
+ intro:"srv-web01 ne sert plus l'intranet. C'est une Debian avec Apache. Je te laisse la main, je regarde par-dessus ton épaule.",
+ steps:[
+ {type:'term',os:'linux',prompt:'hugo@srv-web01:~$',goal:"Trouve pourquoi Apache est arrêté, corrige la cause, puis relance le service.",
+  need:[{k:'status',l:"Consulter l'état du service apache2"},{k:'df',l:"Vérifier l'espace disque"},{k:'rm',l:"Libérer de la place sur /var"},{k:'restart',l:"Relancer Apache"}],
+  hints:["systemctl status apache2        état du service","df -h                           espace disque par partition","ls -lh /var/log                 taille des fichiers de logs","sudo rm <fichier>               supprimer un fichier (droits root)","sudo systemctl restart apache2  relancer le service","curl -I localhost               tester le site"],
+  cmds:[
+   {re:/^(sudo\s+)?systemctl\s+status\s+apache2(\.service)?$/i,k:'status',out:s=>s.done.has('restart')?`● apache2.service - The Apache HTTP Server\n     Loaded: loaded (/lib/systemd/system/apache2.service; enabled)\n     Active: active (running) since Mon 2026-11-02 09:31:44 CET; 4s ago\n   Main PID: 2210 (apache2)`:`● apache2.service - The Apache HTTP Server\n     Loaded: loaded (/lib/systemd/system/apache2.service; enabled)\n     Active: failed (Result: exit-code) since Mon 2026-11-02 08:14:03 CET; 1h 12min ago\n\nnov. 02 08:14:03 srv-web01 apachectl[815]: (28)No space left on device:\n  AH00023: Couldn't create the proxy mutex\nnov. 02 08:14:03 srv-web01 systemd[1]: apache2.service: Failed with result 'exit-code'.`},
+   {re:/^(sudo\s+)?journalctl\b.*apache2/i,out:`nov. 02 08:14:03 srv-web01 apachectl[815]: (28)No space left on device\nnov. 02 08:14:03 srv-web01 systemd[1]: Failed to start apache2.service.`},
+   {re:/^df(\s+-\w+)*$/i,k:'df',out:s=>`Sys. de fichiers Taille Utilisé Dispo Uti% Monté sur\n/dev/sda1           20G    6,1G   13G  32% /\n/dev/sda3           20G    ${s.done.has('rm')?'1,9G   18G  10%':' 20G     0 100%'} /var\ntmpfs              988M       0  988M   0% /dev/shm`},
+   {re:/^(sudo\s+)?(ls|du)(\s+-[\w]+)*\s+\/var\/log(\/\*?)?\/?$/i,k:'ls',out:s=>s.done.has('rm')?`drwxr-x--- 2 root adm 4,0K nov.  2 07:00 apache2\n-rw-r----- 1 root adm 1,2M nov.  2 09:20 syslog\n-rw-r----- 1 root adm 310K nov.  2 09:20 auth.log`:`total 18G\ndrwxr-x--- 2 root adm 4,0K nov.  2 07:00 apache2\n-rw-r----- 1 root adm  18G nov.  2 08:13 debug.log\n-rw-r----- 1 root adm 1,2M nov.  2 09:20 syslog\n-rw-r----- 1 root adm 310K nov.  2 09:20 auth.log`},
+   {re:/^cd\s+\/var\/log\/?$/i,out:''},
+   {re:/^sudo\s+(rm(\s+-\w+)*|truncate\s+-s\s*0)\s+(\/var\/log\/)?debug\.log$/i,k:'rm',out:"# (rm ne dit rien quand tout va bien : 18 Go libérés)"},
+   {re:/^(rm(\s+-\w+)*|truncate\s+-s\s*0)\s+(\/var\/log\/)?debug\.log$/i,out:"rm: impossible de supprimer '/var/log/debug.log': Permission non accordée"},
+   {re:/^sudo\s+systemctl\s+(re)?start\s+apache2(\.service)?$/i,k:'restart',req:['rm'],fail:`Job for apache2.service failed because the control process exited with error code.\nSee "systemctl status apache2.service" and "journalctl -xeu apache2.service" for details.`,out:''},
+   {re:/^systemctl\s+(re)?start\s+apache2/i,out:"Failed to restart apache2.service: Interactive authentication required.\nSee system logs and 'systemctl status apache2.service' for details."},
+   {re:/^curl(\s+-\w+)*\s+(http:\/\/)?localhost\/?$/i,out:s=>s.done.has('restart')?"HTTP/1.1 200 OK\nServer: Apache/2.4.62 (Debian)\nContent-Type: text/html; charset=UTF-8":"curl: (7) Failed to connect to localhost port 80: Connection refused"}],
+  success:"Apache tourne, l'intranet répond."},
+ {type:'choice',q:"Le fichier de config doit être lisible et modifiable par son propriétaire, seulement lisible par le groupe www-data, invisible pour les autres. Commande ?",
+  o:["chmod 640 fichier","chmod 777 fichier","chmod 604 fichier","chmod 755 fichier"],a:0,
+  ex:"r = 4, w = 2, x = 1. Propriétaire rw = 6, groupe r = 4, autres rien = 0 → 640, soit rw-r-----."},
+ {type:'choice',q:"Comment éviter que /var se remplisse de nouveau ?",
+  o:["Configurer logrotate et une supervision avec alerte à 80 % d'occupation","Supprimer /var/log chaque matin","Désactiver tous les journaux","Agrandir le disque à chaque incident"],a:0,
+  ex:"logrotate compresse et purge les anciens journaux. Une supervision (Zabbix, Centreon, Nagios…) prévient avant la panne au lieu de la constater."},
+ {type:'choice',q:"Durcissement de l'accès SSH à ce serveur. Quelle mesure garder ?",
+  o:["Authentification par clé et PermitRootLogin no","Ouvrir le port 22 à tout Internet avec le mot de passe root","Passer à Telnet, plus simple","Partager une même clé privée entre tous les admins"],a:0,
+  ex:"Chaque admin a sa propre clé, root ne se connecte pas directement (on passe par sudo, ce qui laisse une trace nominative)."}],
+ recap:["systemctl status, puis journalctl : lire l'erreur avant d'agir.","df -h et ls -lh pour trouver ce qui remplit un disque.","Les droits : r 4, w 2, x 1 ; 640 = rw-r-----."]},
+
+secu:{n:2047,title:"Audit éclair du RSSI",npc:'leroy',prio:'Haute',module:'Sécurité · sauvegarde',
+ intro:"On m'a dit du bien de toi. Avant de te lâcher seul en astreinte, quelques questions de sécurité.",
+ steps:[
+ {type:'choice',q:"Un utilisateur te transfère ce mail. Que fais-tu ?",
+  ctx:"De : Support Microsoft <support@micros0ft-secure.com>\nObjet : URGENT – votre boîte mail sera supprimée dans 24 h\n\nCliquez ici pour confirmer votre identité :\nhttp://login-office365.verif-compte.ru/connexion",
+  o:["Cliquer pour vérifier, au cas où","Ne pas cliquer, signaler au RSSI, prévenir les utilisateurs si c'est une campagne et bloquer le domaine","Répondre à l'expéditeur pour demander si c'est vrai","Le transférer à tout le service pour avoir leur avis"],a:1,
+  ex:"Indices : urgence, domaine « micros0ft » avec un zéro, lien vers un domaine sans rapport. Le signalement permet de bloquer l'expéditeur et de vérifier si quelqu'un a déjà cliqué."},
+ {type:'input',q:"Sur quel port TCP écoute le Bureau à distance (RDP) par défaut ?",ans:['3389'],hint:"Un nombre à 4 chiffres qui commence par 33."},
+ {type:'choice',q:"Un prestataire demande qu'on ouvre RDP depuis Internet vers un serveur pour intervenir. Tu proposes…",
+  o:["D'ouvrir le port, c'est temporaire","Un accès VPN avec authentification multifacteur, puis RDP uniquement en interne","De mettre RDP sur le port 3390 pour le cacher","De couper le pare-feu le temps de l'intervention"],a:1,
+  ex:"RDP exposé sur Internet est une porte d'entrée classique des ransomwares. Changer de port ne cache rien à un scanner."},
+ {type:'choice',q:"Dans la politique du pare-feu, où place-t-on la règle « tout refuser » ?",
+  o:["En premier, pour être sûr","En dernier : tout ce qui n'est pas explicitement autorisé avant est bloqué","Au milieu","Nulle part, elle bloque tout"],a:1,
+  ex:"Les règles sont lues de haut en bas et la première qui correspond s'applique. Les autorisations précises d'abord, le refus par défaut à la fin."},
+ {type:'choice',q:"La règle de sauvegarde 3-2-1, c'est :",
+  o:["3 copies des données, sur 2 supports différents, dont 1 hors site","3 sauvegardes par jour, 2 par semaine, 1 par mois","3 disques en RAID, 2 serveurs, 1 NAS","3 admins, 2 mots de passe, 1 coffre-fort"],a:0,
+  ex:"On ajoute souvent une copie hors ligne ou immuable contre les ransomwares, et surtout des tests de restauration réguliers."},
+ {type:'choice',q:"Un poste affiche une demande de rançon, les fichiers sont chiffrés. Premier geste ?",
+  o:["Isoler le poste du réseau (câble débranché, Wi-Fi coupé) sans l'éteindre, et alerter le RSSI","Payer la rançon pour aller vite","Éteindre tous les serveurs de l'entreprise","Lancer une défragmentation"],a:0,
+  ex:"Isoler stoppe la propagation. Laisser la machine allumée conserve des traces utiles à l'analyse, comme le recommande l'ANSSI."}],
+ recap:["Phishing : ne pas cliquer, signaler, bloquer.","Pas de RDP exposé : VPN + MFA.","Sauvegardes 3-2-1, testées. Ransomware : isoler d'abord."]}
+};
+for(const k in MISSIONS)MISSIONS[k].id=k;
+const ORDER=['imprimante','dhcp','ad','atelier','adressage','linux','secu'];
+const LEVELS=[[0,'Stagiaire'],[150,'Technicien support N1'],[350,'Technicien support N2'],[600,'Technicien systèmes et réseaux'],[900,'Administrateur systèmes'],[1200,'TSSR confirmé']];
+
+/* ---------- Sauvegarde ---------- */
+const KEY='tssr-quest-v1';
+const def=()=>({xp:0,done:[],errors:0,clean:0,intro:false});
+function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(def(),JSON.parse(r));}catch(e){}return def();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+let S=load();
+
+/* ---------- Utilitaires DOM ---------- */
+const $=s=>document.querySelector(s);
+function h(t,a={},...c){const e=document.createElement(t);for(const k in a){const v=a[k];if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v);}for(const x of c.flat()){if(x==null||x===false)continue;e.append(x.nodeType?x:document.createTextNode(x));}return e;}
+const modal=$('#modal'),sheet=$('#sheet');
+function openModal(nodes){sheet.replaceChildren(...nodes);modal.hidden=false;sheet.scrollTop=0;}
+function closeModal(){modal.hidden=true;R=null;}
+modal.addEventListener('pointerdown',e=>{if(e.target===modal&&!R)closeModal();});
+let toastT;function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,3200);}
+const npcOf=id=>NPCS.find(n=>n.mission===id);
+const nextId=()=>ORDER.find(id=>!S.done.includes(id));
+function levelIdx(xp){let i=0;LEVELS.forEach((l,j)=>{if(xp>=l[0])i=j;});return i;}
+
+/* ---------- HUD & journal ---------- */
+function hud(){
+  const i=levelIdx(S.xp),cur=LEVELS[i][0],nx=LEVELS[i+1]?.[0];
+  $('#rank').textContent=`Niv. ${i+1} · ${LEVELS[i][1]}`;
+  $('#nums').textContent=nx?`${S.xp} / ${nx} XP · ${S.done.length}/${ORDER.length} tickets`:`${S.xp} XP · ${S.done.length}/${ORDER.length} tickets`;
+  $('#xpfill').style.width=(nx?((S.xp-cur)/(nx-cur))*100:100)+'%';
+  const nid=nextId();
+  $('#mlist').replaceChildren(...ORDER.map(id=>{
+    const m=MISSIONS[id],n=npcOf(id),st=S.done.includes(id)?'done':id===nid?'todo':'lock';
+    return h('li',{},h('button',{type:'button',class:'mi is-'+st,disabled:st==='lock'?'':null,onclick:()=>walkToNpc(n)},
+      h('span',{class:'no'},'#'+m.n),
+      h('span',{class:'t'},m.title,h('span',{class:'s'},`${n.name} · ${m.module}`)),
+      h('span',{class:'pill '+st},st==='done'?'Résolu':st==='todo'?'À traiter':'En attente')));
+  }));
+}
+let lastLevel=levelIdx(S.xp);
+function checkLevel(){const i=levelIdx(S.xp);if(i>lastLevel)toast(`Niveau ${i+1} : ${LEVELS[i][1]}`);lastLevel=i;}
+
+/* ---------- Carte & déplacement ---------- */
+const cv=$('#map'),ctx=cv.getContext('2d');ctx.scale(2,2);
+const P={x:10,y:7,px:320,py:224,path:[],dir:'down',pending:null};
+function roomAt(x,y){return ROOMS.find(r=>x>=r.x1&&x<=r.x2&&y>=r.y1&&y<=r.y2);}
+function walkable(x,y){if(x<0||y<0||x>=W||y>=H)return false;if('#TSWP'.includes(MAP[y][x]))return false;return !NPCS.some(n=>n.x===x&&n.y===y);}
+function bfs(goals){
+  const sk=P.x+','+P.y;if(goals.has(sk))return[];
+  const q=[[P.x,P.y]],prev=new Map([[sk,null]]);
+  while(q.length){const[x,y]=q.shift();
+    for(const[dx,dy]of[[0,-1],[1,0],[0,1],[-1,0]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;
+      if(prev.has(k)||!walkable(nx,ny))continue;prev.set(k,x+','+y);
+      if(goals.has(k)){const path=[];let c=k;while(c&&c!==sk){const[a,b]=c.split(',').map(Number);path.unshift({x:a,y:b});c=prev.get(c);}return path;}
+      q.push([nx,ny]);}}
+  return null;}
+function walkTo(x,y){if(!walkable(x,y))return;const p=bfs(new Set([x+','+y]));if(p){P.path=p;P.pending=null;}}
+function walkToNpc(n){
+  const g=new Set([[0,-1],[1,0],[0,1],[-1,0]].map(([dx,dy])=>[n.x+dx,n.y+dy]).filter(([a,b])=>walkable(a,b)).map(a=>a.join(',')));
+  const p=bfs(g);if(p===null)return;
+  if(!p.length&&!P.path.length){face(n);talk(n);return;}
+  P.path=p;P.pending=n;}
+function face(n){const dx=n.x-P.x,dy=n.y-P.y;P.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');}
+cv.addEventListener('pointerdown',e=>{
+  if(!modal.hidden)return;
+  const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);
+  const n=NPCS.find(n=>n.x===x&&n.y===y);n?walkToNpc(n):walkTo(x,y);});
+addEventListener('keydown',e=>{
+  if(!modal.hidden){if(e.key==='Escape'&&!R)closeModal();return;}
+  const d={ArrowUp:[0,-1,'up'],ArrowDown:[0,1,'down'],ArrowLeft:[-1,0,'left'],ArrowRight:[1,0,'right'],z:[0,-1,'up'],s:[0,1,'down'],q:[-1,0,'left'],d:[1,0,'right']}[e.key];
+  if(d){e.preventDefault();if(P.path.length)return;P.dir=d[2];if(walkable(P.x+d[0],P.y+d[1]))P.path=[{x:P.x+d[0],y:P.y+d[1]}];P.pending=null;return;}
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();
+    const v={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[P.dir];
+    const n=NPCS.find(n=>n.x===P.x+v[0]&&n.y===P.y+v[1])||NPCS.find(n=>Math.abs(n.x-P.x)+Math.abs(n.y-P.y)===1);
+    if(n){face(n);talk(n);}}});
+
+function tick(){
+  if(P.path.length){const t=P.path[0],tx=t.x*T,ty=t.y*T,sp=4;
+    if(tx>P.px)P.dir='right';else if(tx<P.px)P.dir='left';else if(ty>P.py)P.dir='down';else if(ty<P.py)P.dir='up';
+    P.px+=Math.sign(tx-P.px)*Math.min(sp,Math.abs(tx-P.px));P.py+=Math.sign(ty-P.py)*Math.min(sp,Math.abs(ty-P.py));
+    if(P.px===tx&&P.py===ty){P.x=t.x;P.y=t.y;P.path.shift();
+      if(!P.path.length&&P.pending){const n=P.pending;P.pending=null;face(n);talk(n);}}}
+  draw(performance.now()/1000);requestAnimationFrame(tick);}
+
+/* ---------- Dessin ---------- */
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+function floor(x,y){const r=roomAt(x,y),X=x*T,Y=y*T;rect(X,Y,T,T,r?r.c:CORRIDOR);
+  ctx.fillStyle='rgba(255,255,255,.035)';
+  if(r&&r.grid){ctx.fillRect(X,Y,T,1);ctx.fillRect(X,Y,1,T);}
+  else if(!r){if((x+y)%2)ctx.fillRect(X,Y,T,T);}
+  else{ctx.fillRect(X+8,Y+8,2,2);ctx.fillRect(X+22,Y+22,2,2);}}
+function draw(t){
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=MAP[y][x],X=x*T,Y=y*T;
+    if(c==='#'){rect(X,Y,T,T,'#0a0d12');if(y<H-1&&MAP[y+1][x]!=='#')rect(X,Y+T-5,T,5,'#2a3342');continue;}
+    floor(x,y);
+    if(c==='T'){rect(X+2,Y+8,28,18,'#6b4a33');rect(X+2,Y+8,28,3,'#86603f');rect(X+9,Y+2,14,10,'#0d1117');rect(X+10,Y+3,12,7,'#3d8fb0');rect(X+14,Y+12,4,2,'#0d1117');}
+    if(c==='S'){rect(X+3,Y+1,26,30,'#0c1015');rect(X+5,Y+3,22,26,'#18202a');
+      for(let i=0;i<5;i++){rect(X+6,Y+5+i*5,20,3,'#222c38');
+        const on=Math.sin(t*(3+((x*7+y*3+i)%5))+i*2+x)>-.2;rect(X+22,Y+6+i*5,2,1,on?((x+i)%3?'#6fd08c':'#f2b54a'):'#2d3a2f');}}
+    if(c==='W'){rect(X+1,Y+6,30,22,'#4b5047');rect(X+1,Y+6,30,3,'#62685d');rect(X+5,Y+12,12,9,'#2f6a3e');rect(X+7,Y+14,3,3,'#c9b24a');rect(X+20,Y+13,8,2,'#f2b54a');rect(X+20,Y+15,2,6,'#9aa3b0');}
+    if(c==='P'){rect(X+11,Y+20,10,9,'#9a5a3a');ctx.fillStyle='#3f8f4f';for(const[a,b,r]of[[16,12,7],[11,16,5],[21,15,5]]){ctx.beginPath();ctx.arc(X+a,Y+b,r,0,7);ctx.fill();}}}
+  ctx.font='8px Silkscreen, monospace';ctx.textBaseline='middle';
+  for(const r of ROOMS){const ly=r.y1*T-7;ctx.fillStyle='rgba(242,181,74,.7)';ctx.fillText(r.n.toUpperCase(),r.x1*T+3,ly);}
+  ctx.fillStyle='rgba(151,161,174,.55)';ctx.fillText('COULOIR',6*T+4,6*T+10);
+  const nid=nextId(),all=!nid;
+  for(const n of NPCS){
+    const st=n.id==='dsi'?(all?'star':'talk'):S.done.includes(n.mission)?'done':n.mission===nid?'todo':'lock';
+    person(n.x*T,n.y*T,n.body,n.hair,n.skin,'down',t,st);}
+  person(P.px,P.py,'#3d7be0','#2a1d14','#e9c39b',P.dir,t,'me');}
+function person(X,Y,body,hair,skin,dir,t,st){
+  ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(X+16,Y+29,9,3,0,0,7);ctx.fill();
+  rect(X+9,Y+15,14,12,body);rect(X+9,Y+25,14,2,'rgba(0,0,0,.25)');
+  rect(X+11,Y+27,4,3,'#1d232c');rect(X+17,Y+27,4,3,'#1d232c');
+  ctx.fillStyle=skin;ctx.beginPath();ctx.arc(X+16,Y+10,6.5,0,7);ctx.fill();
+  ctx.fillStyle=hair;ctx.beginPath();ctx.arc(X+16,Y+9,6.8,Math.PI,0);ctx.fill();
+  if(dir!=='up'){ctx.fillStyle='#14181f';const ox=dir==='left'?-2:dir==='right'?2:0;ctx.fillRect(X+13+ox,Y+11,2,2);ctx.fillRect(X+18+ox,Y+11,2,2);}
+  if(st==='me'){rect(X+15,Y+15,2,7,'#f2b54a');rect(X+14,Y+21,4,3,'#e7e2d8');}
+  const b=Math.sin(t*4)*2,my=Y-5+b;
+  if(st==='todo'||st==='star'||st==='talk'&&!S.done.length){
+    rect(X+11,my-8,10,12,'#f2b54a');rect(X+14,my+4,4,2,'#f2b54a');ctx.fillStyle='#1a1307';ctx.font='10px Silkscreen, monospace';ctx.textAlign='center';ctx.fillText(st==='star'?'*':'!',X+16,my-1);ctx.textAlign='left';}
+  else if(st==='done'){rect(X+12,Y-6,8,8,'#1f3a2a');ctx.fillStyle='#6fd08c';ctx.fillRect(X+14,Y-2,2,2);ctx.fillRect(X+16,Y,2,2);ctx.fillRect(X+18,Y-2,2,2);ctx.fillRect(X+19,Y-4,1,2);}
+}
+
+/* ---------- Dialogues ---------- */
+let R=null;
+function sayBox(n,txt){return h('p',{class:'say'},h('b',{},`${n.name} · ${n.role}`),txt);}
+function talk(n){
+  if(n.id==='dsi')return dsi(n);
+  const m=MISSIONS[n.mission],nid=nextId();
+  if(S.done.includes(n.mission)){
+    return openModal([meta(m),h('h2',{},m.title),sayBox(n,"Merci encore pour le coup de main ! Tu veux revoir l'essentiel ou rejouer le ticket ?"),
+      h('ul',{class:'recap'},m.recap.map(r=>h('li',{},r))),
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>start(m,true)},'Rejouer (sans XP)'),h('button',{class:'btn',type:'button',onclick:closeModal},'Fermer'))]);}
+  if(n.mission!==nid){const nn=npcOf(nid);
+    return openModal([h('h2',{},n.name),sayBox(n,`J'aurai sûrement besoin de toi plus tard. Pour l'instant, ${nn.name} (${nn.role.toLowerCase()}) t'attend.`),
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{closeModal();walkToNpc(nn);}},`Aller voir ${nn.name}`),h('button',{class:'btn',type:'button',onclick:closeModal},'Fermer'))]);}
+  openModal([meta(m),h('h2',{},m.title),h('p',{class:'who'},`Demandeur : ${n.name} (${n.role}) · ${m.module}`),sayBox(n,m.intro),
+    h('p',{class:'tip'},`${m.steps.length} étapes · jusqu'à ${m.steps.length*30+50} XP. Bonne réponse du premier coup : +10 XP de bonus.`),
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>start(m,false)},'Prendre le ticket'),h('button',{class:'btn',type:'button',onclick:closeModal},'Plus tard'))]);
+  sheet.querySelector('.btn.primary').focus();}
+function meta(m,closable){return h('div',{class:'tk-meta'},h('span',{},'Ticket ',h('b',{},'#'+m.n),` · priorité ${m.prio.toLowerCase()}`),
+  h('button',{class:'x',type:'button','aria-label':'Fermer le ticket',onclick:closeModal},'✕'));}
+function dsi(n){
+  const nid=nextId();
+  if(!nid)return certificate(n);
+  const nn=npcOf(nid);
+  openModal([h('h2',{},'Bureau de la DSI'),sayBox(n,S.done.length?`Beau travail, ${S.done.length} ticket${S.done.length>1?'s':''} sur ${ORDER.length}. Ton prochain dossier : ${MISSIONS[nid].title.toLowerCase()}, avec ${nn.name}.`:`Bienvenue chez LabCorp ! Ici, tu vas toucher à tout : support, réseau, Active Directory, Linux, sécurité. Commence par ${nn.name} à l'accueil, son imprimante fait des siennes.`),
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{closeModal();walkToNpc(nn);}},`Aller voir ${nn.name}`),h('button',{class:'btn',type:'button',onclick:closeModal},'Fermer'))]);}
+function certificate(n){
+  const total=ORDER.reduce((s,id)=>s+MISSIONS[id].steps.length,0);
+  openModal([sayBox(n,"Sept tickets résolus. Tu as eu les bons réflexes : diagnostiquer avant d'agir, documenter, penser sécurité. Voici ton attestation."),
+    h('div',{class:'cert'},h('p',{class:'tip'},'LabCorp · Direction des systèmes d\u2019information'),h('p',{class:'big'},'Attestation de stage'),
+      h('p',{},'Technicien supérieur systèmes et réseaux'),
+      h('div',{class:'stats'},h('div',{},h('b',{},S.xp),h('span',{},'XP')),h('div',{},h('b',{},`${S.clean}/${total}`),h('span',{},'sans faute')),h('div',{},h('b',{},S.errors),h('span',{},'erreurs'))),
+      h('p',{class:'tip'},LEVELS[levelIdx(S.xp)][1])),
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:closeModal},'Fermer'))]);}
+
+/* ---------- Moteur de mission ---------- */
+function start(m,replay){R={m,i:0,replay,gained:0,first:true};renderStep();}
+function renderStep(){
+  const m=R.m,st=m.steps[R.i],n=NPCS.find(x=>x.id===m.npc);R.first=true;
+  const pips=h('div',{class:'pips','aria-label':`Étape ${R.i+1} sur ${m.steps.length}`},m.steps.map((_,j)=>h('i',{class:j<R.i?'on':j===R.i?'cur':''})));
+  const box=h('div',{class:'stepbox',style:'display:grid;gap:12px'});
+  openModal([meta(m),h('h2',{},m.title),h('p',{class:'who'},`Étape ${R.i+1}/${m.steps.length} · ${m.module}${R.replay?' · révision':''}`),pips,box]);
+  ({choice:renderChoice,input:renderInput,order:renderOrder,term:renderTerm})[st.type](st,box);}
+function miss(){R.first=false;if(!R.replay){S.errors++;save();}}
+function goodBox(text){return h('div',{class:'fb good'},h('p',{},h('strong',{},'Bien vu. '),text||''),
+  h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:next},R.i+1<R.m.steps.length?'Étape suivante':'Clôturer le ticket')));}
+function next(){
+  if(!R.replay){const g=20+(R.first?10:0);S.xp+=g;R.gained+=g;if(R.first)S.clean++;save();hud();checkLevel();}
+  R.i++;if(R.i<R.m.steps.length)renderStep();else finish();}
+function finish(){
+  const m=R.m,n=NPCS.find(x=>x.id===m.npc);
+  if(!R.replay&&!S.done.includes(m.id)){S.xp+=50;R.gained+=50;S.done.push(m.id);save();hud();checkLevel();}
+  const nid=nextId(),nn=nid&&npcOf(nid),dir=NPCS[0];
+  openModal([meta(m),h('p',{class:'tip'},'Ticket résolu'),h('h2',{},m.title),R.replay?null:h('p',{class:'big'},`+${R.gained} XP`),
+    sayBox(n,'Merci, ça fonctionne ! Je note ton nom pour la prochaine fois.'),
+    h('div',{},h('p',{class:'q',style:'font-size:15px;margin-bottom:6px'},'À retenir'),h('ul',{class:'recap'},m.recap.map(r=>h('li',{},r)))),
+    h('div',{class:'row'},
+      nn?h('button',{class:'btn primary',type:'button',onclick:()=>{closeModal();walkToNpc(nn);}},`Ticket suivant : ${nn.name}`)
+        :h('button',{class:'btn primary',type:'button',onclick:()=>{closeModal();walkToNpc(dir);}},'Voir la DSI'),
+      h('button',{class:'btn',type:'button',onclick:closeModal},'Retour au bureau'))]);
+  R=null;}
+
+function renderChoice(st,box){
+  box.append(h('p',{class:'q'},st.q));if(st.ctx)box.append(h('pre',{class:'doc'},st.ctx));
+  const opts=h('div',{class:'opts'}),fb=h('div');
+  st.o.forEach((t,i)=>{const b=h('button',{class:'opt',type:'button',onclick:()=>{
+    if(i===st.a){b.classList.add('right');[...opts.children].forEach(x=>x.disabled=true);fb.replaceChildren(goodBox(st.ex));fb.querySelector('button').focus();}
+    else{b.classList.add('wrong');b.disabled=true;miss();fb.replaceChildren(h('div',{class:'fb bad'},h('p',{},h('strong',{},'Pas cette fois. '),'Élimine ce qui ne règle pas la cause et réessaie.')));}
+  }},h('span',{class:'k'},'ABCD'[i]),h('span',{},t));opts.append(b);});
+  box.append(opts,fb);}
+
+function renderInput(st,box){
+  let tries=0;const id='ans-'+R.m.id+'-'+R.i;
+  const inp=h('input',{id,type:'text',autocomplete:'off',autocapitalize:'off',spellcheck:'false','aria-label':'Ta réponse',placeholder:'Ta réponse'});
+  const fb=h('div');
+  const check=()=>{const v=inp.value.trim().toLowerCase().replace(/\s+/g,'');if(!v)return;
+    if(st.ans.includes(v)){inp.disabled=true;btn.disabled=true;fb.replaceChildren(goodBox(st.ex||''));fb.querySelector('button').focus();}
+    else{tries++;miss();fb.replaceChildren(h('div',{class:'fb bad'},h('p',{},h('strong',{},'Pas tout à fait. '),st.hint),
+      tries>=3?h('p',{},'Réponse attendue : ',h('b',{},st.ans[0]),'. Tape-la pour continuer.'):null));}};
+  const btn=h('button',{class:'btn primary',type:'button',onclick:check},'Valider');
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')check();});
+  box.append(h('label',{class:'q',for:id},st.q),h('div',{class:'field'},inp,btn),fb);
+  setTimeout(()=>inp.focus(),30);}
+
+function swStyle(sw){return sw.length>1?`background:repeating-linear-gradient(135deg,${sw[0]} 0 4px,${sw[1]} 4px 9px)`:`background:${sw[0]}`;}
+function renderOrder(st,box){
+  let pos=0;const slots=h('div',{class:'slots'},st.items.map((_,i)=>h('div',{class:'slot'},String(i+1))));
+  const fb=h('div'),pool=h('div',{class:'pool'});
+  const idx=st.items.map((_,i)=>i).sort(()=>Math.random()-.5);
+  idx.forEach(i=>{const it=st.items[i];const c=h('button',{class:'chip',type:'button',onclick:()=>{
+    if(i===pos){const s=slots.children[pos];s.classList.add('filled');s.replaceChildren(h('span',{class:'sw',style:swStyle(it.sw)}),String(pos+1));c.remove();pos++;fb.replaceChildren();
+      if(pos===st.items.length)fb.replaceChildren(goodBox(st.ex));}
+    else{c.classList.remove('shake');void c.offsetWidth;c.classList.add('shake');miss();fb.replaceChildren(h('div',{class:'fb bad'},h('p',{},h('strong',{},`Broche ${pos+1} : `),'pas ce fil. En T568B, la paire orange vient en premier.')));}
+  }},h('span',{class:'sw',style:swStyle(it.sw)}),it.l);pool.append(c);});
+  box.append(h('p',{class:'q'},st.q),h('div',{style:'overflow-x:auto'},slots),pool,fb);}
+
+const GEN={
+ win:[{re:/^(cls|clear)$/i,clear:1},{re:/^hostname$/i,out:'PC-LABCORP-023'},{re:/^whoami$/i,out:'lab\\stagiaire'}],
+ linux:[{re:/^(clear|cls)$/i,clear:1},{re:/^hostname$/i,out:'srv-web01'},{re:/^whoami$/i,out:'hugo'},{re:/^pwd$/i,out:'/home/hugo'},{re:/^ls(\s+-\w+)*$/i,out:'notes-astreinte.txt'}]};
+function renderTerm(st,box){
+  const done=new Set(),hist=[];let hi=0,ok=false;
+  const out=h('pre',{class:'term-out',tabindex:'0'}),id='term-'+R.m.id+'-'+R.i;
+  const inp=h('input',{id,class:'term-in',type:'text',autocomplete:'off',autocapitalize:'off',autocorrect:'off',spellcheck:'false','aria-label':'Commande'});
+  const objs=h('ul',{class:'objs'}),fb=h('div');
+  const drawObjs=()=>objs.replaceChildren(...st.need.map(o=>h('li',{class:done.has(o.k)?'ok':''},o.l)));
+  const print=s=>{if(s==null)return;out.textContent+=s+(s.endsWith('\n')?'':'\n');out.scrollTop=out.scrollHeight;};
+  const help=()=>print('Commandes utiles :\n'+st.hints.map(x=>'  '+x).join('\n'));
+  print(st.os==='win'?'Microsoft Windows [version 10.0.22631]\nTape « aide » pour voir les commandes utiles.\n':'Debian GNU/Linux 12 (bookworm)\nTape « aide » pour voir les commandes utiles.\n');
+  function run(raw){
+    const c=raw.trim().replace(/\s+/g,' ');print(st.prompt+' '+raw);if(!c)return;
+    hist.push(c);hi=hist.length;
+    if(/^(aide|help|\?)$/i.test(c))return help();
+    const e=[...st.cmds,...GEN[st.os]].find(x=>x.re.test(c));
+    if(!e){const w=c.split(' ')[0];print(st.os==='win'?`'${w}' n'est pas reconnu en tant que commande interne\nou externe, un programme exécutable ou un fichier de commandes.`:`bash: ${w} : commande introuvable`);return;}
+    if(e.clear){out.textContent='';return;}
+    if(e.req&&!e.req.every(k=>done.has(k))){print(e.fail);return;}
+    const arg=c.split(' ').slice(1).join(' ');
+    const o=typeof e.out==='function'?e.out({done,arg}):e.out;if(o)print(o);
+    if(e.k&&!done.has(e.k)){done.add(e.k);drawObjs();}
+    if(!ok&&st.need.every(o=>done.has(o.k))){ok=true;print('\n✔ '+st.success);fb.replaceChildren(goodBox(''));}}
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){run(inp.value);inp.value='';}
+    else if(e.key==='ArrowUp'&&hist.length){hi=Math.max(0,hi-1);inp.value=hist[hi];e.preventDefault();}
+    else if(e.key==='ArrowDown'){hi=Math.min(hist.length,hi+1);inp.value=hist[hi]||'';e.preventDefault();}});
+  drawObjs();
+  box.append(h('p',{class:'q'},st.goal),objs,
+    h('div',{class:'term',onclick:e=>{if(e.target!==out)inp.focus();}},out,h('div',{class:'term-line'},h('span',{},st.prompt),inp)),
+    h('div',{class:'row'},h('button',{class:'btn',type:'button',onclick:()=>{print(st.prompt+' aide');help();inp.focus();}},'Afficher l\u2019aide')),fb);
+  setTimeout(()=>inp.focus(),30);}
+
+/* ---------- Démarrage ---------- */
+$('#resetBtn').addEventListener('click',()=>openModal([h('h2',{},'Recommencer le stage ?'),h('p',{},'Ton XP et tes tickets résolus seront effacés.'),
+  h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{S=def();S.intro=true;save();lastLevel=0;Object.assign(P,{x:10,y:7,px:320,py:224,path:[],pending:null});hud();closeModal();toast('Nouveau stage, nouveau départ.');}},'Effacer et recommencer'),
+  h('button',{class:'btn',type:'button',onclick:closeModal},'Annuler'))]));
+hud();requestAnimationFrame(tick);
+if(!S.intro){
+  openModal([h('p',{class:'tip'},'Lundi, 8 h 30 · premier jour'),h('h2',{},'Bienvenue chez LabCorp'),
+    h('p',{style:'margin:0'},"Tu prépares le titre de Technicien supérieur systèmes et réseaux et tu commences ton stage au service informatique. Sept collègues ont un problème pour toi : support, DHCP, Active Directory, câblage, adressage IP, Linux et sécurité."),
+    h('p',{style:'margin:0'},"Chaque ticket rapporte de l'XP. Les terminaux acceptent de vraies commandes : tape « aide » si tu bloques."),
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{S.intro=true;save();closeModal();walkToNpc(NPCS[0]);}},'Aller voir la DSI'))]);}
+</script>

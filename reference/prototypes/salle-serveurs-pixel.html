@@ -1,0 +1,222 @@
+<title>Salle serveurs pixel</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: scène jouable en haut, planches de sprites en dessous */
+:root{color-scheme:dark;--bg:#0d1015;--panel:#161b23;--line:#2a323d;--fg:#e6e2d8;--muted:#95a0ad;--amber:#f2b54a;
+--accent:#f2b54a;--dlg-bg:#11151c;--dlg-bw:3px;--dlg-r:0px;--display:'Silkscreen',ui-monospace,monospace;--body:'Atkinson Hyperlegible',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--body);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 40px}
+main{max-width:900px;margin:0 auto;display:grid;gap:18px}
+h1{font-family:var(--display);font-weight:400;font-size:22px;color:var(--amber);margin:0}
+p{margin:0;color:var(--muted)}
+canvas{display:block;width:100%;max-width:100%;height:auto;image-rendering:pixelated;background:#000;border:1px solid var(--line);border-radius:4px;touch-action:manipulation;cursor:pointer}
+h2{font-family:var(--display);font-weight:400;font-size:13px;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.sheet{background:repeating-conic-gradient(#1a2029 0 25%,#141920 0 50%) 0 0/24px 24px;border:1px solid var(--line);border-radius:4px;padding:12px;overflow-x:auto}
+.sheet img{image-rendering:pixelated;display:block;max-width:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.grid>div{min-width:0}
+kbd{font-family:ui-monospace,monospace;font-size:12px;border:1px solid var(--line);border-radius:3px;padding:0 4px;background:var(--panel)}
+#stage{position:relative}
+.dlg{position:absolute;left:8px;right:8px;bottom:8px;z-index:5;display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;
+  background:var(--dlg-bg);border:var(--dlg-bw) solid var(--accent);border-radius:var(--dlg-r);padding:10px 14px 12px;box-shadow:0 0 0 2px #000,0 10px 30px rgba(0,0,0,.55);cursor:pointer;max-width:720px;margin:0 auto}
+.dlg .face{width:56px;height:49px;image-rendering:pixelated;background:#1f2733;border:1px solid var(--line);border-radius:var(--dlg-r)}
+.dlg-col{min-width:0}
+.dlg .nm{font-family:var(--display);font-size:11px;letter-spacing:.06em;color:var(--accent);margin:0 0 3px}
+.dlg .tx{margin:0;color:var(--fg);font-size:15px;line-height:1.4;min-height:2.8em}
+.dlg .more{position:absolute;right:10px;bottom:5px;color:var(--accent);font-size:11px;animation:dlgblink 1s steps(2) infinite}
+.dlg .ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.dlg .ch:empty{display:none}
+.dlg .ch button{font:inherit;font-size:14px;color:var(--fg);background:var(--panel);border:1px solid var(--accent);border-radius:var(--dlg-r);padding:6px 12px;cursor:pointer}
+.dlg .ch button:hover,.dlg .ch button:focus-visible{background:var(--accent);color:#0b0e13;outline:none}
+@keyframes dlgblink{50%{opacity:0}}
+@media (max-width:520px){.dlg{left:4px;right:4px;bottom:4px;padding:8px 10px;gap:8px}.dlg .face{width:40px;height:35px}.dlg .tx{font-size:14px}}
+
+.tm{position:fixed;inset:0;z-index:40;background:rgba(3,5,8,.82);display:flex;align-items:center;justify-content:center;
+  padding:max(10px,env(safe-area-inset-top,0px)) max(10px,env(safe-area-inset-right,0px)) max(10px,env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-left,0px))}
+.tm-win{width:min(780px,100%);max-height:100%;display:flex;flex-direction:column;background:#090c10;border:1px solid var(--line);border-radius:6px;overflow:hidden;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.tm-head{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#161b23;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.tm-head .dots{display:flex;gap:5px}.tm-head .dots i{width:10px;height:10px;border-radius:50%;display:block}
+.tm-obj{list-style:none;margin:0;padding:10px 12px;border-bottom:1px solid var(--line);font-size:12.5px;display:grid;gap:3px;color:var(--muted)}
+.tm-obj li::before{content:"[ ] "}.tm-obj li.ok{color:#6fd08c}.tm-obj li.ok::before{content:"[x] "}
+.tm-out{flex:1 1 auto;min-height:140px;height:42vh;overflow:auto;margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;color:#cfe7d4;font-size:12.5px;line-height:1.45}
+.tm-line{display:flex;gap:8px;align-items:center;padding:9px 12px;border-top:1px solid var(--line);background:#0d1116}
+.tm-line span{color:#f2b54a;font-size:13px;white-space:nowrap}
+.tm-in{flex:1;min-width:0;background:transparent;border:0;color:#e6e2d8;font:16px ui-monospace,SFMono-Regular,Menlo,monospace;outline:none;padding:0}
+.tm-foot{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--line);background:#11161d}
+.tm-foot button{font:13px var(--body);color:var(--fg);background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:7px 14px;cursor:pointer}
+.tm-foot .primary{background:#6fd08c;border-color:#6fd08c;color:#08130c;font-weight:700;margin-left:auto}
+@media (prefers-reduced-motion:reduce){.dlg .more{animation:none}}
+</style>
+<main>
+<h1>Salle serveurs · pixel art</h1>
+<p>Touche le sol pour te déplacer, touche Hugo pour lui parler (clavier : <kbd>flèches</kbd> + <kbd>Entrée</kbd>). Tuiles de 16 px, personnage 16×24 px, affichés en ×3.</p>
+<div id="stage"><canvas id="c" width="672" height="480" aria-label="Salle serveurs en pixel art"></canvas></div>
+<div class="grid">
+ <div><h2>Tileset · 16 tuiles</h2><div class="sheet"><img id="ts" alt="Tileset" width="384" height="96"></div></div>
+ <div><h2>Personnage · 4 directions × 4 images</h2><div class="sheet"><img id="ch" alt="Spritesheet personnage" width="192" height="288"></div></div>
+</div>
+</main>
+<script>
+const UI=(()=>{
+const stage=document.getElementById('stage');
+const el=(t,c,txt)=>{const e=document.createElement(t);if(c)e.className=c;if(txt!=null)e.textContent=txt;return e;};
+let busy=false,done=false,termOpen=false,onDone=()=>{};
+
+/* Portrait pixel d'Hugo */
+const FACE=["................",".....KKKKKK.....","....KxxxxxxK....","...KxxxxxxxxK...","...KxxxxxxxxK...","...KxssssssxK...","...KsKssssKsK...","...KssssssssK...","....KSSSSSSK....",".....KKSSKK.....","...KKvvvvvvKK...","..KvvvvaavvvvK..","..KvVvvvvvvVvK..","..KvVvvvvvvVvK.."];
+const PAL={K:'#0e1116',x:'#2b2b2b',s:'#d6a27c',S:'#5a4030',v:'#e0884f',V:'#b0602e',a:'#f2b54a'};
+function face(){const c=el('canvas','face');c.width=16;c.height=14;const g=c.getContext('2d');
+  FACE.forEach((r,y)=>[...r].forEach((ch,x)=>{if(PAL[ch]){g.fillStyle=PAL[ch];g.fillRect(x,y,1,1);}}));return c;}
+
+/* Boîte de dialogue */
+const box=el('div','dlg');box.hidden=true;box.setAttribute('aria-live','polite');
+const col=el('div','dlg-col'),nm=el('p','nm','Hugo · Admin systèmes'),tx=el('p','tx'),chs=el('div','ch'),more=el('span','more','▼');
+col.append(nm,tx,chs);box.append(face(),col,more);stage.append(box);
+let queue=[],cb=null,full='',typed=0,timer=null,choosing=false,cur=null;
+function show(n){cur=n;full=n.t;typed=0;tx.textContent='';chs.replaceChildren();more.hidden=true;choosing=false;clearInterval(timer);
+  timer=setInterval(()=>{typed+=2;tx.textContent=full.slice(0,typed);if(typed>=full.length){clearInterval(timer);endType();}},28);}
+function endType(){tx.textContent=full;typed=full.length;
+  if(cur.c){choosing=true;cur.c.forEach(o=>{const b=el('button','',o.l);b.type='button';
+      b.addEventListener('click',e=>{e.stopPropagation();queue=[...o.then,...queue];next();});chs.append(b);});
+    chs.firstChild.focus({preventScroll:true});}
+  else more.hidden=false;}
+function advance(){if(choosing)return;if(typed<full.length){clearInterval(timer);endType();return;}next();}
+function next(){const n=queue.shift();if(!n){box.hidden=true;busy=false;const c=cb;cb=null;c&&c();return;}show(n);}
+function run(lines,then){busy=true;queue=[...lines];cb=then||null;box.hidden=false;next();}
+box.addEventListener('click',advance);
+addEventListener('keydown',e=>{if(box.hidden||termOpen)return;if(e.key==='Enter'||e.key===' '){if(choosing)return;e.preventDefault();advance();}});
+
+const INTRO=[
+ {t:"Ah, te voilà ! L'intranet est tombé depuis 8 h et les commerciaux me harcèlent."},
+ {t:"C'est srv-web01, une Debian avec Apache. Je t'ouvre une session SSH dessus."},
+ {t:"Tu veux un indice avant de te lancer ?",c:[
+   {l:"Oui, un indice",then:[{t:"Commence toujours par l'état du service. Le message d'erreur dit souvent tout."}]},
+   {l:"Non, je gère",then:[{t:"J'aime cette confiance. Tape « aide » si tu bloques."}]}]}];
+const OUTRO=[
+ {t:"Un /var plein à cause d'un log de debug de 18 Go… grand classique !"},
+ {t:"Bon réflexe d'avoir lu le statut avant de redémarrer au hasard. Mission validée : +150 XP."}];
+
+/* Terminal */
+const tm=el('div','tm');tm.hidden=true;
+const win=el('div','tm-win');win.setAttribute('role','dialog');win.setAttribute('aria-label','Terminal SSH srv-web01');
+const head=el('div','tm-head');const dots=el('span','dots');['#ef6b5e','#f2b54a','#6fd08c'].forEach(c=>{const i=el('i');i.style.background=c;dots.append(i);});
+head.append(dots,el('span','tm-title','hugo@srv-web01 — ssh'));
+const objs=el('ul','tm-obj'),out=el('pre','tm-out'),line=el('div','tm-line'),PROMPT='hugo@srv-web01:~$';
+const inp=el('input','tm-in');Object.assign(inp,{type:'text',id:'tm-in',autocomplete:'off',spellcheck:false});
+inp.setAttribute('autocapitalize','off');inp.setAttribute('autocorrect','off');inp.setAttribute('aria-label','Commande');
+line.append(el('span','',PROMPT),inp);
+const foot=el('div','tm-foot');const bHelp=el('button','','Aide'),bQuit=el('button','','Quitter'),bEnd=el('button','primary','Fermer la session');
+[bHelp,bQuit,bEnd].forEach(b=>b.type='button');bEnd.hidden=true;foot.append(bHelp,bQuit,bEnd);
+win.append(head,objs,out,line,foot);tm.append(win);document.body.append(tm);
+
+const NEED=[{k:'status',l:"Consulter l'état du service apache2"},{k:'df',l:"Vérifier l'espace disque"},{k:'rm',l:"Libérer de la place sur /var"},{k:'restart',l:"Relancer Apache"}];
+const HINTS=["systemctl status apache2        état du service","df -h                           espace disque par partition","ls -lh /var/log                 taille des fichiers de logs","sudo rm <fichier>               supprimer un fichier (root)","sudo systemctl restart apache2  relancer le service","curl -I localhost               tester le site"];
+const CMDS=[
+ {re:/^(clear|cls)$/i,clear:1},{re:/^whoami$/i,out:'hugo'},{re:/^hostname$/i,out:'srv-web01'},{re:/^pwd$/i,out:'/home/hugo'},{re:/^ls(\s+-\w+)*$/i,out:'notes-astreinte.txt'},
+ {re:/^cat\s+notes-astreinte\.txt$/i,out:"- Apache sur srv-web01\n- Logs dans /var/log\n- Toujours lire le statut avant de redémarrer"},
+ {re:/^(sudo\s+)?systemctl\s+status\s+apache2(\.service)?$/i,k:'status',out:s=>s.has('restart')?
+  "● apache2.service - The Apache HTTP Server\n     Loaded: loaded (/lib/systemd/system/apache2.service; enabled)\n     Active: active (running) since Tue 2026-11-03 09:31:44 CET; 4s ago\n   Main PID: 2210 (apache2)":
+  "● apache2.service - The Apache HTTP Server\n     Loaded: loaded (/lib/systemd/system/apache2.service; enabled)\n     Active: failed (Result: exit-code) since Tue 2026-11-03 08:14:03 CET; 1h 12min ago\n\nnov. 03 08:14:03 srv-web01 apachectl[815]: (28)No space left on device:\n  AH00023: Couldn't create the proxy mutex\nnov. 03 08:14:03 srv-web01 systemd[1]: apache2.service: Failed with result 'exit-code'."},
+ {re:/^(sudo\s+)?journalctl\b.*apache2/i,out:"nov. 03 08:14:03 srv-web01 apachectl[815]: (28)No space left on device\nnov. 03 08:14:03 srv-web01 systemd[1]: Failed to start apache2.service."},
+ {re:/^df(\s+-\w+)*$/i,k:'df',out:s=>"Sys. de fichiers Taille Utilisé Dispo Uti% Monté sur\n/dev/sda1           20G    6,1G   13G  32% /\n/dev/sda3           20G    "+(s.has('rm')?"1,9G   18G  10%":" 20G     0 100%")+" /var\ntmpfs              988M       0  988M   0% /dev/shm"},
+ {re:/^(sudo\s+)?(ls|du)(\s+-\w+)*\s+\/var\/log(\/\*?)?\/?$/i,out:s=>(s.has('rm')?"":"-rw-r----- 1 root adm  18G nov.  3 08:13 debug.log\n")+"drwxr-x--- 2 root adm 4,0K nov.  3 07:00 apache2\n-rw-r----- 1 root adm 1,2M nov.  3 09:20 syslog\n-rw-r----- 1 root adm 310K nov.  3 09:20 auth.log"},
+ {re:/^cd\s+\/var\/log\/?$/i,out:''},
+ {re:/^sudo\s+(rm(\s+-\w+)*|truncate\s+-s\s*0)\s+(\/var\/log\/)?debug\.log$/i,k:'rm',out:"# rm ne dit rien quand tout va bien : 18 Go libérés"},
+ {re:/^(rm(\s+-\w+)*|truncate\s+-s\s*0)\s+(\/var\/log\/)?debug\.log$/i,out:"rm: impossible de supprimer '/var/log/debug.log': Permission non accordée"},
+ {re:/^sudo\s+systemctl\s+(re)?start\s+apache2(\.service)?$/i,k:'restart',req:'rm',fail:'Job for apache2.service failed because the control process exited with error code.\nSee "systemctl status apache2.service" for details.',out:''},
+ {re:/^systemctl\s+(re)?start\s+apache2/i,out:"Failed to restart apache2.service: Interactive authentication required."},
+ {re:/^curl(\s+-\w+)*\s+(http:\/\/)?localhost\/?$/i,out:s=>s.has('restart')?"HTTP/1.1 200 OK\nServer: Apache/2.4.62 (Debian)\nContent-Type: text/html; charset=UTF-8":"curl: (7) Failed to connect to localhost port 80: Connection refused"}];
+let got=new Set(),hist=[],hi=0,solved=false;
+const print=s=>{if(s==null||s==='')return;out.textContent+=s+'\n';out.scrollTop=out.scrollHeight;};
+const drawObjs=()=>objs.replaceChildren(...NEED.map(o=>{const li=el('li',got.has(o.k)?'ok':'',o.l);return li;}));
+const help=()=>print('Commandes utiles :\n'+HINTS.map(h=>'  '+h).join('\n'));
+function exec(raw){const c=raw.trim().replace(/\s+/g,' ');print(PROMPT+' '+raw);if(!c)return;hist.push(c);hi=hist.length;
+  if(/^(aide|help|\?)$/i.test(c))return help();
+  if(/^(exit|logout)$/i.test(c))return close(solved);
+  const e=CMDS.find(x=>x.re.test(c));
+  if(!e)return print(`bash: ${c.split(' ')[0]} : commande introuvable`);
+  if(e.clear){out.textContent='';return;}
+  if(e.req&&!got.has(e.req))return print(e.fail);
+  print(typeof e.out==='function'?e.out(got):e.out);
+  if(e.k&&!got.has(e.k)){got.add(e.k);drawObjs();}
+  if(!solved&&NEED.every(o=>got.has(o.k))){solved=true;print('\n✔ Apache tourne, l’intranet répond. Tape « exit » ou ferme la session.');bEnd.hidden=false;bQuit.hidden=true;}}
+inp.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){exec(inp.value);inp.value='';}
+  else if(e.key==='ArrowUp'&&hist.length){hi=Math.max(0,hi-1);inp.value=hist[hi];e.preventDefault();}
+  else if(e.key==='ArrowDown'){hi=Math.min(hist.length,hi+1);inp.value=hist[hi]||'';e.preventDefault();}
+  else if(e.key==='Escape')close(solved);
+  e.stopPropagation();});
+win.addEventListener('click',e=>{if(e.target===out||e.target.closest('button'))return;inp.focus();});
+bHelp.addEventListener('click',()=>{print(PROMPT+' aide');help();inp.focus();});
+bQuit.addEventListener('click',()=>close(false));bEnd.addEventListener('click',()=>close(true));
+function openTerm(){termOpen=true;busy=true;got=new Set();solved=false;hist=[];bEnd.hidden=true;bQuit.hidden=false;
+  out.textContent="Linux srv-web01 6.1.0-26-amd64 #1 SMP Debian 6.1.112-1 x86_64\nDernière connexion : mar. 3 nov. 08:02 depuis 192.168.1.23\nTape « aide » pour voir les commandes utiles.\n\n";
+  drawObjs();tm.hidden=false;setTimeout(()=>inp.focus(),40);}
+function close(win){tm.hidden=true;termOpen=false;busy=false;
+  if(win)run(OUTRO,()=>{done=true;onDone();});
+  else run([{t:"Pas de souci, reviens quand tu veux. Le serveur ne va pas se réparer tout seul, par contre !"}]);}
+
+function talk(){if(busy)return;
+  if(done)return run([{t:"L'intranet tourne nickel. Pense à configurer logrotate pour que ça ne se reproduise pas !"}]);
+  run(INTRO,openTerm);}
+return{talk,busy:()=>busy,isDone:()=>done,onDone:f=>{onDone=f;}};
+})();
+
+const TS='data:image/png;base64,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',CH='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABgCAYAAACtxXToAAAE7klEQVR4Xu2cMWtUQRDHLyIKgoIErIxNqoAgWATJF1AU/A62KfwCYiX5AoJp9TNEFMQ+iIUQCMTCNCaNQhAsBC0SmeCc+/ZmZndnZ+cRbn9whLy73f/O7Hvz9s3c7cKkAVeuXjuhuv354/tCA7kZSvTJAZV0EANtby6eI+3cPTrOcoKn/owDagyQ2iIpJ3jrD6YqZQDMLDc7Foyhf95i4DFvXz4ju73/6GkLuSp90gE1BkDbGw+fTL5ubQwGhsfgbwpP/ZlohQbEwMC5gcXExgPUMQpv/UEQhGswNVBwhHQ7wz4O9vYG9i2trGS3lbDWJ+8C4ASNAQgGSnQmnvY564AaB2r0xXVAqQFo+K31j+Qk7myunh5POULrQI3+zCUAA9QYAOJxuzdr66cGP9jeHDgEHEE5QWNAOOsa/eldIMcAFNjZXD3hZvFo/8NkcfkOaXj4XsxY+jO3Qa0BVnjr04t2Ja/vvZ8cvnvMtob34DOt0OgPzgDoACL2IhPEwIDtrY3JjeElPQWjPcwih7QQGkN/GgTDNf71u8/J8Yezy8UA6Gdp+TbZ/mD/k9gOG3nqT88ANAgMWPjyip3B1C1My1j6pjEgBmYcXmORoy86IKeDlnjoN3kc/nb4uaVfipHG08QBf37/GgzS2yGxXjyeENIBcQclBsRBEoKqNACKGn0g1EsFbdIB8YBLDQhJDYCiRl+jN9c0ydPXpLUtKNHvdYHY4955+bH1e13A4poLCTPHXnWAGv0ZB1gYgDUA7KvEEd765LMAPrPDYHJrASFxar20D0990gFaA2ARgoOHtDq+kFRhFPHUz6oLQFEDTuNcA7RpbYCqC7TUN60LoAHwN05R59YEwj5K6xIaffIMqDGASm8jXD0ghKsN5DqwVJ+MAVRhhCuW5CAlSSk89bNSYqUGhFikwVvqJx1gYUANrfXNV4IAXK+Y2l57cXl6zIsSfTYIxrl5rAnkJByo2oBUE6CCoJc+exuMixslBmBbTImH/3s4sEQ/GQNKCGceHQYGh47gkhUWaPRNHXAWMQuC4P0LFy+xGWTM9MJn4LM5l0IJWn0zBwBS9lh6zwqNPnkXgFmKgc6tZ40CZ9JLP6su4I3H2dL5R68LcNchdTwnBtSk1ZGSwkZMqX6vC8TrcO7XHkD/vYCSMCssfUusFZJ+1kJIa0DcLvVNdI6W+qIDagyIawEa4z30WQdoDIC7xO7k/6/Gwq/c5/xeIMRLn70LwAC0BtTWBSDYeun3ugC1kIBj2sJGaV5+bP1mdYGaVLZFXSBXn80I5XYgUZPS9tIXU2I1BljgoS86QAvW8aAmADMJLzzmQYl+rwtwj8O9LqBAk5e3RKPfJAacJbKeBnPQ5uWt0OqbOQDQ5OUt0eizQXBeagPsGTB2bn5s/bmh1wW4hRB1vNcFEhshSUUJpKaPmrac/tzXBeZ+JdgdMDf3OwZTB5zWBY6OWZ+mglgtGn3T6jBiURegyHVgib5pXYD7qjtS8pV3aFP6ewGNftN9hDi89hHK0Z/GACxoSL8LgPfgJX3bU0pnS++NpS/uIxQjbYQUUpPTlzRa6JOPw1oDcBscaSsuaRsexFOf3EdIa4DVPkKe+n0fITztxtrHZ2x905VgjMc2OBI5+n0fIdGFSkp2nfGg7yMU7WsU0vcRok7Bmn18YnISqTE1+hq9ueYvsTqFzs5BzSEAAAAASUVORK5CYII=';
+document.getElementById('ts').src=TS;document.getElementById('ch').src=CH;
+const S=3,T=16,W=14,H=10,cv=document.getElementById('c'),x=cv.getContext('2d');x.imageSmoothingEnabled=false;
+const M=[
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+[3,3,11,3,3,3,3,3,3,14,3,3,3,3],
+[0,0,0,0,0,0,0,0,0,0,0,0,13,13],
+[0,4,4,4,4,4,0,4,4,4,4,4,0,0],
+[0,5,5,5,5,5,0,5,5,5,5,5,0,0],
+[0,1,1,1,1,1,0,1,1,1,1,1,0,0],
+[0,4,4,4,4,4,0,4,4,4,4,4,0,12],
+[0,5,5,5,5,5,0,5,5,5,5,5,0,0],
+[15,15,15,0,0,0,0,0,0,8,9,0,10,12],
+[2,2,2,2,2,2,2,2,2,2,2,2,2,2]];
+const BLOCK=new Set([2,3,4,5,8,9,10,11,12,13,14]);
+const ti=new Image(),ci=new Image();ti.src=TS;ci.src=CH;let ni=null;
+const N={x:12,y:4,dir:1};
+const P={x:6,y:5,px:6*T,py:5*T,dir:0,path:[],f:0,pending:false};
+const ok=(a,b)=>a>=0&&b>=0&&a<W&&b<H&&!BLOCK.has(M[b][a])&&!(a===N.x&&b===N.y);
+const adj=(a,b)=>Math.abs(a-N.x)+Math.abs(b-N.y)===1;
+function bfs(goal){const k=(a,b)=>a+','+b,sk=k(P.x,P.y);if(goal(P.x,P.y))return[];const pr=new Map([[sk,null]]),q=[[P.x,P.y]];
+ while(q.length){const[a,b]=q.shift();
+  for(const[dx,dy]of[[0,1],[0,-1],[1,0],[-1,0]]){const u=a+dx,v=b+dy;if(!ok(u,v)||pr.has(k(u,v)))continue;pr.set(k(u,v),k(a,b));
+   if(goal(u,v)){const p=[];let c=k(u,v);while(c!==sk){const[i,j]=c.split(',').map(Number);p.unshift({x:i,y:j});c=pr.get(c);}return p;}q.push([u,v]);}}return null;}
+const dirTo=(dx,dy)=>Math.abs(dx)>Math.abs(dy)?(dx>0?2:1):(dy>0?0:3);
+function faceEach(){P.dir=dirTo(N.x-P.x,N.y-P.y);N.dir=dirTo(P.x-N.x,P.y-N.y);}
+function goTalk(){const p=bfs(adj);if(p===null)return;if(!p.length&&!P.path.length){faceEach();UI.talk();}else{P.path=p;P.pending=true;}}
+cv.addEventListener('pointerdown',e=>{if(UI.busy())return;const r=cv.getBoundingClientRect(),tx=Math.floor((e.clientX-r.left)/r.width*W),ty=Math.floor((e.clientY-r.top)/r.height*H);
+ if(tx===N.x&&(ty===N.y||ty===N.y-1))return goTalk();
+ if(ok(tx,ty)){P.path=bfs((a,b)=>a===tx&&b===ty)||[];P.pending=false;}});
+addEventListener('keydown',e=>{if(UI.busy())return;
+ if((e.key==='Enter'||e.key===' ')&&adj(P.x,P.y)&&!P.path.length){e.preventDefault();faceEach();UI.talk();return;}
+ const d={ArrowDown:[0,1],ArrowUp:[0,-1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[e.key];if(!d)return;e.preventDefault();if(P.path.length)return;
+ P.dir=dirTo(d[0],d[1]);P.pending=false;if(ok(P.x+d[0],P.y+d[1]))P.path=[{x:P.x+d[0],y:P.y+d[1]}];});
+function recolor(img,map){const c=document.createElement('canvas');c.width=img.width;c.height=img.height;const g=c.getContext('2d');g.drawImage(img,0,0);
+ const d=g.getImageData(0,0,c.width,c.height);for(let i=0;i<d.data.length;i+=4){const m=map[(d.data[i]<<16)|(d.data[i+1]<<8)|d.data[i+2]];if(m!=null){d.data[i]=m>>16&255;d.data[i+1]=m>>8&255;d.data[i+2]=m&255;}}g.putImageData(d,0,0);return c;}
+function loop(t){
+ if(P.path.length){const n=P.path[0],tx=n.x*T,ty=n.y*T;
+  P.dir=tx>P.px?2:tx<P.px?1:ty>P.py?0:3;
+  P.px+=Math.sign(tx-P.px);P.py+=Math.sign(ty-P.py);
+  if(P.px===tx&&P.py===ty){P.x=n.x;P.y=n.y;P.path.shift();if(!P.path.length&&P.pending){P.pending=false;faceEach();UI.talk();}}
+  P.f=Math.floor(t/130)%4;}else P.f=0;
+ const blink=Math.floor(t/450)%2,cur=Math.floor(t/500)%2;
+ x.setTransform(S,0,0,S,0,0);x.imageSmoothingEnabled=false;
+ for(let r=0;r<H;r++)for(let c=0;c<W;c++){let id=M[r][c];
+  if((id===4||id===5)&&((c+blink)%2))id+=2;
+  if(id===8&&cur)id=9;
+  x.drawImage(ti,(id%8)*T,Math.floor(id/8)*T,T,T,c*T,r*T,T,T);}
+ const ents=[{img:ci,px:P.px,py:P.py,f:P.f,dir:P.dir},{img:ni,px:N.x*T,py:N.y*T,f:0,dir:N.dir}].sort((a,b)=>a.py-b.py);
+ for(const e of ents){x.fillStyle='rgba(0,0,0,.35)';x.beginPath();x.ellipse(e.px+8,e.py+14,5,2,0,0,7);x.fill();x.drawImage(e.img,e.f*16,e.dir*24,16,24,e.px,e.py-9,16,24);}
+ if(!UI.isDone()&&!UI.busy()){const b=Math.round(Math.sin(t/180)*1.5),bx=N.x*T+5,by=N.y*T-20+b;
+  x.fillStyle='#0e1116';x.fillRect(bx-1,by-1,8,11);x.fillStyle='#f2b54a';x.fillRect(bx,by,6,9);x.fillRect(bx+2,by+9,2,2);
+  x.fillStyle='#1a1307';x.fillRect(bx+2,by+1,2,5);x.fillRect(bx+2,by+7,2,1);}
+ requestAnimationFrame(loop);}
+ci.onload=()=>{ni=recolor(ci,{0x3d7be0:0xe0884f,0x2a58a8:0xb0602e,0x3a2418:0x2b2b2b,0xf0c39b:0xd6a27c,0xd39a72:0x5a4030});requestAnimationFrame(loop);};
+</script>
