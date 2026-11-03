@@ -59,7 +59,7 @@ describe('commande chmod', () => {
     const { state, exitCode } = runLine(machine, 'chmod 640 /srv/app.conf');
 
     expect(exitCode).toBe(0);
-    expect(state.fs.get('/srv/app.conf')?.mode).toBe(0o640);
+    expect(state.fs['/srv/app.conf']?.mode).toBe(0o640);
   });
 
   it('accepte la notation symbolique équivalente', () => {
@@ -67,7 +67,7 @@ describe('commande chmod', () => {
 
     const { state } = runLine(machine, 'chmod u=rw,g=r,o= /srv/app.conf');
 
-    expect(state.fs.get('/srv/app.conf')?.mode).toBe(0o640);
+    expect(state.fs['/srv/app.conf']?.mode).toBe(0o640);
   });
 
   it("refuse de modifier un fichier dont on n'est pas propriétaire", () => {

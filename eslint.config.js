@@ -120,10 +120,15 @@ export default tseslint.config(
           require: {
             FunctionDeclaration: true,
             ClassDeclaration: true,
-            ArrowFunctionExpression: true,
-            FunctionExpression: true,
+            ArrowFunctionExpression: false,
+            FunctionExpression: false,
           },
-          contexts: ['TSInterfaceDeclaration', 'TSTypeAliasDeclaration', 'TSEnumDeclaration'],
+          contexts: [
+            'TSInterfaceDeclaration',
+            'TSTypeAliasDeclaration',
+            'TSEnumDeclaration',
+            'ExportNamedDeclaration > VariableDeclaration',
+          ],
         },
       ],
     },

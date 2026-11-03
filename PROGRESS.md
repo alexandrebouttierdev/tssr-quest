@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.3 — `core/save` + `platform/storage.ts`
-- **Prochaine action** : 0.4 — `sims/shared` (machine, système de fichiers, droits)
+- **Dernière tâche terminée** : 0.4 — `sims/shared` (machine, fs, droits, services, disques, journaux, fabrique Debian)
+- **Prochaine action** : 0.5 — interpréteur Bash (lexer, parser, expansion, interpréteur) puis commandes de la mission d'Hugo
 
 ## Environnement
 
@@ -34,7 +34,7 @@ Il est mis à jour à chaque tâche terminée.
 - [ ] `scripts/validate-content.ts` et `scripts/replay-solutions.ts`.
 
 **Simulateur Bash (version 1)**
-- [ ] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
+- [x] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
 - [ ] `sims/bash` : lexer, parser, interpréteur (pipes, redirections, `;` `&&` `||`, variables, jokers).
 - [ ] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide`.
 
@@ -68,6 +68,13 @@ Il est mis à jour à chaque tâche terminée.
 | D15 | 2026-11-03 | Événements ajoutés à l'union : `dialogue/advance`, `mission/continue` | Avancer une réplique et passer à l'étape suivante sont des actions joueur à faire transiter par le bus. |
 | D16 | 2026-11-03 | Compression gzip faite dans `platform/storage.ts` (octets stockés dans IndexedDB) ; l'export `.tssrsave` reste du JSON lisible | `core/save` reste pur et synchrone côté format ; l'export doit être lisible et réimportable. |
 | D17 | 2026-11-03 | Une sauvegarde illisible est vue comme un emplacement vide (jamais d'exception au chargement) | Principe « l'erreur n'est jamais punitive » ; l'import de fichier, lui, signale l'erreur. |
+| D18 | 2026-11-03 | Système de fichiers = objet `chemin → nœud` (et non `Map`) ; docs/09 corrigé (`state.fs['/srv/app.conf']`) | Principe « état sérialisable » de docs/03. |
+| D19 | 2026-11-03 | Messages d'erreur : `strerror` glibc fr (« Aucun fichier ou dossier de ce type », « Permission non accordée »…) avec noms de fichiers entre apostrophes droites | Comportement de coreutils 9.1 en fr_FR sur Debian 12 ; cohérent avec les exemples de docs/03 et docs/09. |
+| D20 | 2026-11-03 | Dossiers personnels créés en 0700 | Valeur par défaut de adduser sur Debian 12 (DIR_MODE=0700). |
+| D21 | 2026-11-03 | Occupation disque = `baseUsed` (part non modélisée) + taille des fichiers simulés ; `df` simplifié sans les 5 % réservés d'ext4 | Supprimer un fichier libère réellement de la place ; sobriété plutôt que faux. |
+| D22 | 2026-11-03 | Pannes de service (`no-space-left`, `port-in-use`) réévaluées à chaque démarrage | La réussite se vérifie sur l'état : le service redémarre dès que la cause disparaît, quelle que soit la méthode. |
+| D23 | 2026-11-03 | Historique des commandes : champ `ok` distinct du code de retour (ex. `systemctl status` d'un service en échec renvoie 3 mais compte comme exécuté) | Les conditions `command` de docs/04 portent sur une commande « exécutée avec succès ». |
+| D24 | 2026-11-03 | Règle ESLint jsdoc : TSDoc exigée sur fonctions, classes, interfaces, types et constantes exportés (pas sur les fonctions fléchées internes) | Évite de documenter chaque callback d'un objet exporté. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

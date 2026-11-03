@@ -75,7 +75,9 @@ export interface Machine {
 }
 ```
 
-**Système de fichiers** : nœuds `file`, `dir`, `symlink` avec propriétaire, groupe, mode (bits rwx + setuid, setgid, sticky), taille « déclarée » (un fichier de 18 Go n'a pas besoin de 18 Go de contenu), contenu texte optionnel, dates. Les droits sont vérifiés pour toute lecture, écriture, exécution, traversée.
+**Système de fichiers** : un objet JSON `chemin absolu → nœud` (pas de `Map`, pour rester sérialisable), avec des nœuds `file`, `dir`, `symlink` avec propriétaire, groupe, mode (bits rwx + setuid, setgid, sticky), taille « déclarée » (un fichier de 18 Go n'a pas besoin de 18 Go de contenu), contenu texte optionnel, dates. Les droits sont vérifiés pour toute lecture, écriture, exécution, traversée.
+
+**Organisation** : `types.ts` (types de la machine), `path.ts`, `permissions.ts` (règles POSIX, sticky bit), `fs.ts` (lecture, écriture, création, suppression avec codes errno), `errors.ts` (messages `strerror` en français), `disks.ts` (occupation = part fixe + taille des fichiers simulés), `services.ts` et `service-catalog.ts` (unités systemd, pannes réévaluées à chaque démarrage : disque plein, port occupé), `journal.ts`, `debian-files.ts` (contenus de base) et `factories.ts`.
 
 **Fabriques** : `createDebianServer(options)`, `createWindowsClient(options)` produisent une machine de base réaliste (arborescence FHS, comptes système, services par défaut). Les missions la personnalisent dans leur `state`.
 
