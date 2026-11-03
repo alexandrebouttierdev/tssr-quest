@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.1 — initialisation du projet
-- **Prochaine action** : 0.2 — socle `core/events`, `core/random`, `core/store`
+- **Dernière tâche terminée** : 0.2 — socle `core/events`, `core/random`, `core/store`
+- **Prochaine action** : 0.3 — `core/save` + `platform/storage.ts`
 
 ## Environnement
 
@@ -23,9 +23,9 @@ Il est mis à jour à chaque tâche terminée.
 - [x] Créer l'arborescence de `02-architecture.md` avec un `README.md` par dossier.
 
 **Socle**
-- [ ] `core/events` : bus typé + tests.
-- [ ] `core/store` : store Zustand vanilla + hook React + tranches `player`, `progress`, `progression`, `ui`, `settings` + tests.
-- [ ] `core/random` : générateur à graine + tests.
+- [x] `core/events` : bus typé + tests.
+- [x] `core/store` : store Zustand vanilla + hook React + tranches `player`, `progress`, `progression`, `ui`, `settings` + tests.
+- [x] `core/random` : générateur à graine + tests.
 - [ ] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
 
 **Contenu**
@@ -62,6 +62,10 @@ Il est mis à jour à chaque tâche terminée.
 | D8 | 2026-11-03 | Dépendances entre dossiers : `game` et `ui` peuvent aussi importer `platform` et `audio` ; `platform` et `audio` n'importent que `core` | docs/10 ne mentionne pas ces deux dossiers ; c'est le choix le plus restrictif compatible avec docs/02. |
 | D9 | 2026-11-03 | `core/save` reçoit son stockage par injection (interface `SaveStorage`), implémentée par `src/platform/storage.ts` | `core` ne peut rien importer d'autre de `src/` (docs/10) ; testable en mémoire. |
 | D10 | 2026-11-03 | `src/ui` n'exécute jamais un simulateur : le terminal envoie la ligne au moteur (`mission/step-input`) et affiche la sortie publiée dans le store | docs/10 : `ui` n'importe que des **types** de `sims`. |
+| D12 | 2026-11-03 | Ajout de `src/core/model.ts` (types partagés : compétences, services, `MissionResult`, `SoundId`…) | `core/events` et `core/store` en ont besoin et ne peuvent rien importer d'autre ; ajouté à docs/02. |
+| D13 | 2026-11-03 | Le store contient la **vue** de la mission (`MissionRunView`, types dans `core`) ; l'état complet (machines simulées) reste dans le moteur | `core` ne peut pas importer les types de `sims` ; une mission interrompue reprend au début de l'étape (docs/02). |
+| D14 | 2026-11-03 | Tranches ajoutées dès la phase 0 : `inventory`, `reputation`, `missionRun` (en plus de player, progress, progression, ui, settings) | Prévues par docs/02 ; nécessaires aux récompenses de la mission d'Hugo. |
+| D15 | 2026-11-03 | Événements ajoutés à l'union : `dialogue/advance`, `mission/continue` | Avancer une réplique et passer à l'étape suivante sont des actions joueur à faire transiter par le bus. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

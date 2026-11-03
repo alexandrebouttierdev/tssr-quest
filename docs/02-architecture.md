@@ -122,6 +122,7 @@ tssr-quest/
 │   │   ├── GameCanvas.tsx          # crée et détruit l'instance Phaser
 │   │   └── providers.tsx
 │   ├── core/                       # socle sans dépendance de rendu
+│   │   ├── model.ts                # types partagés (compétences, services, MissionResult…)
 │   │   ├── events/                 # bus d'événements typé
 │   │   │   ├── bus.ts
 │   │   │   ├── events.ts           # union de tous les événements
@@ -135,6 +136,10 @@ tssr-quest/
 │   │   │   ├── time.slice.ts
 │   │   │   ├── ui.slice.ts
 │   │   │   ├── settings.slice.ts
+│   │   │   ├── progression.slice.ts
+│   │   │   ├── mission-run.slice.ts  # vue de la mission en cours publiée par le moteur
+│   │   │   ├── create-store.ts     # fabrique createGameStore + store global
+│   │   │   ├── use-game-store.tsx  # hook React useGameStore + fournisseur
 │   │   │   └── *.test.ts
 │   │   ├── save/                   # sauvegarde, migrations de version
 │   │   │   ├── save-manager.ts
@@ -252,7 +257,7 @@ Un store unique, créé avec `createStore` de `zustand/vanilla` (accessible part
 | `tickets` | Tickets secondaires ouverts et leur SLA |
 | `ui` | Mode d'entrée (`world` / `ui`), fenêtre ouverte, dialogue courant, notifications |
 | `settings` | Volumes, vitesse du texte, accessibilité, difficulté |
-| `missionRun` | Mission en cours : id, étape, état des simulateurs, erreurs, indices utilisés |
+| `missionRun` | Vue de la mission en cours publiée par le moteur : id, étape, objectifs, sortie du terminal, indices révélés (l'état des simulateurs reste dans le moteur) |
 
 Les tranches `ui` et `missionRun` ne sont pas sauvegardées telles quelles ; une mission interrompue reprend au début de l'étape en cours.
 
@@ -268,11 +273,13 @@ Un bus maison, typé par une union discriminée, qui sert de frontière entre le
 export type GameEvent =
   | { type: 'world/interact'; targetId: string }            // le joueur interagit avec un PNJ ou un objet
   | { type: 'world/zone-entered'; zoneId: string }
+  | { type: 'dialogue/advance' }                             // réplique suivante
   | { type: 'dialogue/choice'; nodeId: string; choiceId: string }
   | { type: 'mission/start'; missionId: string }
   | { type: 'mission/step-input'; payload: unknown }       // saisie du joueur dans une étape
   | { type: 'mission/hint-requested' }
   | { type: 'mission/abandon' }
+  | { type: 'mission/continue' }                             // étape terminée : passer à la suite
   | { type: 'mission/completed'; missionId: string; result: MissionResult }
   | { type: 'progression/level-up'; level: number }
   | { type: 'ui/notify'; message: string; kind: 'info' | 'success' | 'warning' }
