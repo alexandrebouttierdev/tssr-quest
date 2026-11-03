@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : refonte graphique complète (design system, portraits, dialogues, HUD, fenêtres de mission, notifications, jeu de tuiles et carte générés, lumière par pièce, ombres, animations) — branche `dev`
-- **Prochaine action** : tests dédiés de `apt`/`apt-get`/`dpkg` (src/sims/shared/packages.ts, commands/apt.ts) ; puis phase 1 — commandes du ch. 5 restantes : réseau (ip, ping, ss, ifup/ifdown), mémoire (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron
+- **Dernière tâche terminée** : commandes réseau du ch. 5 (ip, ping, ss, ifup/ifdown) sur un modèle réseau local (`sims/shared/network.ts`)
+- **Prochaine action** : phase 1 — commandes du ch. 5 restantes : mémoire et processus (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, fstab, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron ; puis les missions des ch. 4-5
 
 ## Environnement
 
@@ -53,7 +53,7 @@ Il est mis à jour à chaque tâche terminée.
 ## Phase 1 — Tranche Linux (suivi)
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳
+- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown) ✅
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
 
@@ -118,6 +118,9 @@ Il est mis à jour à chaque tâche terminée.
 | D51 | 2026-11-03 | Vue ≈ 16 × 9 tuiles (×5 en 720p, ×7 en 1080p, ×10 en 1440p) et `--screen-scale` de l'interface sur grand écran | Demande de l'auteur : personnages plus grands, interface lisible en 1080p et 1440p. docs/07 mis à jour. |
 | D52 | 2026-11-03 | Carte du plateau technique recomposée (40 × 24) : salle serveurs, supervision, coin pause ; Hugo à son bureau de la supervision, même case qu'avant (32, 11) | Variété et ambiances par pièce ; les tests E2E gardent leurs coordonnées. |
 | D53 | 2026-11-03 | Tickets ouverts, alertes et objectif actif calculés dans `engine/tickets/ticket-board.ts` et fournis au HUD par les services d'interface, avec l'horloge du moteur | Pas de logique dans React (règle de CLAUDE.md). |
+| D54 | 2026-11-03 | Réseau de phase 1 : modèle local (interfaces, routes, voisins du LAN qui répondent, hôtes publics connus, DNS lu dans /etc/resolv.conf) dans `sims/shared/network.ts` ; le moteur de topologies reste en phase 2 | Suffit aux missions Linux (ip-fixe, diagnostic) et à APT ; extensible. |
+| D55 | 2026-11-03 | `ping` en français (iputils 20221126 traduit sous Debian : « 64 octets de… temps= »), `ifupdown` et `iproute2` en anglais (non traduits), sauf les erreurs système (strerror) ; sans `-c`, 4 paquets puis « ^C » | Fidélité à une Debian 12 en fr_FR ; le terminal n'a pas de sortie continue. |
+| D56 | 2026-11-03 | Numéro d'inœud de `stat` dérivé du chemin (stable) | Il changeait à chaque fichier ajouté au système simulé. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

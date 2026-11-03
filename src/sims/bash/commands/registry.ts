@@ -63,6 +63,7 @@ import {
 } from './accounts';
 import { chgrp, chmod, chown, umask } from './permissions';
 import { apt, aptGet, dpkg } from './apt';
+import { ifdown, ifup, ip, ping, ss } from './network';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
@@ -72,6 +73,11 @@ export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromE
     apt,
     aptGet,
     dpkg,
+    ifdown,
+    ifup,
+    ip,
+    ping,
+    ss,
     chage,
     chgrp,
     chmod,

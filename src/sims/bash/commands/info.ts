@@ -4,6 +4,7 @@ import { userGroups } from '@sims/shared/permissions';
 import { frenchMonth, parisParts } from '@sims/shared/time-format';
 import type { BashCommand, CommandEnv } from '../command';
 import { modeString } from '../format';
+import { seedFromString } from '@core/random/rng';
 import { USR_BIN, USR_SBIN } from '@sims/shared/debian-files';
 
 /** Jours de la semaine en français (glibc fr_FR). */
@@ -218,6 +219,17 @@ SYNOPSIS
   },
 };
 
+/**
+ * Numéro d'inœud stable d'un chemin : il ne change pas quand d'autres fichiers
+ * apparaissent (installation d'un paquet, création d'un fichier).
+ *
+ * @param path - Chemin absolu.
+ * @returns Un numéro entre 131 073 et 1 179 648.
+ */
+export function inodeOf(path: string): number {
+  return 131_073 + (seedFromString(path) % 1_048_576);
+}
+
 /** Commande `which` : chemin d'un programme dans le PATH. */
 export const which: BashCommand = {
   name: 'which',
@@ -405,7 +417,7 @@ DESCRIPTION
       const name = node.type === 'symlink' ? `${operand} -> ${node.target}` : operand;
       stdout += `  Fichier : ${name}
    Taille : ${String(size).padEnd(10)}\tBlocs : ${String(Math.ceil(size / 4096) * 8).padEnd(10)} Blocs d'E/S : 4096   ${kind}
-Périphérique : 8/1\tInœud : ${String(1000 + (Object.keys(env.machine.fs).indexOf(found.value.path) + 1)).padEnd(11)} Liens : ${node.type === 'dir' ? 2 : 1}
+Périphérique : 8/1\tInœud : ${String(inodeOf(found.value.path)).padEnd(11)} Liens : ${node.type === 'dir' ? 2 : 1}
 Accès : (${octal}/${modeString(node)})  UID : (${String(uid).padStart(5)}/${node.owner.padStart(8)})   GID : (${String(gid).padStart(5)}/${node.group.padStart(8)})
  Accès : ${when}
 Modif. : ${when}

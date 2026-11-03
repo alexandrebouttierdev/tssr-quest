@@ -120,6 +120,14 @@ export interface DebianServerOptions {
     readonly gateway?: string;
     readonly dns?: readonly string[];
     readonly iface?: string;
+    /** Interface désactivée au démarrage. */
+    readonly down?: boolean;
+    /** Adresse obtenue par DHCP. */
+    readonly dhcp?: boolean;
+    /** Pas de passerelle par défaut (configuration incomplète). */
+    readonly noGateway?: boolean;
+    /** Autres hôtes du réseau local qui répondent. */
+    readonly neighbors?: readonly { readonly address: string; readonly name?: string }[];
   };
   readonly rootPassword?: string;
   /** Processus supplémentaires (programme qui s'emballe, script oublié…). */
@@ -841,13 +849,34 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
     processes,
     interfaces: [
       { name: 'lo', mac: '00:00:00:00:00:00', ipv4: '127.0.0.1/8', up: true, mtu: 65536 },
-      { name: iface, mac: macFor(hostname), ipv4: `${address}/${prefix}`, up: true, mtu: 1500 },
+      {
+        name: iface,
+        mac: macFor(hostname),
+        ipv4: `${address}/${prefix}`,
+        up: options.network?.down !== true,
+        mtu: 1500,
+        ...(options.network?.dhcp ? { dhcp: true } : {}),
+      },
     ],
     routes: [
-      { destination: 'default', gateway, device: iface },
+      ...(options.network?.noGateway ? [] : [{ destination: 'default', gateway, device: iface }]),
       { destination: `${networkAddress(address, prefix)}/${prefix}`, gateway: null, device: iface },
     ],
     dns: { servers: dnsServers, search: [domain] },
+    // Hôtes du site qui répondent : la passerelle, les serveurs DNS, ceux de la mission.
+    neighbors: [
+      { address: gateway, name: 'routeur', mac: macFor(`gw-${gateway}`) },
+      ...dnsServers.map((ip, i) => ({
+        address: ip,
+        name: i === 0 ? 'srv-dc01' : `srv-dc0${i + 1}`,
+        mac: macFor(`dns-${ip}`),
+      })),
+      ...(options.network?.neighbors ?? []).map((n) => ({
+        address: n.address,
+        ...(n.name ? { name: n.name } : {}),
+        mac: macFor(`n-${n.address}`),
+      })),
+    ].filter((n, i, all) => all.findIndex((m) => m.address === n.address) === i),
     disks,
     logs,
     crontabs: {},

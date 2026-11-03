@@ -8,6 +8,7 @@
  */
 
 import { appendLogs } from './journal';
+import { hasInternet } from './network';
 import { dirname } from './path';
 import {
   PACKAGE_CATALOG,
@@ -204,13 +205,6 @@ export function readSources(machine: Machine): SourcesResult {
     }
   }
   return { ok: true, entries };
-}
-
-/** Vrai si la machine peut joindre Internet (interface active, passerelle, DNS). */
-export function hasInternet(machine: Machine): boolean {
-  const iface = machine.interfaces.some((i) => i.name !== 'lo' && i.up && i.ipv4 !== null);
-  const route = machine.routes.some((r) => r.destination === 'default');
-  return iface && route && machine.dns.servers.length > 0;
 }
 
 /** État d'un dépôt (URI + suite) au moment d'un `apt update`. */

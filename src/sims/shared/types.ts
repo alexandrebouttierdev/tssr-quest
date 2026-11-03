@@ -167,6 +167,16 @@ export interface NetInterface {
   readonly ipv4: string | null;
   readonly up: boolean;
   readonly mtu: number;
+  /** Adresse obtenue par DHCP (affichée « dynamic » par `ip a`). */
+  readonly dhcp?: boolean;
+}
+
+/** Hôte du réseau local qui répond (passerelle, serveur DNS, autre serveur). */
+export interface Neighbor {
+  readonly address: string;
+  /** Nom court (`srv-dc01`), résolu par le DNS du site. */
+  readonly name?: string;
+  readonly mac: string;
 }
 
 /** Route IPv4. */
@@ -284,6 +294,8 @@ export interface Machine {
   readonly interfaces: readonly NetInterface[];
   readonly routes: readonly Route[];
   readonly dns: { readonly servers: readonly string[]; readonly search: readonly string[] };
+  /** Hôtes du réseau local qui répondent ; par défaut, la passerelle et les DNS. */
+  readonly neighbors?: readonly Neighbor[];
   readonly disks: readonly Disk[];
   /** Journaux par unité (`apache2`, `ssh`) ; la clé `kernel` regroupe le noyau. */
   readonly logs: Readonly<Record<string, readonly LogLine[]>>;
