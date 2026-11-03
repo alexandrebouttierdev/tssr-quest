@@ -135,6 +135,18 @@ describe('moteur de jeu', () => {
     expect(store.getState().ui.inputMode).toBe('world');
   });
 
+  it("propose l'autocomplétion dans le terminal de la mission seulement", () => {
+    const { store, bus, engine } = setup();
+    expect(engine.completeCommand('sys')).toEqual([]);
+
+    playIntro(store, bus);
+
+    expect(engine.completeCommand('sys')).toEqual(['systemctl']);
+    bus.emit({ type: 'mission/step-input', payload: { line: 'sudo systemctl start apache2' } });
+    bus.emit({ type: 'mission/continue' });
+    expect(engine.completeCommand('sys')).toEqual([]);
+  });
+
   it('annonce les montées de niveau', () => {
     const { store, bus, events } = setup();
     store.getState().setProgression({ xp: 290 });

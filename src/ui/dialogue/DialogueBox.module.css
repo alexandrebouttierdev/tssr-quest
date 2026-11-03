@@ -1,0 +1,103 @@
+.box {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100% - 16px));
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 16px 14px;
+  background: var(--c-ink-1);
+  border: 3px solid var(--c-amber);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+.portrait {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  background: var(--c-ink-2);
+  border: 1px solid var(--c-ink-3);
+  font: 28px var(--font-display);
+  color: var(--c-amber);
+}
+
+.portrait[data-mood='inquiet'] {
+  color: var(--c-alert);
+}
+
+.portrait[data-mood='content'] {
+  color: var(--c-led-soft);
+}
+
+.body {
+  min-width: 0;
+}
+
+.name {
+  margin: 0 0 4px;
+  font: calc(13px * var(--text-scale)) var(--font-display);
+  letter-spacing: 0.04em;
+  color: var(--c-amber);
+}
+
+.role {
+  color: var(--c-muted);
+}
+
+.text {
+  margin: 0;
+  min-height: 2.9em;
+  font-size: calc(16px * var(--text-scale));
+}
+
+.choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.choices button {
+  padding: 7px 14px;
+  color: var(--c-paper);
+  background: var(--c-ink-2);
+  border: 1px solid var(--c-amber);
+  cursor: pointer;
+}
+
+.choices button:hover,
+.choices button:focus-visible {
+  background: var(--c-amber);
+  color: var(--c-ink-0);
+}
+
+.next {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  background: none;
+  border: 0;
+  color: var(--c-amber);
+  cursor: pointer;
+  animation: blink 1s steps(2) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .portrait {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+}

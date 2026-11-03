@@ -1,0 +1,48 @@
+/* Jetons de style : palette de docs/07, typographie, espacements. */
+:root {
+  --c-ink-0: #0e1116;
+  --c-ink-1: #1b2129;
+  --c-ink-2: #2a323d;
+  --c-ink-3: #3a4552;
+  --c-ink-4: #556273;
+  --c-ink-5: #7d8a9a;
+  --c-paper: #e6e2d8;
+  --c-muted: #a3adb9;
+  --c-wood: #8f6644;
+  --c-led: #2fbf71;
+  --c-led-soft: #6fd08c;
+  --c-amber: #f2b54a;
+  --c-cyan: #5fb6e0;
+  --c-alert: #e0524a;
+  --c-sky: #a8e4f5;
+
+  --font-display: 'Pixelify Sans', ui-monospace, monospace;
+  --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  --text-scale: 1;
+  --radius: 4px;
+  --gap: 8px;
+  --focus: 0 0 0 2px var(--c-ink-0), 0 0 0 4px var(--c-amber);
+  --shadow: 0 0 0 2px #000, 0 12px 32px rgba(0, 0, 0, 0.55);
+  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+:root[data-text-size='grand'] {
+  --text-scale: 1.15;
+}
+
+:root[data-text-size='tres-grand'] {
+  --text-scale: 1.3;
+}
+
+:root[data-readable-font='true'] {
+  --font-display: 'Atkinson Hyperlegible', system-ui, sans-serif;
+}
+
+:root[data-high-contrast='true'] {
+  --c-ink-1: #000;
+  --c-ink-2: #111;
+  --c-paper: #fff;
+  --c-muted: #e0e0e0;
+}

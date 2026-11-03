@@ -120,9 +120,11 @@ tssr-quest/
 ├── src/
 │   ├── main.tsx                    # point d'entrée : monte React et Phaser
 │   ├── app/                        # racine React
-│   │   ├── App.tsx
+│   │   ├── App.tsx                 # charge contenu et sauvegarde auto, compose l'écran
 │   │   ├── GameCanvas.tsx          # crée et détruit l'instance Phaser
-│   │   └── providers.tsx
+│   │   ├── services.ts             # store + bus + moteur + sauvegarde, horloge de jeu
+│   │   ├── content.ts              # charge src/content/generated/content.json
+│   │   └── debug.ts                # window.__TSSR_DEBUG__ (mode test uniquement)
 │   ├── core/                       # socle sans dépendance de rendu
 │   │   ├── model.ts                # types partagés (compétences, services, MissionResult…)
 │   │   ├── events/                 # bus d'événements typé
@@ -214,6 +216,8 @@ tssr-quest/
 │   │   │   ├── npc-routines.ts
 │   │   │   └── camera.ts
 │   │   ├── animations/             # définitions des animations de sprites
+│   │   ├── keys.ts                 # clés et chemins des assets (constantes typées)
+│   │   ├── services.ts             # services (store, bus, contenu) dans le registre Phaser
 │   │   └── bridge.ts               # abonnements store/bus côté Phaser
 │   ├── ui/                         # tout ce qui dépend de React
 │   │   ├── hud/
@@ -233,7 +237,8 @@ tssr-quest/
 │   │   ├── notifications/
 │   │   ├── title/                  # écran titre, création du personnage
 │   │   ├── components/             # boutons, fenêtres, barres, onglets
-│   │   ├── hooks/
+│   │   ├── hooks/                  # game-services.tsx : bus, autocomplétion, fiches
+│   │   ├── test-utils.tsx          # rendu avec store et bus de test
 │   │   ├── strings/                # textes d'interface en français
 │   │   └── styles/                 # tokens CSS, thème
 │   ├── audio/

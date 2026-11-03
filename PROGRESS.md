@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.6 — contenu (schémas, compilation, validation, rejeu) + moteur (missions, dialogues, progression, orchestrateur) + mission `linux-admin.intranet-down`
-- **Prochaine action** : 0.7 — monde Phaser (config, scènes, carte Tiled de la salle serveurs, joueur, PNJ, pathfinding A*, bridge)
+- **Dernière tâche terminée** : 0.7 monde Phaser + 0.8 interface React (HUD, dialogue, fenêtre de mission, terminal, notifications)
+- **Prochaine action** : 0.9 — test E2E Playwright de la mission d'Hugo, CI complète en local, bilan et tag `v0.1.0`
 
 ## Environnement
 
@@ -44,9 +44,9 @@ Il est mis à jour à chaque tâche terminée.
 - [x] `engine/progression` : XP, niveaux, compétences.
 
 **Jeu et interface**
-- [ ] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
-- [ ] React : `App`, `GameCanvas`, HUD minimal (niveau, XP), `DialogueBox`, `MissionWindow`, `Terminal`.
-- [ ] Mission `linux-admin.intranet-down` jouable de bout en bout.
+- [x] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
+- [x] React : `App`, `GameCanvas`, HUD minimal (niveau, XP), `DialogueBox`, `MissionWindow`, `Terminal`.
+- [x] Mission `linux-admin.intranet-down` jouable de bout en bout (vérifiée dans Chromium par script Playwright).
 
 ## Décisions
 
@@ -88,6 +88,13 @@ Il est mis à jour à chaque tâche terminée.
 | D35 | 2026-11-03 | Étape `input` avec `pattern` : champ `example` obligatoire | Il faut une réponse de référence rejouable par `test:content` (règle 6 de CLAUDE.md). |
 | D36 | 2026-11-03 | Le plugin Vite de contenu lance `tsx scripts/build-content.ts` en sous-processus | La config Vite est chargée sans les alias d'import du projet. |
 | D37 | 2026-11-03 | Chapitre 5 réduit à la seule mission de l'intranet en phase 0 (pas encore d'épreuve) ; `exam` rendu facultatif dans le schéma | Les 21 autres missions arrivent en phase 1. |
+| D38 | 2026-11-03 | Phaser 3.90 + carte générée par script (`assets/generators/maps/salle-serveurs.ts`), jeu de tuiles intégré à la carte (pas de `.tsj` externe) | Le chargeur Tiled de Phaser ne lit pas les jeux de tuiles externes. La carte reste éditable dans Tiled. |
+| D39 | 2026-11-03 | Éclairage phase 0 : voile multiplicatif + halos additifs + bloom/vignette (postFX) ; Light2D avec normal maps reporté en phase 1 | docs/07 rend Light2D optionnel en phase 1 ; rendu déjà « moderne » et léger. |
+| D40 | 2026-11-03 | Polices auto-hébergées via @fontsource (Pixelify Sans, Atkinson Hyperlegible, JetBrains Mono, OFL) | Jeu jouable hors ligne (PWA), licences libres vérifiées ; nouvelle dépendance justifiée. |
+| D41 | 2026-11-03 | Horloge de partie : mardi 3 novembre 2026, 9 h 26 (Paris), avançant en temps réel | Dates réalistes dans les sorties ; le cycle de journée accéléré arrive avec engine/time. |
+| D42 | 2026-11-03 | Portraits des dialogues : initiale stylisée en attendant les portraits 48 × 48 (phase 1) | Les portraits ne sont pas encore dessinés. |
+| D43 | 2026-11-03 | La complétion Tab ne complète que commandes et chemins (pas les sous-commandes de systemctl) | Équivalent d'un shell sans bash-completion ; amélioration prévue en phase 1. |
+| D44 | 2026-11-03 | Partie restaurée depuis l'emplacement `auto` au démarrage ; pas encore d'écran titre | L'écran titre et la création du personnage sont en phase 1. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

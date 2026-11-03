@@ -1,4 +1,5 @@
 import type { EventBus, Unsubscribe } from '@core/events/bus';
+import { bashSimulator } from '@sims/bash';
 import { createRng, type Rng } from '@core/random/rng';
 import type { GameStoreApi } from '@core/store/create-store';
 import type { DialogueView } from '@core/store/ui.slice';
@@ -40,6 +41,8 @@ export interface GameEngineOptions {
 export interface GameEngine {
   /** Mission en cours (état complet, machines comprises), pour le débogage et les tests. */
   currentRun(): MissionRun | null;
+  /** Autocomplétion de la ligne en cours dans le terminal de la mission. */
+  completeCommand(partial: string): readonly string[];
   /** Débranche le moteur du bus. */
   dispose(): void;
 }
@@ -270,6 +273,12 @@ export function createGameEngine(options: GameEngineOptions): GameEngine {
 
   return {
     currentRun: () => run,
+    completeCommand(partial) {
+      const step = mission?.steps[run?.stepIndex ?? -1];
+      if (!run || step?.type !== 'terminal') return [];
+      const machine = run.machines[step.machine];
+      return machine ? bashSimulator.complete(machine, partial) : [];
+    },
     dispose: () => subscriptions.forEach((unsubscribe) => unsubscribe()),
   };
 }

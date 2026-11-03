@@ -74,7 +74,7 @@ Vérifié par la règle ESLint `import/no-restricted-paths`.
 
 - Une scène = un fichier ; logique extraite dans `src/game/systems` (fonctions testables).
 - Pas d'accès au DOM depuis Phaser ; pas de `window` global hors `bridge.ts`.
-- Les clés d'assets sont des constantes typées (`assets/keys.ts`), jamais des chaînes libres.
+- Les clés d'assets sont des constantes typées (`src/game/keys.ts`), jamais des chaînes libres.
 - Nettoyage systématique des abonnements au store à la destruction de la scène.
 
 ## Nommage des fichiers
