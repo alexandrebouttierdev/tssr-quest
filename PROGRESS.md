@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.2 — socle `core/events`, `core/random`, `core/store`
-- **Prochaine action** : 0.3 — `core/save` + `platform/storage.ts`
+- **Dernière tâche terminée** : 0.3 — `core/save` + `platform/storage.ts`
+- **Prochaine action** : 0.4 — `sims/shared` (machine, système de fichiers, droits)
 
 ## Environnement
 
@@ -26,7 +26,7 @@ Il est mis à jour à chaque tâche terminée.
 - [x] `core/events` : bus typé + tests.
 - [x] `core/store` : store Zustand vanilla + hook React + tranches `player`, `progress`, `progression`, `ui`, `settings` + tests.
 - [x] `core/random` : générateur à graine + tests.
-- [ ] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
+- [x] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
 
 **Contenu**
 - [ ] Schémas Zod : chapitre, mission, étapes `dialogue`, `choice`, `input`, `ordering`, `terminal` ; dialogue ; PNJ ; zone.
@@ -66,6 +66,8 @@ Il est mis à jour à chaque tâche terminée.
 | D13 | 2026-11-03 | Le store contient la **vue** de la mission (`MissionRunView`, types dans `core`) ; l'état complet (machines simulées) reste dans le moteur | `core` ne peut pas importer les types de `sims` ; une mission interrompue reprend au début de l'étape (docs/02). |
 | D14 | 2026-11-03 | Tranches ajoutées dès la phase 0 : `inventory`, `reputation`, `missionRun` (en plus de player, progress, progression, ui, settings) | Prévues par docs/02 ; nécessaires aux récompenses de la mission d'Hugo. |
 | D15 | 2026-11-03 | Événements ajoutés à l'union : `dialogue/advance`, `mission/continue` | Avancer une réplique et passer à l'étape suivante sont des actions joueur à faire transiter par le bus. |
+| D16 | 2026-11-03 | Compression gzip faite dans `platform/storage.ts` (octets stockés dans IndexedDB) ; l'export `.tssrsave` reste du JSON lisible | `core/save` reste pur et synchrone côté format ; l'export doit être lisible et réimportable. |
+| D17 | 2026-11-03 | Une sauvegarde illisible est vue comme un emplacement vide (jamais d'exception au chargement) | Principe « l'erreur n'est jamais punitive » ; l'import de fichier, lui, signale l'erreur. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés
