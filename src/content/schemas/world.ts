@@ -15,6 +15,14 @@ export const npcSchema = z.strictObject({
       outfit: z.string().regex(/^#[0-9a-f]{6}$/i),
     })
     .optional(),
+  /** Traits du portrait généré (assets/generators/portraits.ts). */
+  portrait: z
+    .strictObject({
+      hair: z.enum(['court', 'long', 'boucle', 'chignon', 'rase']).optional(),
+      beard: z.boolean().optional(),
+      glasses: z.boolean().optional(),
+    })
+    .optional(),
   /** Hauteur de la « voix » (bip) de 0,5 à 2. */
   voicePitch: z.number().min(0.5).max(2).optional(),
   description: playerTextSchema,

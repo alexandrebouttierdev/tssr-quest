@@ -1,7 +1,9 @@
+/* Notifications : cartes empilées à droite, au-dessus de l'état du service. */
+
 .stack {
   position: absolute;
-  right: 12px;
-  bottom: 12px;
+  right: clamp(12px, 1.6vw, 24px);
+  top: calc(clamp(12px, 1.6vw, 24px) + 72px);
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -11,31 +13,79 @@
 }
 
 .toast {
+  position: relative;
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
-  max-width: 360px;
-  padding: 8px 10px 8px 14px;
-  background: var(--c-ink-1);
-  border: 1px solid var(--c-ink-4);
-  border-left: 4px solid var(--c-cyan);
-  border-radius: var(--radius);
+  width: min(380px, calc(100vw - 32px));
+  padding: 12px 10px 12px 12px;
+  background: var(--panel-glass);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
   pointer-events: auto;
+  --tone: var(--accent);
 }
 
 .toast[data-kind='success'] {
-  border-left-color: var(--c-led);
+  --tone: var(--success);
 }
 
 .toast[data-kind='warning'] {
-  border-left-color: var(--c-amber);
+  --tone: var(--warning);
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--tone) 20%, transparent);
+  color: var(--tone);
+}
+
+.message {
+  flex: 1;
+  font: 600 var(--fs-sm) / 1.4 var(--font-body);
+  color: var(--text);
 }
 
 .toast button {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
   background: none;
   border: 0;
-  color: var(--c-muted);
-  font-size: 18px;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
   cursor: pointer;
+}
+
+.toast button:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Barre de temps restant (4 s). */
+.timer {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: 100%;
+  background: var(--tone);
+  transform-origin: left;
+  animation: countdown 4s linear forwards;
+}
+
+@keyframes countdown {
+  to {
+    transform: scaleX(0);
+  }
 }

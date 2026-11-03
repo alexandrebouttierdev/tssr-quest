@@ -19,6 +19,28 @@ export interface TerminalProps {
   readonly hint?: string;
   /** Saisie masquée (mot de passe), jamais gardée dans l'historique. */
   readonly secret?: boolean;
+  /** Titre de la fenêtre (`hugo@srv-web01 — ssh`). */
+  readonly title?: string;
+}
+
+/**
+ * Invite colorée comme celle de Bash sur Debian (`PS1` par défaut avec couleurs) :
+ * `utilisateur@machine` en vert, le chemin en bleu. Les autres invites restent unies.
+ *
+ * @param props - Texte de l'invite.
+ * @returns L'invite mise en forme.
+ */
+function PromptText({ prompt }: { prompt: string }) {
+  const match = /^([^\s:]+@[^\s:]+)(:)([^$#]*)([$#]\s*)$/.exec(prompt);
+  if (!match) return <>{prompt}</>;
+  return (
+    <>
+      <span className={styles['promptUser']}>{match[1]}</span>
+      {match[2]}
+      <span className={styles['promptPath']}>{match[3]}</span>
+      {match[4]}
+    </>
+  );
 }
 
 /** Plus long préfixe commun d'une liste de mots. */
@@ -44,6 +66,7 @@ export function Terminal({
   disabled = false,
   hint,
   secret = false,
+  title,
 }: TerminalProps) {
   const [value, setValue] = useState('');
   const [history, setHistory] = useState<string[]>([]);
@@ -121,6 +144,16 @@ export function Terminal({
 
   return (
     <div className={styles['terminal']}>
+      {title && (
+        <div className={styles['titlebar']} aria-hidden="true">
+          <span className={styles['lights']}>
+            <i />
+            <i />
+            <i />
+          </span>
+          <span className={styles['titleText']}>{title}</span>
+        </div>
+      )}
       <div
         ref={outputRef}
         className={styles['output']}
@@ -130,18 +163,32 @@ export function Terminal({
         onClick={() => inputRef.current?.focus()}
       >
         {hint && <p className={styles['hint']}>{hint}</p>}
-        {lines.map((line, index) => (
-          <div key={index} className={styles[line.kind]}>
-            {line.text || ' '}
-          </div>
-        ))}
+        {lines.map((line, index) => {
+          // La commande tapée garde son invite colorée, comme dans un vrai terminal.
+          const echoed =
+            line.kind === 'input' ? /^(\S+@\S+?:[^$#\s]*[$#] ?)(.*)$/.exec(line.text) : null;
+          return (
+            <div key={index} className={styles[line.kind]}>
+              {echoed ? (
+                <>
+                  <span className={styles['prompt']}>
+                    <PromptText prompt={echoed[1] ?? ''} />
+                  </span>
+                  {echoed[2]}
+                </>
+              ) : (
+                line.text || ' '
+              )}
+            </div>
+          );
+        })}
         {suggestions.length > 0 && (
           <div className={styles['suggestions']}>{suggestions.join('  ')}</div>
         )}
       </div>
       <div className={styles['line']}>
         <label htmlFor="terminal-input" className={styles['prompt']}>
-          {prompt}
+          <PromptText prompt={prompt} />
         </label>
         <input
           ref={inputRef}

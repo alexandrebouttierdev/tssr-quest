@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import type { MissionRunView } from '@core/store/mission-run.slice';
 import { useGameStore } from '@core/store/use-game-store';
+import { Icon } from '../components/Icon';
 import { SimpleMarkdown } from '../components/SimpleMarkdown';
 import { useUiServices } from '../hooks/game-services';
 import { FEEDBACK_TEXT, PRIORITY_LABELS, STRINGS } from '../strings/fr';
@@ -11,20 +12,34 @@ import { Terminal } from './Terminal/Terminal';
 import { VimEditor } from './VimEditor/VimEditor';
 
 /**
- * Fenêtre de mission (docs/08) : en-tête du ticket, objectifs, indices, fiche, et le
- * composant de l'étape en cours (terminal, choix, saisie, ordre).
+ * Fenêtre de mission (docs/08), dans l'esprit d'un outil de gestion d'incidents :
+ * en-tête du ticket (numéro, titre, priorité, étapes), description, consigne,
+ * objectifs avec progression, indices et fiche mémo, et la zone de simulation de
+ * l'étape en cours (terminal, éditeur, choix, saisie, ordre).
  *
  * @returns La fenêtre, ou rien hors mission.
  */
 export function MissionWindow() {
   const run = useGameStore((s) => s.missionRun);
+  const reducedMotion = useGameStore((s) => s.settings.reducedMotion);
   if (!run || run.phase !== 'step' || !run.step) return null;
   // Une clé par étape : la confirmation de sortie et la fiche se referment à chaque étape.
-  return <MissionStep key={`${run.missionId}-${run.stepIndex}`} run={run} />;
+  return (
+    <MissionStep
+      key={`${run.missionId}-${run.stepIndex}`}
+      run={run}
+      reducedMotion={reducedMotion}
+    />
+  );
+}
+
+/** Session affichée dans la barre de titre du terminal (`hugo@srv-web01`). */
+function sessionName(prompt: string, machine: string): string {
+  return /^([^\s:]+@[^\s:]+)/.exec(prompt)?.[1] ?? machine;
 }
 
 /** Contenu de la fenêtre pour l'étape en cours. */
-function MissionStep({ run }: { run: MissionRunView }) {
+function MissionStep({ run, reducedMotion }: { run: MissionRunView; reducedMotion: boolean }) {
   const { bus, complete, sheet } = useUiServices();
   const [confirmQuit, setConfirmQuit] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -43,47 +58,93 @@ function MissionStep({ run }: { run: MissionRunView }) {
   const feedbackText = run.feedback
     ? (run.feedback.text ?? (run.feedback.code ? FEEDBACK_TEXT[run.feedback.code] : ''))
     : '';
+  const done = run.objectives.filter((o) => o.done).length;
+  const total = run.objectives.length;
+  const goal = step.type === 'terminal' || step.type === 'editor' ? step.goal : null;
+  const editing = step.type === 'editor' || (step.type === 'terminal' && step.editor);
 
   return (
-    <div className={styles['backdrop']}>
+    <motion.div
+      className={styles['backdrop']}
+      initial={reducedMotion ? false : { opacity: 0 }}
+      animate={{ opacity: 1 }}
+    >
       <motion.section
         className={styles['window']}
         role="dialog"
         aria-modal="true"
         aria-labelledby="mission-title"
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.16, ease: [0.33, 1, 0.68, 1] }}
+        initial={reducedMotion ? false : { opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       >
-        <header className={styles['header']}>
-          <h2 id="mission-title" className={styles['title']}>
-            {run.ticket && <span>{STRINGS.mission.ticket(run.ticket.number)} · </span>}
-            {run.title}
-          </h2>
-          {run.ticket && (
-            <span className={styles['priority']} data-priority={run.ticket.priority}>
-              {PRIORITY_LABELS[run.ticket.priority]}
-            </span>
-          )}
-        </header>
-        <div className={styles['content']}>
-          <aside className={styles['side']}>
-            <p className={styles['stepCount']}>
+        <header className={styles['header']} data-priority={run.ticket?.priority}>
+          <div className={styles['headings']}>
+            <p className={styles['eyebrow']}>
+              <Icon name="ticket" size={14} />
+              {STRINGS.mission.incident}
+              <span aria-hidden="true">·</span>
               {STRINGS.mission.step(run.stepIndex, run.stepCount)}
             </p>
-            {(step.type === 'terminal' || step.type === 'editor') && (
-              <p className={styles['goal']}>{step.goal}</p>
+            <h2 id="mission-title" className={styles['title']}>
+              {run.ticket && (
+                <span className={styles['ticketNumber']}>
+                  {STRINGS.mission.ticket(run.ticket.number)}
+                </span>
+              )}
+              {run.ticket && <span className={styles['separator']}> · </span>}
+              {run.title}
+            </h2>
+          </div>
+          <div className={styles['headerSide']}>
+            {run.ticket && (
+              <span className={styles['priority']} data-priority={run.ticket.priority}>
+                <span className={styles['dot']} aria-hidden="true" />
+                {PRIORITY_LABELS[run.ticket.priority]}
+              </span>
             )}
-            {(step.type === 'editor' || (step.type === 'terminal' && step.editor)) && (
-              <p className={styles['goal']}>{STRINGS.editor.hint}</p>
+            <ol className={styles['stepper']} aria-hidden="true">
+              {Array.from({ length: run.stepCount }, (_, i) => (
+                <li
+                  key={i}
+                  data-state={i < run.stepIndex ? 'done' : i === run.stepIndex ? 'current' : 'todo'}
+                />
+              ))}
+            </ol>
+          </div>
+        </header>
+
+        <div className={styles['content']}>
+          <aside className={styles['side']}>
+            {run.summary && (
+              <section className={styles['block']}>
+                <h3 className={styles['subtitle']}>{STRINGS.mission.description}</h3>
+                <p className={styles['summary']}>{run.summary}</p>
+              </section>
             )}
-            {run.objectives.length > 0 && (
-              <>
-                <h3 className={styles['subtitle']}>{STRINGS.mission.objectives}</h3>
+            {(goal || editing) && (
+              <section className={styles['block']}>
+                <h3 className={styles['subtitle']}>{STRINGS.mission.instructions}</h3>
+                {goal && <p className={styles['goal']}>{goal}</p>}
+                {editing && <p className={styles['editorHint']}>{STRINGS.editor.hint}</p>}
+              </section>
+            )}
+            {total > 0 && (
+              <section className={styles['block']}>
+                <h3 className={styles['subtitle']}>
+                  {STRINGS.mission.objectives}
+                  <span className={styles['count']}>{STRINGS.mission.progress(done, total)}</span>
+                </h3>
+                <div className={styles['progress']} aria-hidden="true">
+                  <div style={{ width: `${(done / total) * 100}%` }} />
+                </div>
                 <ul className={styles['objectives']}>
                   {run.objectives.map((o) => (
-                    <li key={o.id} className={o.done ? styles['done'] : undefined}>
-                      <span aria-hidden="true">{o.done ? '[x]' : '[ ]'}</span> {o.label}
+                    <li key={o.id} data-done={o.done ? 'true' : 'false'}>
+                      <span className={styles['check']} aria-hidden="true">
+                        {o.done && <Icon name="check" size={12} />}
+                      </span>
+                      <span>{o.label}</span>
                       <span className="visually-hidden">
                         {' '}
                         ({o.done ? STRINGS.mission.objectiveDone : STRINGS.mission.objectiveTodo})
@@ -91,62 +152,75 @@ function MissionStep({ run }: { run: MissionRunView }) {
                     </li>
                   ))}
                 </ul>
-              </>
+              </section>
             )}
             {run.hints.length > 0 && (
-              <>
+              <section className={styles['block']}>
                 <h3 className={styles['subtitle']}>{STRINGS.mission.hints}</h3>
                 <ol className={styles['hints']}>
                   {run.hints.map((h, i) => (
-                    <li key={i}>{h}</li>
+                    <li key={i}>
+                      <Icon name="hint" size={14} />
+                      <span>{h}</span>
+                    </li>
                   ))}
                 </ol>
-              </>
+              </section>
             )}
-            <p className={styles['feedback']} data-kind={run.feedback?.kind} aria-live="polite">
-              {feedbackText}
-            </p>
+            {!run.stepCompleted && (
+              <p className={styles['feedback']} data-kind={run.feedback?.kind} aria-live="polite">
+                {feedbackText}
+              </p>
+            )}
             <div className={styles['actions']}>
               <button
                 type="button"
+                className="btn"
                 onClick={() => bus.emit({ type: 'mission/hint-requested' })}
                 disabled={hintsLeft === 0 || run.stepCompleted}
               >
+                <Icon name="hint" />
                 {STRINGS.mission.hint} {STRINGS.mission.hintsLeft(hintsLeft)}
               </button>
               {sheetData && (
-                <button type="button" onClick={() => setSheetOpen(true)}>
-                  {STRINGS.mission.sheet}
+                <button type="button" className="btn" onClick={() => setSheetOpen(true)}>
+                  <Icon name="sheet" />
+                  {STRINGS.mission.sheetLong}
                 </button>
               )}
               {!confirmQuit ? (
-                <button type="button" onClick={() => setConfirmQuit(true)}>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-danger"
+                  onClick={() => setConfirmQuit(true)}
+                >
                   {STRINGS.mission.quit}
                 </button>
               ) : (
-                <span className={styles['confirm']}>
-                  {STRINGS.mission.quitConfirm}
-                  <button type="button" onClick={() => bus.emit({ type: 'mission/abandon' })}>
-                    {STRINGS.mission.quit}
-                  </button>
-                  <button type="button" onClick={() => setConfirmQuit(false)} autoFocus>
-                    {STRINGS.sheets.close}
-                  </button>
-                </span>
+                <div className={styles['confirm']} role="group">
+                  <p>{STRINGS.mission.quitConfirm}</p>
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      onClick={() => bus.emit({ type: 'mission/abandon' })}
+                    >
+                      {STRINGS.mission.quit}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      onClick={() => setConfirmQuit(false)}
+                      autoFocus
+                    >
+                      {STRINGS.sheets.close}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
-            {run.stepCompleted && (
-              <button
-                ref={continueRef}
-                type="button"
-                className={styles['primary']}
-                onClick={() => bus.emit({ type: 'mission/continue' })}
-              >
-                {last ? STRINGS.mission.finish : STRINGS.mission.continue}
-              </button>
-            )}
           </aside>
-          <div className={styles['main']}>
+          <div className={styles['main']} aria-label={STRINGS.mission.simulation} role="region">
             {step.type === 'editor' && (
               <VimEditor view={step.editor} onKey={(key) => submit({ key })} />
             )}
@@ -155,6 +229,7 @@ function MissionStep({ run }: { run: MissionRunView }) {
             )}
             {step.type === 'terminal' && !step.editor && (
               <Terminal
+                title={STRINGS.terminal.title(sessionName(step.prompt, step.machine))}
                 prompt={step.prompt}
                 lines={step.lines}
                 secret={step.secret ?? false}
@@ -175,28 +250,58 @@ function MissionStep({ run }: { run: MissionRunView }) {
             {step.type === 'dialogue' && <p>{STRINGS.mission.dialogueStep}</p>}
           </div>
         </div>
-        {sheetOpen && sheetData && (
-          <div
-            className={styles['sheet']}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="sheet-title"
-          >
-            <h3 id="sheet-title">
-              {STRINGS.sheets.title} — {sheetData.title}
-            </h3>
-            <SimpleMarkdown text={sheetData.body} />
-            <button
-              type="button"
-              className={styles['primary']}
-              onClick={() => setSheetOpen(false)}
-              autoFocus
+
+        <AnimatePresence>
+          {run.stepCompleted && (
+            <motion.footer
+              className={styles['complete']}
+              data-kind={run.feedback?.kind ?? 'success'}
+              initial={reducedMotion ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             >
-              {STRINGS.sheets.close}
-            </button>
-          </div>
-        )}
+              <span className={styles['completeIcon']} aria-hidden="true">
+                <Icon name="check" size={18} />
+              </span>
+              <p aria-live="polite">{feedbackText}</p>
+              <button
+                ref={continueRef}
+                type="button"
+                className="btn btn-primary"
+                onClick={() => bus.emit({ type: 'mission/continue' })}
+              >
+                {last ? STRINGS.mission.finish : STRINGS.mission.continue}
+              </button>
+            </motion.footer>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {sheetOpen && sheetData && (
+            <motion.div
+              className={styles['sheet']}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="sheet-title"
+              initial={reducedMotion ? false : { opacity: 0, x: 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 24 }}
+            >
+              <p className={styles['sheetEyebrow']}>{STRINGS.sheets.title}</p>
+              <h3 id="sheet-title">{sheetData.title}</h3>
+              <SimpleMarkdown text={sheetData.body} />
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setSheetOpen(false)}
+                autoFocus
+              >
+                {STRINGS.sheets.close}
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.section>
-    </div>
+    </motion.div>
   );
 }

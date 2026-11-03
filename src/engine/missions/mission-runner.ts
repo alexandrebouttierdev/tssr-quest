@@ -187,6 +187,7 @@ export function missionView(mission: Mission, run: MissionRun): MissionRunView {
   return {
     missionId: mission.id,
     title: mission.title,
+    summary: mission.summary,
     ...(mission.ticket
       ? { ticket: { number: mission.ticket.number, priority: mission.ticket.priority } }
       : {}),

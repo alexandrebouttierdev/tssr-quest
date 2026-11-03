@@ -1,0 +1,26 @@
+.portrait {
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  flex: none;
+  overflow: hidden;
+}
+
+.sheet {
+  display: block;
+  width: calc(var(--size) * 3);
+  height: var(--size);
+  transform: translateX(calc(var(--index) * var(--size) * -1));
+  max-width: none;
+  image-rendering: pixelated;
+  user-select: none;
+}
+
+.initial {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font: 700 calc(var(--fs-xl) * 1.4) var(--font-display);
+  color: var(--accent);
+}

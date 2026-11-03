@@ -32,7 +32,14 @@ export function renderWithServices(
   const bus = createEventBus();
   const events: GameEvent[] = [];
   bus.onAny((e) => events.push(e));
-  const services: UiServices = { bus, complete: () => [], sheet: () => undefined, ...overrides };
+  const services: UiServices = {
+    bus,
+    complete: () => [],
+    sheet: () => undefined,
+    ticketBoard: () => ({ open: [], alerts: 0, objective: null }),
+    clock: () => new Date(Date.UTC(2026, 10, 3, 8, 26)),
+    ...overrides,
+  };
   const result = render(
     <GameStoreProvider store={store}>
       <UiServicesProvider services={services}>{ui}</UiServicesProvider>

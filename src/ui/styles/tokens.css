@@ -1,31 +1,82 @@
-/* Jetons de style : palette de docs/07, typographie, espacements. */
+/*
+ * Design system de TSSR Quest (docs/08, « Design system »).
+ *
+ * Monde en pixel art, interfaces modernes et sobres inspirées des consoles de
+ * supervision : panneaux sombres, bordures fines, accent cyan, couleurs d'état
+ * réservées au sens (succès, avertissement, erreur). Pas de glow excessif.
+ */
 :root {
-  --c-ink-0: #0e1116;
-  --c-ink-1: #1b2129;
-  --c-ink-2: #2a323d;
-  --c-ink-3: #3a4552;
-  --c-ink-4: #556273;
-  --c-ink-5: #7d8a9a;
-  --c-paper: #e6e2d8;
-  --c-muted: #a3adb9;
-  --c-wood: #8f6644;
-  --c-led: #2fbf71;
-  --c-led-soft: #6fd08c;
-  --c-amber: #f2b54a;
-  --c-cyan: #5fb6e0;
-  --c-alert: #e0524a;
-  --c-sky: #a8e4f5;
+  /* --- Palette ------------------------------------------------------------------- */
+  --bg: #111820;
+  --panel: #1b2633;
+  --surface: #29394a;
+  --surface-hover: #33465a;
+  --accent: #5fb6e0;
+  --accent-strong: #8fd0ef;
+  --success: #2fbf71;
+  --warning: #f2b54a;
+  --danger: #e0524a;
 
+  --text: #e6edf3;
+  --text-muted: #9fb0c2;
+  --text-dim: #6f8296;
+  --line: rgba(159, 176, 194, 0.16);
+  --line-strong: rgba(159, 176, 194, 0.3);
+  --panel-glass: rgba(27, 38, 51, 0.88);
+  --panel-solid: #1b2633;
+  --terminal-bg: #0b1016;
+
+  --accent-soft: rgba(95, 182, 224, 0.14);
+  --success-soft: rgba(47, 191, 113, 0.14);
+  --warning-soft: rgba(242, 181, 74, 0.14);
+  --danger-soft: rgba(224, 82, 74, 0.16);
+
+  /* --- Typographie ---------------------------------------------------------------- */
   --font-display: 'Pixelify Sans', ui-monospace, monospace;
   --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-
   --text-scale: 1;
-  --radius: 4px;
+  --fs-xs: calc(12px * var(--text-scale));
+  --fs-sm: calc(13px * var(--text-scale));
+  --fs-md: calc(15px * var(--text-scale));
+  --fs-lg: calc(17px * var(--text-scale));
+  --fs-xl: calc(20px * var(--text-scale));
+
+  /* --- Espacements, formes, ombres ---------------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --border: 1px solid var(--line);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.42), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --focus: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration: 180ms;
+
+  /* --- Alias historiques (anciens composants) ----------------------------------------- */
+  --c-ink-0: var(--terminal-bg);
+  --c-ink-1: var(--panel);
+  --c-ink-2: var(--surface);
+  --c-ink-3: #3a4d61;
+  --c-ink-4: #556a80;
+  --c-ink-5: var(--text-dim);
+  --c-paper: var(--text);
+  --c-muted: var(--text-muted);
+  --c-wood: #8f6644;
+  --c-led: var(--success);
+  --c-led-soft: #6fd08c;
+  --c-amber: var(--warning);
+  --c-cyan: var(--accent);
+  --c-alert: var(--danger);
+  --c-sky: #a8e4f5;
+  --radius-legacy: 4px;
   --gap: 8px;
-  --focus: 0 0 0 2px var(--c-ink-0), 0 0 0 4px var(--c-amber);
-  --shadow: 0 0 0 2px #000, 0 12px 32px rgba(0, 0, 0, 0.55);
-  --ease-out: cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 :root[data-text-size='grand'] {
@@ -41,8 +92,11 @@
 }
 
 :root[data-high-contrast='true'] {
-  --c-ink-1: #000;
-  --c-ink-2: #111;
-  --c-paper: #fff;
-  --c-muted: #e0e0e0;
+  --panel: #000;
+  --panel-glass: rgba(0, 0, 0, 0.96);
+  --surface: #111;
+  --text: #fff;
+  --text-muted: #e0e0e0;
+  --line: rgba(255, 255, 255, 0.45);
+  --line-strong: rgba(255, 255, 255, 0.7);
 }

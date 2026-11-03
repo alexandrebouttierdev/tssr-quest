@@ -1,127 +1,350 @@
+/* HUD d'exploration : quatre coins, panneaux translucides compacts. */
+
 .hud {
   position: absolute;
   inset: 0;
   z-index: 10;
   pointer-events: none;
+  --hud-gap: clamp(12px, 1.6vw, 24px);
 }
 
-.card {
+/* Panneau commun. */
+.player,
+.status,
+.objective {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  background: var(--panel-glass);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+/* --- Carte joueur (haut gauche) ------------------------------------------------------ */
+
+.player {
+  top: var(--hud-gap);
+  left: var(--hud-gap);
   display: flex;
-  gap: 10px;
-  padding: 8px 12px 8px 8px;
-  background: rgba(14, 17, 22, 0.86);
-  border: 1px solid var(--c-ink-3);
-  border-radius: var(--radius);
-  box-shadow: 0 0 0 1px #000;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 8px 16px 8px 8px;
+  min-width: 260px;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  background: var(--c-ink-2);
-  border: 1px solid var(--c-ink-4);
-  font: 22px var(--font-display);
-  color: var(--c-cyan);
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background:
+    radial-gradient(100% 80% at 50% 100%, rgba(95, 182, 224, 0.3), transparent 70%),
+    linear-gradient(180deg, #24364a, #18222e);
+  border: 1px solid var(--line-strong);
 }
 
-.info p {
+/* Portrait ×2 (96 px) recadré sur le visage. */
+.avatarImage {
+  margin: -6px 0 0 -16px;
+}
+
+.identity {
+  min-width: 0;
+  flex: 1;
+}
+
+.identity p {
   margin: 0;
 }
 
 .name {
-  font: calc(13px * var(--text-scale)) var(--font-display);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font: 700 var(--fs-md) var(--font-body);
+  color: var(--text);
 }
 
 .level {
-  color: var(--c-amber);
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #08131b;
+  font: 700 var(--fs-xs) var(--font-body);
 }
 
-.title {
-  font-size: calc(12px * var(--text-scale));
-  color: var(--c-muted);
+.grade {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
 }
 
 .bar {
-  width: 150px;
+  position: relative;
   height: 6px;
-  margin-top: 4px;
-  background: var(--c-ink-2);
-  border: 1px solid var(--c-ink-0);
+  margin-top: 6px;
+  border-radius: 999px;
+  background: rgba(8, 12, 18, 0.7);
   overflow: hidden;
 }
 
 .fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--c-led), var(--c-led-soft));
-  box-shadow: 0 0 6px var(--c-led);
-  transition: width 0.8s var(--ease-out);
+  border-radius: inherit;
+  background: linear-gradient(90deg, #3f9fd0, var(--accent-strong));
+  transition: width 0.9s var(--ease-out);
 }
 
 .xp {
-  font-size: 11px;
-  color: var(--c-muted);
+  margin-top: 3px !important;
+  font: 600 11px var(--font-mono);
+  color: var(--text-dim);
 }
 
-.prompt {
+.gain {
   position: absolute;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  padding: 6px 12px;
-  background: rgba(14, 17, 22, 0.9);
-  color: var(--c-paper);
-  border: 1px solid var(--c-amber);
+  right: 12px;
+  top: -12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--success);
+  color: #06210f;
+  font: 700 var(--fs-xs) var(--font-body);
+  box-shadow: var(--shadow-sm);
+}
+
+/* --- État (haut droite) -------------------------------------------------------------- */
+
+.status {
+  top: var(--hud-gap);
+  right: var(--hud-gap);
+  display: flex;
+  align-items: stretch;
+  padding: 6px;
+  gap: 4px;
+}
+
+.clock {
+  display: grid;
+  align-content: center;
+  padding: 2px 12px 2px 8px;
+  border-right: 1px solid var(--line);
+}
+
+.time {
+  font: 600 var(--fs-lg) var(--font-mono);
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.day {
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
   border-radius: var(--radius);
-  pointer-events: auto;
-  cursor: pointer;
+  color: var(--text-muted);
+  font: 700 var(--fs-md) var(--font-mono);
 }
 
-.prompt kbd {
-  display: inline-block;
-  min-width: 1.6em;
-  padding: 0 4px;
-  margin-right: 4px;
-  background: var(--c-amber);
-  color: var(--c-ink-0);
-  font: 700 12px var(--font-mono);
-  border-radius: 2px;
+.stat[data-alert='true'] {
+  color: var(--danger);
+  background: var(--danger-soft);
 }
 
+.stat[data-alert='true'] svg {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* --- Objectif (bas gauche) ----------------------------------------------------------- */
+
+.objective {
+  left: var(--hud-gap);
+  bottom: var(--hud-gap);
+  width: min(340px, calc(100% - 2 * var(--hud-gap)));
+  padding: 12px 16px 14px;
+  border-left: 3px solid var(--accent);
+}
+
+.objective p {
+  margin: 0;
+}
+
+.objectiveEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 var(--fs-xs) var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+
+.priority {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.priority[data-priority='critique'] {
+  background: var(--danger-soft);
+  color: #ff9e97;
+  box-shadow: inset 0 0 0 1px rgba(224, 82, 74, 0.5);
+}
+
+.priority[data-priority='haute'] {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.objectiveTitle {
+  margin-top: 4px !important;
+  font: 700 var(--fs-lg) var(--font-body);
+  color: var(--text);
+}
+
+.objectiveDetail {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px !important;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.objectiveProgress {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
+.segments {
+  flex: 1;
+  display: flex;
+  gap: 4px;
+}
+
+.segments span {
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--surface);
+  transition: background 0.4s var(--ease-out);
+}
+
+.segments span[data-done='true'] {
+  background: var(--success);
+}
+
+.objectiveCount {
+  font: 600 var(--fs-xs) var(--font-mono);
+  color: var(--text-muted);
+}
+
+.objectiveCount[data-complete='true'] {
+  color: var(--success);
+}
+
+/* --- Invites (bas centre) ------------------------------------------------------------ */
+
+.prompt,
 .controls {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: calc(var(--hud-gap) + 4px);
+  translate: -50% 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
-  transform: translateX(-50%);
-  padding: 8px 14px;
-  max-width: calc(100% - 32px);
-  text-align: center;
-  background: rgba(14, 17, 22, 0.88);
-  color: var(--c-paper);
-  font-size: 15px;
-  box-shadow:
-    0 0 0 2px #000,
-    0 0 0 3px var(--c-ink-3);
-  animation: hint-fade 12s linear forwards;
+  padding: 8px 16px 8px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--panel-glass);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+  font: 600 var(--fs-md) var(--font-body);
+  white-space: nowrap;
 }
 
-@keyframes hint-fade {
-  0%,
-  85% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
+.prompt {
+  pointer-events: auto;
+  cursor: pointer;
+  border-color: rgba(95, 182, 224, 0.6);
 }
 
-@media (prefers-reduced-motion: reduce) {
+.prompt:hover {
+  background: var(--surface);
+}
+
+.prompt :global(.kbd) {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  color: #08131b;
+}
+
+.controls {
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* --- Petits écrans ---------------------------------------------------------------- */
+
+@media (max-width: 720px) {
+  .player {
+    min-width: 0;
+    padding-right: 12px;
+  }
+
+  .avatar {
+    width: 48px;
+    height: 48px;
+  }
+
+  .avatarImage {
+    margin: -6px 0 0 -24px;
+  }
+
+  .clock {
+    display: none;
+  }
+
+  .objective {
+    display: none;
+  }
+
   .controls {
-    animation: none;
+    white-space: normal;
+    width: calc(100% - 32px);
+    text-align: center;
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* Grands écrans : un HUD un peu plus grand pour rester lisible à distance. */
+@media (min-width: 2200px) {
+  .hud {
+    zoom: 1.25;
   }
 }

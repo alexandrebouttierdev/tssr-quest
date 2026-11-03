@@ -90,6 +90,8 @@ export interface FeedbackView {
 export interface MissionRunView {
   readonly missionId: string;
   readonly title: string;
+  /** Description du ticket (résumé de la mission). */
+  readonly summary?: string;
   readonly ticket?: { readonly number: number; readonly priority: TicketPriority };
   /** `intro` : dialogue d'introduction ; `step` : une étape est affichée. */
   readonly phase: 'intro' | 'step';

@@ -3,5 +3,6 @@ name: Hugo
 role: Administrateur systèmes
 zone: salle-serveurs
 palette: { hair: '#2b2b2b', skin: '#d6a27c', outfit: '#e0884f' }
+portrait: { hair: court, beard: true }
 voicePitch: 0.85
 description: Barbu, debianiste convaincu, humour sec. Il connaît chaque serveur de LabCorp par son petit nom.

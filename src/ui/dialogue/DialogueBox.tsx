@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { motion } from 'motion/react';
 import type { DialogueView } from '@core/store/ui.slice';
+import { Portrait } from '../components/Portrait';
 import { STRINGS } from '../strings/fr';
 import styles from './DialogueBox.module.css';
 
@@ -13,10 +15,14 @@ export interface DialogueBoxProps {
   readonly onChoose: (choiceId: string) => void;
 }
 
+/** Taille du portrait : 48 px agrandis ×3. */
+const PORTRAIT_SIZE = 144;
+
 /**
- * Boîte de dialogue en bas de l'écran : portrait, nom et rôle, texte progressif,
- * choix navigables au clavier, à la souris et au toucher (docs/08). Le parent lui donne
- * une `key` par réplique : l'apparition du texte repart ainsi de zéro à chaque réplique.
+ * Fenêtre de dialogue de RPG (docs/08) : grand portrait expressif, nom et fonction,
+ * texte qui s'écrit, indicateur de suite, choix numérotés navigables au clavier
+ * (flèches, chiffres, Entrée), à la souris et au toucher. Le parent lui donne une `key`
+ * par réplique : l'apparition du texte repart ainsi de zéro à chaque réplique.
  *
  * @param props - Réplique et callbacks.
  * @returns La boîte de dialogue.
@@ -32,6 +38,7 @@ export function DialogueBox({
   const [shown, setShown] = useState(instant ? view.text.length : 0);
   const choicesRef = useRef<HTMLDivElement>(null);
   const typing = shown < view.text.length;
+  const hasChoices = view.choices.length > 0;
 
   useEffect(() => {
     if (!typing) return;
@@ -43,34 +50,37 @@ export function DialogueBox({
   }, [typing, textSpeed, view.text.length]);
 
   useEffect(() => {
-    if (!typing && view.choices.length > 0) choicesRef.current?.querySelector('button')?.focus();
-  }, [typing, view.choices.length]);
+    if (!typing && hasChoices) choicesRef.current?.querySelector('button')?.focus();
+  }, [typing, hasChoices]);
 
   const advance = useCallback(() => {
     if (typing) setShown(view.text.length);
-    else if (view.choices.length === 0) onAdvance();
-  }, [typing, view.text.length, view.choices.length, onAdvance]);
+    else if (!hasChoices) onAdvance();
+  }, [typing, view.text.length, hasChoices, onAdvance]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Enter' || event.key === ' ') {
-        if (view.choices.length > 0 && !typing) return;
+        if (hasChoices && !typing) return;
         event.preventDefault();
         advance();
+        return;
+      }
+      // Les chiffres choisissent directement une réponse (1 = première).
+      if (hasChoices && !typing && /^[1-9]$/.test(event.key)) {
+        const choice = view.choices[Number(event.key) - 1];
+        if (choice) {
+          event.preventDefault();
+          onChoose(choice.id);
+        }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [advance, typing, view.choices.length]);
+  }, [advance, typing, hasChoices, view.choices, onChoose]);
 
   const onChoicesKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (
-      event.key !== 'ArrowDown' &&
-      event.key !== 'ArrowUp' &&
-      event.key !== 'ArrowLeft' &&
-      event.key !== 'ArrowRight'
-    )
-      return;
+    if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
     event.preventDefault();
     const buttons = [...(choicesRef.current?.querySelectorAll('button') ?? [])];
     const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
@@ -79,22 +89,36 @@ export function DialogueBox({
   };
 
   return (
-    <section className={styles['box']} aria-label={STRINGS.dialogue.region} onClick={advance}>
-      <div className={styles['portrait']} data-mood={view.mood ?? 'neutre'} aria-hidden="true">
-        {view.speaker.slice(0, 1)}
+    <motion.section
+      className={styles['box']}
+      aria-label={STRINGS.dialogue.region}
+      onClick={advance}
+      initial={reducedMotion ? false : { opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className={styles['portraitFrame']} data-mood={view.mood ?? 'neutre'}>
+        <Portrait
+          id={view.npcId}
+          name={view.speaker}
+          mood={view.mood}
+          size={PORTRAIT_SIZE}
+          className={styles['portrait']}
+        />
       </div>
       <div className={styles['body']}>
-        <p className={styles['name']}>
-          {view.speaker}
-          {view.role && <span className={styles['role']}> · {view.role}</span>}
-        </p>
+        <header className={styles['header']}>
+          <p className={styles['name']}>{view.speaker}</p>
+          {view.role && <p className={styles['role']}>{view.role}</p>}
+        </header>
         <p className={styles['text']} aria-hidden="true">
           {view.text.slice(0, shown)}
+          {typing && <span className={styles['caret']} />}
         </p>
         <p className="visually-hidden" aria-live="polite">
           {`${view.speaker} : ${view.text}`}
         </p>
-        {!typing && view.choices.length > 0 && (
+        {!typing && hasChoices && (
           <div
             ref={choicesRef}
             className={styles['choices']}
@@ -102,34 +126,45 @@ export function DialogueBox({
             aria-label={STRINGS.dialogue.choices}
             onKeyDown={onChoicesKey}
           >
-            {view.choices.map((choice) => (
-              <button
+            {view.choices.map((choice, index) => (
+              <motion.button
                 key={choice.id}
                 type="button"
+                className={styles['choice']}
+                initial={reducedMotion ? false : { opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.18, delay: index * 0.05 }}
                 onClick={(event) => {
                   event.stopPropagation();
                   onChoose(choice.id);
                 }}
               >
-                {choice.text}
-              </button>
+                <span className={styles['choiceKey']} aria-hidden="true">
+                  {index + 1}
+                </span>
+                <span>{choice.text}</span>
+              </motion.button>
             ))}
           </div>
         )}
+        {!typing && !hasChoices && (
+          <button
+            type="button"
+            className={styles['next']}
+            aria-label={STRINGS.dialogue.next}
+            onClick={(e) => {
+              e.stopPropagation();
+              onAdvance();
+            }}
+          >
+            <span aria-hidden="true">{STRINGS.dialogue.next}</span>
+            <span className="kbd" aria-hidden="true">
+              {STRINGS.dialogue.nextKey}
+            </span>
+            <span className={styles['chevron']} aria-hidden="true" />
+          </button>
+        )}
       </div>
-      {!typing && view.choices.length === 0 && (
-        <button
-          type="button"
-          className={styles['next']}
-          aria-label={STRINGS.dialogue.next}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAdvance();
-          }}
-        >
-          ▼
-        </button>
-      )}
-    </section>
+    </motion.section>
   );
 }

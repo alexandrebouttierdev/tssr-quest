@@ -63,10 +63,12 @@ describe('<MissionWindow>', () => {
       screen.getByRole('dialog', { name: "Ticket #2046 · L'intranet est tombé" }),
     ).toBeInTheDocument();
     expect(screen.getByText('Critique')).toBeInTheDocument();
-    expect(screen.getByText(/Consulter l'état du service apache2/).closest('li')).toHaveTextContent(
-      '[x]',
+    expect(screen.getByText(/Consulter l'état du service apache2/).closest('li')).toHaveAttribute(
+      'data-done',
+      'true',
     );
-    expect(screen.getByText(/Relancer Apache/).closest('li')).toHaveTextContent('[ ]');
+    expect(screen.getByText(/Relancer Apache/).closest('li')).toHaveAttribute('data-done', 'false');
+    expect(screen.getByText('1/2')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Commande' })).toBeInTheDocument();
   });
 
@@ -102,7 +104,7 @@ describe('<MissionWindow>', () => {
 
     expect(screen.getByText('Commence par le statut.')).toBeInTheDocument();
     expect(screen.getByText(/Ce n'est pas ça/)).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Fiche' }));
+    await user.click(screen.getByRole('button', { name: 'Fiche mémo' }));
     expect(screen.getByRole('dialog', { name: /Diagnostiquer un service/ })).toBeInTheDocument();
     expect(screen.getByText('status')).toBeInTheDocument();
     expect(screen.getByText('deux')).toBeInTheDocument();
@@ -113,7 +115,7 @@ describe('<MissionWindow>', () => {
   it('demande confirmation avant de quitter', async () => {
     const user = userEvent.setup();
     const { events } = setup(terminalRun, false);
-    expect(screen.queryByRole('button', { name: 'Fiche' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Fiche mémo' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Quitter' }));
     await user.click(screen.getByRole('button', { name: 'Fermer' }));

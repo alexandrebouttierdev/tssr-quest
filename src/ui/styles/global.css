@@ -9,9 +9,10 @@ body,
 #root {
   margin: 0;
   height: 100%;
-  background: var(--c-ink-0);
-  color: var(--c-paper);
-  font: calc(15px * var(--text-scale)) / 1.45 var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  font: var(--fs-md) / 1.5 var(--font-body);
+  -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
 
@@ -22,6 +23,84 @@ button {
 :focus-visible {
   outline: none;
   box-shadow: var(--focus);
+}
+
+/* --- Composants de base partagés (design system) ------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font: 600 var(--fs-sm) var(--font-body);
+  cursor: pointer;
+  transition:
+    background var(--duration) var(--ease-out),
+    border-color var(--duration) var(--ease-out),
+    transform var(--duration) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #08131b;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: #ffb3ad;
+}
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: 700 var(--fs-xs) var(--font-mono);
+  line-height: 1;
+}
+
+.eyebrow {
+  margin: 0;
+  font: 600 var(--fs-xs) var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
 .visually-hidden {

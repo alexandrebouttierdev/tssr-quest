@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { EventBus } from '@core/events/bus';
 import type { GameEvent } from '@core/events/events';
+import type { TicketBoard, TicketBoardState } from '@engine/tickets/ticket-board';
 
 /** Services dont l'interface a besoin en plus du store. */
 export interface UiServices {
@@ -10,6 +11,10 @@ export interface UiServices {
   readonly complete: (partial: string) => readonly string[];
   /** Titre et corps (Markdown simple) d'une fiche « À retenir ». */
   readonly sheet: (id: string) => { title: string; body: string } | undefined;
+  /** Tickets ouverts, alertes et objectif actif (calculés par le moteur). */
+  readonly ticketBoard: (state: TicketBoardState) => TicketBoard;
+  /** Heure de la partie. */
+  readonly clock: () => Date;
 }
 
 /** Contexte des services d'interface. */

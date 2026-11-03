@@ -3,6 +3,7 @@ import { createSaveManager, type SaveManager } from '@core/save/save-manager';
 import { gameStore, type GameStoreApi } from '@core/store/create-store';
 import type { ContentIndex } from '@content/loader';
 import { createGameEngine, type GameEngine } from '@engine/game-engine';
+import { ticketBoard } from '@engine/tickets/ticket-board';
 import { createIndexedDbStorage } from '@platform/storage';
 import type { UiServices } from '@ui/hooks/game-services';
 
@@ -44,11 +45,13 @@ export function createAppServices(
 ): AppServices {
   const bus = createEventBus({ onError: (error) => console.error(error) });
   const saves = createSaveManager(createIndexedDbStorage());
+  // Une seule horloge : celle du moteur (dates des simulateurs) est aussi celle du HUD.
+  const clock = createGameClock();
   const engine = createGameEngine({
     store,
     bus,
     content,
-    clock: createGameClock(),
+    clock,
     onAutosave: () => {
       saves.save('auto', store.getState()).catch((error: unknown) => console.error(error));
     },
@@ -63,6 +66,8 @@ export function createAppServices(
       bus,
       complete: (partial) => engine.completeCommand(partial),
       sheet: (id) => content.sheets.get(id),
+      ticketBoard: (state) => ticketBoard(content, state),
+      clock,
     },
   };
 }

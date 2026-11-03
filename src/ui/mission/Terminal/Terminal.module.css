@@ -1,65 +1,115 @@
+/* Terminal : l'apparence d'un vrai émulateur de terminal (fond sombre, monospace). */
+
 .terminal {
   display: flex;
   flex-direction: column;
   min-height: 0;
   height: 100%;
-  background: #080b0f;
-  border: 1px solid var(--c-ink-2);
+  background: var(--terminal-bg);
+  border: 1px solid #263546;
   border-radius: var(--radius);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
   font-family: var(--font-mono);
-  font-size: calc(13px * var(--text-scale));
+  font-size: calc(14px * var(--text-scale));
+  overflow: hidden;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 34px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, #1c2734, #151e29);
+  border-bottom: 1px solid #0a0f15;
+  color: var(--text-muted);
+  font: 500 var(--fs-xs) var(--font-mono);
+}
+
+.lights {
+  display: flex;
+  gap: 6px;
+}
+
+.lights i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #3a4a5c;
+}
+
+.titleText {
+  flex: 1;
+  text-align: center;
+  margin-right: 46px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .output {
   flex: 1 1 auto;
   min-height: 160px;
   overflow: auto;
-  padding: 10px 12px;
+  padding: 12px 14px;
   white-space: pre-wrap;
   word-break: break-word;
-  line-height: 1.45;
+  line-height: 1.5;
   cursor: text;
+  scrollbar-color: #2b3a4b transparent;
 }
 
 .hint {
-  margin: 0 0 6px;
-  color: var(--c-amber);
-  font-family: var(--font-body);
+  margin: 0 0 8px;
+  color: #8a9bb0;
+  font-family: var(--font-mono);
+  font-style: italic;
 }
 
 .input,
 .stdout {
-  color: #d6e8da;
+  color: #d3dde6;
 }
 
 .input {
-  color: var(--c-paper);
+  color: #f0f4f8;
 }
 
 .stderr {
-  color: #f19a92;
+  color: #ff8f85;
 }
 
 .system {
-  color: var(--c-muted);
+  color: #7f91a6;
 }
 
 .suggestions {
-  color: var(--c-cyan);
+  color: var(--accent);
 }
 
 .line {
   display: flex;
   gap: 8px;
   align-items: center;
-  padding: 8px 12px;
-  border-top: 1px solid var(--c-ink-2);
-  background: #0d1116;
+  padding: 10px 14px;
+  border-top: 1px solid #1a2532;
+  background: #0d141c;
 }
 
 .prompt {
-  color: var(--c-led-soft);
+  color: #e6edf3;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.promptUser {
+  color: #4fd287;
+}
+
+.promptPath {
+  color: #6aa8ff;
 }
 
 .line .input {
@@ -67,27 +117,33 @@
   min-width: 0;
   background: transparent;
   border: 0;
-  color: var(--c-paper);
+  color: #f0f4f8;
   font: calc(15px * var(--text-scale)) var(--font-mono);
+  caret-color: var(--success);
   outline: none;
   padding: 0;
+}
+
+.line:focus-within {
+  background: #0f1821;
 }
 
 .keys {
   display: none;
   gap: 6px;
   padding: 6px 8px;
-  border-top: 1px solid var(--c-ink-2);
+  border-top: 1px solid #1a2532;
   overflow-x: auto;
 }
 
 .keys button {
-  min-width: 40px;
+  min-width: 44px;
+  min-height: 36px;
   padding: 6px 8px;
-  background: var(--c-ink-2);
-  color: var(--c-paper);
-  border: 1px solid var(--c-ink-3);
-  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
 }
 
@@ -95,4 +151,13 @@
   .keys {
     display: flex;
   }
+}
+
+/* Focus visible propre au terminal : une barre verte plutôt que le cadre générique. */
+.line .input:focus-visible {
+  box-shadow: none;
+}
+
+.line:focus-within {
+  box-shadow: inset 3px 0 0 var(--success);
 }

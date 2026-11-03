@@ -62,7 +62,9 @@ test("joue la mission d'Hugo de bout en bout", async ({ page }) => {
   await expect(page.getByRole('log', { name: 'Sortie du terminal' })).toContainText(
     'No space left on device',
   );
-  await expect(mission.getByText(/\[x\]\s*Consulter l'état du service apache2/)).toBeVisible();
+  await expect(
+    mission.locator('li[data-done="true"]', { hasText: "Consulter l'état du service apache2" }),
+  ).toBeVisible();
 
   await input.fill('df -h');
   await input.press('Enter');

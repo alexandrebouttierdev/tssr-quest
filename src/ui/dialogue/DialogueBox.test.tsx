@@ -123,4 +123,30 @@ describe('<DialogueBox>', () => {
 
     expect(onAdvance).toHaveBeenCalledTimes(1);
   });
+
+  it('choisit une réponse avec sa touche numérotée et affiche le portrait', async () => {
+    const user = userEvent.setup();
+    const onChoose = vi.fn();
+    const view = {
+      ...line,
+      choices: [
+        { id: 'a', text: 'Oui, un indice' },
+        { id: 'b', text: 'Non, je gère' },
+      ],
+    };
+    const { container } = render(
+      <DialogueBox
+        view={view}
+        textSpeed={0}
+        reducedMotion
+        onAdvance={vi.fn()}
+        onChoose={onChoose}
+      />,
+    );
+
+    expect(container.querySelector('img')?.getAttribute('src')).toBe('/sprites/portraits/hugo.png');
+    expect(container.querySelector('[data-mood="inquiet"]')).not.toBeNull();
+    await user.keyboard('2');
+    expect(onChoose).toHaveBeenCalledWith('b');
+  });
 });
