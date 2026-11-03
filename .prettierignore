@@ -1,0 +1,16 @@
+node_modules
+dist
+dev-dist
+coverage
+package-lock.json
+src/content/generated
+reference
+docs
+playwright-report
+test-results
+public/maps
+content/maps
+CLAUDE.md
+README.md
+CREDITS.md
+PROGRESS.md
