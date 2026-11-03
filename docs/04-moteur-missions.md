@@ -134,7 +134,7 @@ variants:                        # révision : une variante tirée au hasard rem
 | `ordering` | `question`, `items[]` (ordre correct) | Ordre exact |
 | `matching` | `question`, `pairs[]` | Toutes les paires associées |
 | `terminal` | `sim` (`bash`, `cmd`, `powershell`, `ios`), `machine` ou `device`, `goal`, `objectives[]` | Tous les objectifs vrais |
-| `editor` | `machine`, `file`, `goal`, `objectives[]` | Contenu du fichier valide (conditions) |
+| `editor` | `machine`, `file`, `goal`, `objectives[]`, `solution` (touches : texte tel quel, `<Esc>`, `<CR>`, `<BS>`) | Contenu du fichier valide (conditions) |
 | `diagram` | `topology` (départ), `palette` (équipements disponibles), `objectives[]` | Conditions sur la topologie et tests de paquets |
 | `patch-panel` | `ports`, `expected` | Câblage attendu |
 | `directory` | `domain` (état de départ), `objectives[]` | Conditions sur l'annuaire |
@@ -143,6 +143,8 @@ variants:                        # révision : une variante tirée au hasard rem
 | `flow-matrix` | `zones`, `expectedFlows`, `forbiddenFlows` | Flux attendus autorisés, interdits bloqués |
 | `backup-plan` | `scenario`, `objectives[]` | Conditions sur les jobs et la restauration |
 | `script` | `sim` (`bash`, `powershell`), `machine`, `file`, `tests[]` | Le script passe les cas de test |
+
+Dans la `solution` d'une étape `terminal`, une ligne `vim: <touches>` désigne des touches tapées dans vim ouvert par la commande précédente (ex. `vim app.conf` puis `vim: $a80<Esc>:wq<CR>`).
 
 Chaque étape accepte aussi : `id`, `hints[]` (3 niveaux), `sheet` (fiche liée), `timeLimit` (secondes, rare), `xp` (surcharge des 20 par défaut).
 

@@ -144,6 +144,8 @@ Les pages `man` sont **en français et simplifiées** (exception assumée à la 
 - Une redirection (`sudo echo x > /etc/f`) est faite par le shell avec les droits de l'utilisateur, pas par sudo : « Permission non accordée ».
 - Le journal système n'est lisible que par root et les membres de `adm` ou `systemd-journal` (`journalctl` affiche sinon l'avertissement réel) ; `systemctl status` n'affiche alors pas les lignes de journal.
 - `df -h`, `free -h`, `ip a`, `ss -tlnp` : formats identiques à Debian 12.
+- Tâches de fond : `&`, `jobs`, `fg`, `bg`, `kill %N` ; `sleep N &`, `tail -f &`, `ping &` et `yes &` restent actifs (la fin d'un `sleep` est annoncée « Fini » à la commande suivante).
+- Archives simulées : le contenu d'un `.tar`, `.gz` ou `.zip` est conservé (JSON derrière un marqueur), avec des tailles réalistes.
 - Les services ont des dépendances et des causes d'échec simulées (disque plein, port déjà utilisé, fichier de config invalide) qui apparaissent dans `systemctl status` et `journalctl -u`.
 - `apache2ctl configtest`, `sshd -t` : valident les fichiers de configuration modifiés dans vim.
 
@@ -264,6 +266,7 @@ Inspiré de GLPI pour le vocabulaire et le fonctionnement, avec une interface pr
 - Déplacements `h j k l`, `0 $ gg G`, `w b`, recherche `/motif` et `n`.
 - Édition : `i a o O x dd yy p u`, `:w :q :wq :q! :x`, `:set number`.
 - Quitter vim est une quête à part entière, et une fiche.
+- Implémentation : `src/sims/vim/vim.ts` (état immuable, une touche à la fois, effets `write`/`quit`) ; l'écriture se fait avec les droits du compte de la session (`E45` en lecture seule, `E212` si l'écriture échoue). `vim fichier` dans un terminal de mission ouvre `<VimEditor>` à la place du terminal jusqu'à `:q`.
 
 ## Tests des simulateurs
 

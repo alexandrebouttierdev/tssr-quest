@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : phase 1 — commandes Bash du ch. 4, lot fichiers/filtres/recherche (mkdir … find, locate, stat, date, id…)
-- **Prochaine action** : phase 1 — processus et archives (ps, top, kill, killall, jobs/fg/bg/nohup + `&`, tar, gzip/gunzip, zip/unzip), puis `sims/vim`, puis commandes du ch. 5
+- **Dernière tâche terminée** : phase 1 — commandes du ch. 4 complètes + vim
+- **Prochaine action** : phase 1 — commandes du ch. 5 : comptes (useradd, usermod, userdel, groupadd, groupdel, passwd, chage, su), droits (chmod, chown, chgrp, umask), paquets (apt, apt-get, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron
 
 ## Environnement
 
@@ -51,8 +51,8 @@ Il est mis à jour à chaque tâche terminée.
 ## Phase 1 — Tranche Linux (suivi)
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 : fichiers, filtres, recherche, info ✅ ; processus, archives ⏳ ; ch. 5 ⏳
-- [ ] `sims/vim` et le composant `<VimEditor>`.
+- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳
+- [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
 
 **Contenu** : 22 missions ch. 4-5, épreuves, badges, 3 quêtes secondaires — à faire.
