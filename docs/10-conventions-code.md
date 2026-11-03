@@ -91,7 +91,8 @@ Vérifié par la règle ESLint `import/no-restricted-paths`.
 
 ## Git
 
-- Branche principale `main`, protégée. Travail sur des branches `feat/…`, `fix/…`, `content/…`.
+- Branche de publication `master` : chaque push y déploie le jeu sur GitHub Pages. On n'y travaille pas directement.
+- Branche de travail `dev` : tout le développement courant s'y fait ; on fusionne `dev` dans `master` pour publier une version jouable. Branches `feat/…`, `fix/…`, `content/…` possibles à partir de `dev` pour un gros chantier.
 - Conventional Commits en français : `feat`, `fix`, `content`, `test`, `docs`, `refactor`, `perf`, `chore`, `style`, `ci`.
 - Portée = dossier ou simulateur : `feat(bash): …`, `content(chap-05): …`, `fix(ui/terminal): …`.
 - Une pull request = un sujet, avec la case « Définition de terminé » de `CLAUDE.md` cochée.

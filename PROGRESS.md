@@ -11,6 +11,8 @@ Il est mis à jour à chaque tâche terminée.
 
 ## Environnement
 
+- **Branches** : on travaille sur `dev` (demande de l'auteur, 3 novembre 2026). `master` sert à publier : chaque push y redéploie le jeu sur GitHub Pages. Publier = fusionner `dev` dans `master`.
+
 - Node 22, npm 10. Installer avec `npm install` (le fichier `.npmrc` active `legacy-peer-deps`, voir Décisions).
 - Chromium est préinstallé dans `/opt/pw-browsers` (Playwright 1.63.0 épinglé pour lui correspondre).
 - Commandes : voir `CLAUDE.md`. `npm run typecheck` vérifie `tsconfig.json` (src, tests) et `tsconfig.node.json` (scripts, configs, e2e).
@@ -111,6 +113,7 @@ Il est mis à jour à chaque tâche terminée.
 | D46 | 2026-11-03 | Écran titre en React/CSS (pas de canevas) ; « Nouvelle partie » remet un état neuf, « Continuer » reprend `auto` | Règle 7 de CLAUDE.md ; remplace D44. |
 | D47 | 2026-11-03 | Publication sur GitHub Pages (workflow `pages.yml`, base `/tssr-quest/` via `BASE_PATH`), avant le VPS prévu par docs/02 | Demande de l'auteur : un lien direct pour jouer. docs/02 mis à jour. |
 | D48 | 2026-11-03 | APT simulé : catalogue de paquets réels de bookworm, mises à jour publiées sur une suite et révélées par `apt update` si sources.list la contient ; commandes liées à un paquet (`package`) introuvables s'il est absent | Fidélité (pas de mise à jour sans `apt update`, sources.list cassé = erreurs réelles) et missions « paquets » rejouables. |
+| D49 | 2026-11-03 | Travail sur la branche `dev`, `master` réservée à la publication (déploiement Pages) | Demande de l'auteur. docs/10 mis à jour (remplace « main protégée »). |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés
