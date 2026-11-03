@@ -1,0 +1,12 @@
+id: linux-admin
+number: 5
+title: Administration de GNU/Linux
+eniModule: "Administration d'une distribution GNU/Linux (1/2 et 2/2)"
+period: { from: '2026-11-09', to: '2026-11-20' }
+zones: [salle-serveurs]
+mentor: hugo
+unlocks: { zones: [], items: [badge-serveurs] }
+# Phase 0 : seule la mission de l'intranet est écrite ; les autres arrivent en phase 1.
+missions:
+  - linux-admin.intranet-down
+badge: { id: badge-linux-admin, name: Badge Linux Admin }

@@ -1,0 +1,8 @@
+- id: badge-serveurs
+  name: Badge salle serveurs
+  category: badge
+  description: Ouvre la porte de la salle serveurs du sous-sol. Hugo te l'a confié, ne le perds pas.
+- id: cafe
+  name: Café
+  category: consommable
+  description: Le carburant officiel du service informatique. Aucun effet technique, mais le moral remonte.

@@ -1,0 +1,30 @@
+npc: hugo
+nodes:
+  intranet-intro:
+    - say: Ah, te voilà ! L'intranet est tombé depuis 8 h et les commerciaux de Rennes me harcèlent.
+      mood: inquiet
+    - say: C'est srv-web01, une Debian avec Apache. Je t'ouvre une session SSH.
+    - say: Tu veux un indice avant de te lancer ?
+      choices:
+        - text: Oui, un indice
+          then:
+            - say: Commence toujours par l'état du service. Le message d'erreur dit souvent tout.
+        - text: Non, je gère
+          effects: [{ flag: hugo-confiance }]
+          then:
+            - say: J'aime cette confiance. Tape « aide » si tu bloques.
+    - effects: [{ startStep: diagnostic }]
+
+  intranet-outro:
+    - say: Un /var plein à cause d'un journal de débogage de 18 Go… grand classique !
+      mood: content
+    - if: { flag: hugo-confiance }
+      say: Et sans indice, en plus. Je vais finir par te laisser les clés de la salle serveurs.
+    - say: Pense à logrotate. Ticket clos, merci !
+
+  intranet-abandon:
+    - say: Pas de souci, reviens quand tu veux. Le serveur ne va pas se réparer tout seul, par contre !
+      mood: inquiet
+
+  default:
+    - say: Si tu as un doute, relis les journaux. Toujours les journaux.

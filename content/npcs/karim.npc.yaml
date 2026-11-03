@@ -1,0 +1,7 @@
+id: karim
+name: Karim
+role: Commercial, agence de Rennes
+zone: agence-rennes
+palette: { hair: '#3a2418', skin: '#b07a52', outfit: '#2f6fb0' }
+voicePitch: 1.1
+description: Toujours pressé, toujours en déplacement. Si l'intranet tombe, c'est lui qui appelle en premier.

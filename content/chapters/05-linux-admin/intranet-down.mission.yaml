@@ -1,0 +1,97 @@
+id: linux-admin.intranet-down
+chapter: linux-admin
+title: L'intranet est tombé
+summary: Apache refuse de démarrer sur srv-web01. Trouver la cause et rétablir le service.
+giver: hugo
+zone: salle-serveurs
+ticket: { number: 2046, priority: critique, requester: karim, service: commercial }
+rewards:
+  xp: 150
+  skills: { linux: 12, support: 3 }
+  reputation: { commercial: 6 }
+  items: []
+  sheets: [fiche-systemctl, fiche-espace-disque]
+dialogue:
+  intro: hugo#intranet-intro
+  outro: hugo#intranet-outro
+  abandon: hugo#intranet-abandon
+
+machines:
+  srv-web01:
+    base: debian-server
+    hostname: srv-web01
+    session: { user: hugo, cwd: /home/hugo }
+    users: [hugo]
+    # hugo est administrateur : sudo pour agir, adm pour lire les journaux.
+    sudoers: [hugo]
+    groups: { adm: [hugo] }
+    services:
+      apache2: { state: failed, failure: no-space-left }
+    disks:
+      - { mount: /var, size: 20G, used: 20G }
+    files:
+      /var/log/debug.log: { size: 18G, owner: root, group: adm, mode: '0640' }
+      /home/hugo/notes-astreinte.txt:
+        owner: hugo
+        content: |
+          Astreinte srv-web01 (notes de Gégé, à reprendre)
+          - Apache sur srv-web01, site de l'intranet dans /var/www/html
+          - Journaux dans /var/log
+          - Toujours lire le statut avant de redémarrer
+
+steps:
+  - id: diagnostic
+    type: terminal
+    sim: bash
+    machine: srv-web01
+    sheet: fiche-systemctl
+    goal: Trouve pourquoi Apache est arrêté, corrige la cause, puis relance le service.
+    objectives:
+      - id: status
+        label: Consulter l'état du service apache2
+        when: { command: { matches: 'systemctl status apache2' } }
+      - id: disk
+        label: Vérifier l'espace disque
+        when: { command: { matches: "^(sudo )?df\\b" } }
+      - id: free
+        label: Libérer de la place sur /var
+        when: { disk: { mount: /var, usageBelow: 80 } }
+      - id: restart
+        label: Relancer Apache
+        when: { service: { name: apache2, state: active } }
+    hints:
+      - Commence par l'état du service, le message d'erreur dit souvent tout.
+      - 'Les commandes utiles : systemctl status apache2, df -h, ls -lh /var/log'
+      - 'Solution : sudo rm /var/log/debug.log puis sudo systemctl restart apache2'
+    solution:
+      - systemctl status apache2
+      - df -h
+      - ls -lh /var/log
+      - sudo rm /var/log/debug.log
+      - sudo systemctl restart apache2
+
+  - id: prevention
+    type: choice
+    sheet: fiche-espace-disque
+    question: Comment éviter que /var se remplisse de nouveau ?
+    options:
+      - text: Configurer logrotate et une alerte de supervision à 80 %
+        correct: true
+      - text: Supprimer /var/log chaque matin
+        feedback: Tu perdrais les journaux dont tu as besoin pour diagnostiquer.
+      - text: Désactiver les journaux
+        feedback: Sans journaux, la prochaine panne sera impossible à expliquer.
+      - text: Agrandir le disque à chaque incident
+        feedback: Ça repousse le problème sans le régler, et ça coûte cher.
+    explain: logrotate compresse et purge les anciens journaux ; la supervision prévient avant la panne.
+
+recap:
+  - systemctl status puis journalctl avant toute action.
+  - df -h et ls -lh pour trouver ce qui remplit un disque.
+  - Un service qui ne démarre pas a toujours une raison écrite quelque part.
+
+variants:
+  - id: mysql
+    replace:
+      services: { apache2: null, mariadb: { state: failed, failure: no-space-left } }
+      files: { /var/log/debug.log: null, /var/log/mysql/slow.log: { size: 17G } }

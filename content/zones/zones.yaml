@@ -1,0 +1,62 @@
+- { id: dsi, name: Bureau de la DSI, site: 'Siège, bâtiment A, 2e étage', map: dsi, opensAt: 0 }
+- {
+    id: accueil,
+    name: Accueil et centre de services,
+    site: 'Siège, bâtiment A, rez-de-chaussée',
+    map: accueil,
+    opensAt: 1,
+  }
+- {
+    id: openspace,
+    name: Open space,
+    site: 'Siège, bâtiment A, 1er étage',
+    map: openspace,
+    opensAt: 1,
+  }
+- {
+    id: formation,
+    name: Salle de formation,
+    site: 'Siège, bâtiment A, 1er étage',
+    map: formation,
+    opensAt: 3,
+  }
+- { id: atelier, name: Atelier, site: 'Siège, bâtiment A, sous-sol', map: atelier, opensAt: 3 }
+- {
+    id: local-technique,
+    name: Local technique,
+    site: 'Siège, bâtiment A, 1er étage',
+    map: local-technique,
+    opensAt: 2,
+  }
+- {
+    id: salle-serveurs,
+    name: Salle serveurs,
+    site: 'Siège, bâtiment A, sous-sol',
+    map: salle-serveurs,
+    opensAt: 0,
+  }
+- { id: datacenter, name: Datacenter, site: 'Siège, bâtiment B', map: datacenter, opensAt: 14 }
+- { id: noc, name: Salle de supervision, site: 'Siège, bâtiment B', map: noc, opensAt: 13 }
+- {
+    id: soc,
+    name: SOC et bureau du RSSI,
+    site: 'Siège, bâtiment A, 2e étage',
+    map: soc,
+    opensAt: 17,
+  }
+- {
+    id: reunion,
+    name: Salle de réunion,
+    site: 'Siège, bâtiment A, 2e étage',
+    map: reunion,
+    opensAt: 6,
+  }
+- { id: agence-rennes, name: Agence de Rennes, site: Rennes, map: agence-rennes, opensAt: 8 }
+- {
+    id: teletravail,
+    name: Domicile d'une télétravailleuse,
+    site: Vitré,
+    map: teletravail,
+    opensAt: 17,
+  }
+- { id: cloud, name: Console cloud, site: Hors du monde réel, map: cloud, opensAt: 15 }
