@@ -161,7 +161,7 @@ describe('which, type, file, stat', () => {
     expect(runLine(machine, 'stat notes.txt').stdout).toMatchInlineSnapshot(`
       "  Fichier : notes.txt
          Taille : 24        	Blocs : 8          Blocs d'E/S : 4096   fichier
-      Périphérique : 8/1	Inœud : 1223        Liens : 1
+      Périphérique : 8/1	Inœud : 1329        Liens : 1
       Accès : (0644/-rw-r--r--)  UID : ( 1000/    hugo)   GID : ( 1000/    hugo)
        Accès : 2026-10-24 10:26:00.000000000 +0200
       Modif. : 2026-10-24 10:26:00.000000000 +0200

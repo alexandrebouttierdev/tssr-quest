@@ -17,6 +17,7 @@ function isLocal(machine: Machine, host: string): boolean {
 /** Commande `curl` : effectue une requête HTTP (serveur web local uniquement). */
 export const curl: BashCommand = {
   name: 'curl',
+  package: 'curl',
   summary: 'interroge un serveur web (HTTP)',
   manual: `NOM
        curl - transférer des données depuis ou vers un serveur

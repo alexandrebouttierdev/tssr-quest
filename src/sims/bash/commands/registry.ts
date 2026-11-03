@@ -62,12 +62,16 @@ import {
   usermod,
 } from './accounts';
 import { chgrp, chmod, chown, umask } from './permissions';
+import { apt, aptGet, dpkg } from './apt';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
     adduser,
+    apt,
+    aptGet,
+    dpkg,
     chage,
     chgrp,
     chmod,

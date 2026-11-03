@@ -309,6 +309,7 @@ export function describeFile(path: string, content: string, mode: number, size: 
 /** Commande `file` : nature du contenu d'un fichier. */
 export const file: BashCommand = {
   name: 'file',
+  package: 'file',
   summary: "devine la nature d'un fichier",
   manual: `NOM
        file - déterminer le type d'un fichier

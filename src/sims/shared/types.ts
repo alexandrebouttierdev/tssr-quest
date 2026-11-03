@@ -119,12 +119,26 @@ export interface ServiceState {
   readonly ports: readonly number[];
 }
 
-/** Paquet Debian. */
+/** Suite d'un dépôt Debian 12. */
+export type AptSuite = 'bookworm' | 'bookworm-updates' | 'bookworm-security';
+
+/** Paquet Debian (installé, ou disponible dans le dépôt simulé). */
 export interface PackageState {
   readonly name: string;
+  /** Version installée ; pour un paquet absent, version proposée par le dépôt. */
   readonly version: string;
   readonly installed: boolean;
   readonly description: string;
+  /** Version plus récente publiée sur le miroir (mise à jour en attente). */
+  readonly update?: { readonly version: string; readonly suite: AptSuite };
+  /** Vrai quand `apt update` a téléchargé les listes qui annoncent `update`. */
+  readonly updateListed?: boolean;
+  /** Installé automatiquement comme dépendance (candidat à `apt autoremove`). */
+  readonly auto?: boolean;
+  /** Enlevé mais fichiers de configuration conservés (état `rc` de dpkg). */
+  readonly configRemains?: boolean;
+  /** Installation interrompue : il faut `dpkg --configure -a`. */
+  readonly halfConfigured?: boolean;
 }
 
 /** Processus en cours. */

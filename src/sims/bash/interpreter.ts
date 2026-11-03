@@ -364,6 +364,15 @@ function runSimple(
   return { status: outcome.exitCode, piped };
 }
 
+/**
+ * Vrai si un programme de ce nom est présent sur le disque (paquet installé) ou fait
+ * partie des programmes connus de Debian, sans être simulé.
+ */
+function isInstalledBinary(machine: Machine, name: string): boolean {
+  if (KNOWN_BINARIES.has(name)) return true;
+  return ['/usr/bin', '/usr/sbin'].some((dir) => machine.fs[`${dir}/${name}`]?.type === 'file');
+}
+
 /** Lance une commande par son nom, sous un compte donné. */
 function execute(
   state: RunState,
@@ -379,10 +388,15 @@ function execute(
   line = '',
 ): CommandOutcome {
   const commandName = name.includes('/') ? name.slice(name.lastIndexOf('/') + 1) : name;
-  const command = Object.hasOwn(commands, commandName) ? commands[commandName] : undefined;
+  const registered = Object.hasOwn(commands, commandName) ? commands[commandName] : undefined;
+  // Une commande dont le paquet a été désinstallé (ou jamais installé) n'existe plus.
+  const command =
+    registered?.package && !state.machine.packages[registered.package]?.installed
+      ? undefined
+      : registered;
   if (!command || (viaSudo && command.builtin)) {
     const prefix = viaSudo ? 'sudo' : 'bash';
-    if (!command && KNOWN_BINARIES.has(commandName)) {
+    if (!command && !registered && isInstalledBinary(state.machine, commandName)) {
       return {
         stderr: `${prefix}: ${name} : commande non disponible dans cette simulation\n`,
         exitCode: 127,

@@ -1,4 +1,5 @@
 import { syncAccountFiles } from '@sims/shared/factories';
+import { applyPlan, decodePlan } from '@sims/shared/packages';
 import type { Machine, PendingPrompt, SimContext, UserAccount } from '@sims/shared/types';
 
 /** Résultat du traitement d'une réponse. */
@@ -157,6 +158,11 @@ const HANDLERS: Readonly<Record<string, PendingHandler>> = {
       machine,
       `Ajout du nouvel utilisateur « ${user} » aux groupes supplémentaires « users » ...\nAjout de l'utilisateur « ${user} » au groupe « users » ...\n`,
     );
+  },
+  'apt-confirm': (machine, answer, prompt, ctx) => {
+    if (!/^(|o|oui|y|yes)$/i.test(answer.trim())) return done(machine, '', 'Annulation.\n', 1);
+    const applied = applyPlan(machine, decodePlan(prompt.data), ctx.now.getTime());
+    return done(applied.machine, applied.stdout, applied.stderr, applied.exitCode);
   },
   su: (machine, answer, prompt) => {
     const target = prompt.data['user'] ?? 'root';

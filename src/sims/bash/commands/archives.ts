@@ -557,6 +557,7 @@ EXEMPLES
 /** Commande `zip` : archive zip. */
 export const zip: BashCommand = {
   name: 'zip',
+  package: 'zip',
   summary: 'crée des archives .zip',
   manual: `NOM
        zip - créer une archive zip (format courant sous Windows)
@@ -617,6 +618,7 @@ DESCRIPTION
 /** Commande `unzip` : extraction d'une archive zip. */
 export const unzip: BashCommand = {
   name: 'unzip',
+  package: 'unzip',
   summary: 'extrait des archives .zip',
   manual: `NOM
        unzip - extraire une archive zip

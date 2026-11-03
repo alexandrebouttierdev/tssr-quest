@@ -19,6 +19,8 @@ import {
 import { diskForPath } from './disks';
 import { fileSize } from './node-size';
 import { dirname, isInside, normalizePath } from './path';
+import { PACKAGE_CATALOG } from './package-catalog';
+import { seedPackageFiles } from './packages';
 import { SERVICE_CATALOG } from './service-catalog';
 import { failureLogLines, serviceProcesses, startLogLines } from './services';
 import { parseSize } from './size';
@@ -32,6 +34,7 @@ import type {
   PackageState,
   Process,
   ServiceActiveState,
+  AptSuite,
   ServiceFailure,
   ServiceState,
   UserAccount,
@@ -80,6 +83,18 @@ export interface ServiceSpec {
   readonly failure?: 'no-space-left' | 'port-in-use' | null;
 }
 
+/** Paquets décrits par une mission. */
+export interface PackagesSpec {
+  /** Paquets installés en plus de la base (leurs dépendances suivent). */
+  readonly install?: readonly string[];
+  /** Mises à jour publiées sur les miroirs, pas encore vues par `apt update`. */
+  readonly updates?: Readonly<
+    Record<string, { readonly version: string; readonly suite?: AptSuite }>
+  >;
+  /** Paquets dont la configuration a été interrompue (`dpkg --configure -a`). */
+  readonly halfConfigured?: readonly string[];
+}
+
 /** Options de `createDebianServer`. */
 export interface DebianServerOptions {
   readonly hostname?: string;
@@ -97,6 +112,8 @@ export interface DebianServerOptions {
   readonly files?: Readonly<Record<string, FileSpec | null>>;
   /** Services à ajouter, modifier, ou retirer avec `null`. */
   readonly services?: Readonly<Record<string, ServiceSpec | null>>;
+  /** État des paquets : installés en plus, mises à jour publiées, dpkg interrompu. */
+  readonly packages?: PackagesSpec;
   readonly network?: {
     readonly address?: string;
     readonly prefix?: number;
@@ -113,28 +130,6 @@ export interface DebianServerOptions {
     readonly rss?: number;
   }[];
 }
-
-/** Paquets toujours installés sur le serveur de base. */
-const BASE_PACKAGES: readonly (readonly [string, string, string])[] = [
-  ['apt', '2.6.1', 'commandline package manager'],
-  ['bash', '5.2.15-2+b7', 'GNU Bourne Again SHell'],
-  ['coreutils', '9.1-1', 'GNU core utilities'],
-  ['curl', '7.88.1-10+deb12u8', 'command line tool for transferring data with URL syntax'],
-  ['dpkg', '1.21.22', 'Debian package management system'],
-  ['findutils', '4.9.0-4', 'utilities for finding files--find, xargs'],
-  ['grep', '3.8-5', 'GNU grep, egrep and fgrep'],
-  ['gzip', '1.12-1', 'GNU compression utilities'],
-  ['iproute2', '6.1.0-3', 'networking and traffic control tools'],
-  ['less', '590-2.1~deb12u2', 'pager program similar to more'],
-  ['man-db', '2.11.2-2', 'tools for reading manual pages'],
-  ['procps', '2:4.0.2-3', '/proc file system utilities'],
-  ['sed', '4.9-1', 'GNU stream editor for filtering/transforming text'],
-  ['sudo', '1.9.13p3-1+deb12u1', 'Provide limited super user privileges to specific users'],
-  ['systemd', '252.31-1~deb12u1', 'system and service manager'],
-  ['tar', '1.34+dfsg-1.2+deb12u1', 'GNU version of the tar archiving utility'],
-  ['util-linux', '2.38.1-5+deb12u1', 'miscellaneous system utilities'],
-  ['vim', '2:9.0.1378-2', 'Vi IMproved - enhanced vi editor'],
-];
 
 /** Services présents par défaut (actifs et activés). */
 const DEFAULT_SERVICES = ['ssh', 'cron', 'rsyslog'] as const;
@@ -256,6 +251,50 @@ function link(target: string, mtime: number): FsNode {
 }
 
 /**
+ * Construit l'état des paquets : tout le dépôt simulé, la base et les paquets des
+ * services installés (avec leurs dépendances, marquées « automatique »).
+ *
+ * @param spec - Paquets demandés par la mission.
+ * @param servicePackages - Paquets qui fournissent les services présents.
+ * @returns Les paquets indexés par nom.
+ */
+function buildPackages(
+  spec: PackagesSpec | undefined,
+  servicePackages: readonly string[],
+): Record<string, PackageState> {
+  const packages: Record<string, PackageState> = {};
+  for (const def of Object.values(PACKAGE_CATALOG)) {
+    packages[def.name] = {
+      name: def.name,
+      version: def.version,
+      description: def.description,
+      installed: def.base === true,
+    };
+  }
+  const install = (name: string, auto: boolean): void => {
+    const p = packages[name];
+    if (!p) throw new Error(`Paquet inconnu : ${name}`);
+    if (p.installed) return;
+    packages[name] = { ...p, installed: true, ...(auto ? { auto: true } : {}) };
+    PACKAGE_CATALOG[name]?.depends.forEach((d) => install(d, true));
+  };
+  [...servicePackages, ...(spec?.install ?? [])].forEach((n) => install(n, false));
+  for (const [name, update] of Object.entries(spec?.updates ?? {})) {
+    const p = packages[name];
+    if (!p) throw new Error(`Paquet inconnu : ${name}`);
+    packages[name] = {
+      ...p,
+      update: { version: update.version, suite: update.suite ?? 'bookworm-security' },
+    };
+  }
+  for (const name of spec?.halfConfigured ?? []) {
+    const p = packages[name];
+    if (p) packages[name] = { ...p, installed: true, halfConfigured: true };
+  }
+  return packages;
+}
+
+/**
  * Crée un serveur Debian 12 réaliste : arborescence FHS, comptes système, services
  * par défaut (ssh, cron, rsyslog), disque, réseau. Les missions le personnalisent
  * par les options (comptes, fichiers, disques, services en panne…).
@@ -339,17 +378,14 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
     if (spec === null) delete serviceSpecs[name];
     else serviceSpecs[name] = spec;
   }
-  const packages: Record<string, PackageState> = Object.fromEntries(
-    BASE_PACKAGES.map(([name, version, description]) => [
-      name,
-      { name, version, description, installed: true },
-    ]),
+  const packages = buildPackages(
+    options.packages,
+    Object.keys(serviceSpecs).map((name) => {
+      const pkg = SERVICE_CATALOG[name]?.package.name;
+      if (!pkg) throw new Error(`Service inconnu : ${name}`);
+      return pkg;
+    }),
   );
-  for (const name of Object.keys(serviceSpecs)) {
-    const def = SERVICE_CATALOG[name];
-    if (!def) throw new Error(`Service inconnu : ${name}`);
-    packages[def.package.name] = { ...def.package, installed: true };
-  }
 
   // --- Système de fichiers ---------------------------------------------------------------
   const fs: Record<string, FsNode> = {};
@@ -523,6 +559,9 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       '<!DOCTYPE html>\n<html lang="fr">\n<head><meta charset="utf-8"><title>Intranet LabCorp</title></head>\n<body><h1>Intranet LabCorp</h1><p>Bienvenue sur l\'intranet.</p></body>\n</html>\n',
     );
   }
+
+  // Fichiers des paquets installés (programmes, documentation, configuration).
+  seedPackageFiles(fs, packages, t);
 
   // Fichiers propres à la mission.
   for (const [rawPath, spec] of Object.entries(options.files ?? {})) {

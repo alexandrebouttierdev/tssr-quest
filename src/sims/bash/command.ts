@@ -52,6 +52,8 @@ export interface BashCommand {
   readonly manual: string;
   /** Commande interne du shell (`cd`, `export`) : `sudo` ne peut pas la lancer. */
   readonly builtin?: boolean;
+  /** Paquet Debian qui fournit la commande : sans lui, elle est introuvable. */
+  readonly package?: string;
   /** Exécute la commande. `args` ne contient pas le nom de la commande. */
   run(args: readonly string[], env: CommandEnv): CommandOutcome;
 }

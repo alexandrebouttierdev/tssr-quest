@@ -6,6 +6,7 @@ import { globToRegExp, hasGlob } from '../glob';
 /** Commande `locate` : cherche dans la base de noms (mise à jour par updatedb). */
 export const locate: BashCommand = {
   name: 'locate',
+  package: 'locate',
   summary: 'trouve des fichiers par leur nom (base updatedb)',
   manual: `NOM
        locate - trouver des fichiers par leur nom
@@ -45,6 +46,7 @@ DESCRIPTION
 /** Commande `updatedb` : met à jour la base de locate (root). */
 export const updatedb: BashCommand = {
   name: 'updatedb',
+  package: 'locate',
   summary: 'met à jour la base de locate',
   manual: `NOM
        updatedb - mettre à jour la base de noms de locate
