@@ -145,7 +145,7 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'assets/generators/**/*.ts'],
     rules: { 'no-console': 'off' },
   },
 );
