@@ -47,11 +47,13 @@ import { touch } from './touch';
 import { wc } from './wc';
 import { bg, fg, jobs, kill, killall, nohup, ps, top } from './processes';
 import { gunzip, gzip, tar, unzip, zcat, zip } from './archives';
+import { sed } from './sed';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
+    sed,
     gunzip,
     gzip,
     tar,
