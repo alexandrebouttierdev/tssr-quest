@@ -7,6 +7,7 @@ import {
   type DebianServerOptions,
   type DiskSpec,
   type FileSpec,
+  type PackagesSpec,
   type ServiceSpec,
 } from '@sims/shared/factories';
 import type { Machine } from '@sims/shared/types';
@@ -25,6 +26,8 @@ export interface DebianFixtureOptions {
   readonly sudoers?: readonly string[];
   readonly hostname?: string;
   readonly now?: number;
+  /** Paquets installés en plus, mises à jour publiées, dpkg interrompu. */
+  readonly packages?: PackagesSpec;
 }
 
 /**
@@ -48,6 +51,7 @@ export function debianServer(options: DebianFixtureOptions): Machine {
     ...(options.disks ? { disks: options.disks } : {}),
     ...(options.services ? { services: options.services } : {}),
     ...(options.now !== undefined ? { now: options.now } : {}),
+    ...(options.packages ? { packages: options.packages } : {}),
   };
   return createDebianServer(full);
 }

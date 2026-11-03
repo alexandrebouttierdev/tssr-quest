@@ -474,7 +474,13 @@ function dpkgSearch(env: CommandEnv, patterns: readonly string[]): CommandOutcom
   let stdout = '';
   let stderr = '';
   for (const pattern of patterns) {
-    const re = pattern.startsWith('/') ? globToRegExp(pattern) : globToRegExp(`*${pattern}*`);
+    // Comme dpkg-query : motif shell sur le chemin complet ; sans « / » initial, il peut
+    // apparaître n'importe où (`dpkg -S bin/curl`). Le `*` traverse les « / ».
+    const body = pattern
+      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+      .replace(/\*/g, '.*')
+      .replace(/\?/g, '.');
+    const re = new RegExp(pattern.startsWith('/') ? `^${body}$` : body);
     const hits: string[] = [];
     for (const p of Object.values(env.machine.packages).sort((a, b) =>
       a.name.localeCompare(b.name, 'en'),
