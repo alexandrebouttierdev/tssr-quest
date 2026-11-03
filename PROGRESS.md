@@ -99,6 +99,10 @@ Il est mis à jour à chaque tâche terminée.
 
 ## Problèmes rencontrés
 
+- **Tags non poussés** : le proxy git de la session cloud refuse `git push origin v0.1.0` (HTTP 403) alors que la branche `master` passe. Le tag annoté `v0.1.0` est sur le commit `2255fab` ; à pousser depuis un poste local : `git fetch origin && git tag -a v0.1.0 2255fab -m "Phase 0 — Fondations" && git push origin v0.1.0` (ou créer la release sur GitHub).
+- Redémarrage de `WorldScene` : Phaser réutilise l'instance de scène, il faut réinitialiser les tableaux dans `create()` et préférer `keyboard.on('keydown-X')` aux écouteurs posés sur les objets `Key` (corrigé).
+- `pkill -f vite` tue aussi le shell courant quand la commande contient « vite » : utiliser `ps … | awk | xargs kill`.
+
 - npm `Cannot read properties of null (reading 'edgesOut')` en installant Vitest 4 : contourné par `legacy-peer-deps` (D4).
 
 ## Bilans de phase
