@@ -67,16 +67,106 @@ export function runLine(
     state.output.push({ stream: 'stderr', text: `${error.message}\n` });
     return finish(state, 2);
   }
+  reportFinishedJobs(state, ctx);
   let status = state.machine.session.lastExitCode;
   let ran = false;
   for (const item of script.items) {
     if (ran && item.connector === '&&' && status !== 0) continue;
     if (ran && item.connector === '||' && status === 0) continue;
-    status = runPipeline(state, item.pipeline, line, ctx, commands);
+    status = item.background
+      ? runBackground(state, item, line, ctx, commands)
+      : runPipeline(state, item.pipeline, line, ctx, commands);
     ran = true;
     if (state.effects.some((e) => e.type === 'exit')) break;
   }
   return finish(state, ran ? status : state.machine.session.lastExitCode);
+}
+
+/** Libellé d'état d'une tâche, aligné comme dans bash. */
+function jobLine(id: number, marker: string, status: string, command: string): string {
+  return `[${id}]${marker}  ${status.padEnd(24)}${command}\n`;
+}
+
+/** Annonce les tâches de fond terminées depuis la dernière commande (« Fini »). */
+function reportFinishedJobs(state: RunState, ctx: SimContext): void {
+  const jobs = state.machine.session.jobs ?? [];
+  const now = ctx.now.getTime();
+  const done = jobs.filter((j) => j.endsAt !== null && j.endsAt <= now);
+  if (done.length === 0) return;
+  for (const job of done)
+    state.output.push({
+      stream: 'stdout',
+      text: jobLine(job.id, job === jobs.at(-1) ? '+' : '-', 'Fini', job.command),
+    });
+  const pids = new Set(done.map((j) => j.pid));
+  state.machine = {
+    ...state.machine,
+    processes: state.machine.processes.filter((p) => !pids.has(p.pid)),
+    session: { ...state.machine.session, jobs: jobs.filter((j) => !pids.has(j.pid)) },
+  };
+}
+
+/**
+ * Lance un pipeline en arrière-plan (`commande &`). Les commandes instantanées sont
+ * exécutées puis annoncées « Fini » ; `sleep N`, `tail -f`, `ping` sans `-c` et `yes`
+ * restent dans la liste des tâches (et des processus) jusqu'à leur fin ou un `kill`.
+ */
+function runBackground(
+  state: RunState,
+  item: { pipeline: Pipeline; source?: string },
+  line: string,
+  ctx: SimContext,
+  commands: Readonly<Record<string, BashCommand>>,
+): number {
+  const source = item.source ?? '';
+  const words = source.split(/\s+/);
+  let i = 0;
+  while (words[i] === 'sudo' || words[i] === 'nohup') i++;
+  const program = words[i] ?? '';
+  const now = ctx.now.getTime();
+  let endsAt: number | null | undefined;
+  if (program === 'sleep' && Number.isFinite(Number.parseFloat(words[i + 1] ?? ''))) {
+    endsAt = now + Number.parseFloat(words[i + 1] ?? '0') * 1000;
+  } else if (
+    (program === 'tail' && words.includes('-f')) ||
+    program === 'yes' ||
+    (program === 'ping' && !words.includes('-c'))
+  ) {
+    endsAt = null;
+  }
+  if (endsAt === undefined || program === 'tail' || program === 'sleep')
+    runPipeline(state, item.pipeline, line, ctx, commands);
+  const jobs = state.machine.session.jobs ?? [];
+  const id = Math.max(0, ...jobs.map((j) => j.id)) + 1;
+  const pid = state.machine.nextPid;
+  state.output.push({ stream: 'stderr', text: `[${id}] ${pid}\n` });
+  if (endsAt === undefined) {
+    state.output.push({ stream: 'stdout', text: jobLine(id, '+', 'Fini', source) });
+    state.machine = { ...state.machine, nextPid: pid + 1 };
+    return 0;
+  }
+  const session = state.machine.session;
+  state.machine = {
+    ...state.machine,
+    nextPid: pid + 1,
+    processes: [
+      ...state.machine.processes,
+      {
+        pid,
+        ppid: 1187,
+        user: session.user,
+        command: source,
+        cpu: program === 'yes' ? 99 : 0,
+        rss: 1024,
+        vsz: 5480,
+        tty: 'pts/0',
+        stat: 'S',
+        start: now,
+      },
+    ],
+    session: { ...session, jobs: [...jobs, { id, pid, command: `${source} &`, endsAt }] },
+  };
+  return 0;
 }
 
 /** Enregistre le code de retour dans la session et construit le résultat. */

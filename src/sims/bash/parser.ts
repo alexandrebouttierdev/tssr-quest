@@ -131,14 +131,19 @@ export function parse(line: string): Script {
   const items: ListItem[] = [];
   let connector: ListItem['connector'] = ';';
   while (pos < tokens.length) {
-    items.push({ connector, pipeline: parsePipeline() });
+    const startToken = peek();
+    const pipeline = parsePipeline();
+    const endToken = tokens[pos - 1];
+    const source = line.slice(startToken?.start ?? 0, endToken?.end ?? line.length).trim();
+    items.push({ connector, pipeline, source });
     const next = peek();
     if (next === undefined) break;
     if (next.type !== 'op') throw unexpected(next);
     if (next.value === '&') {
-      throw new BashSyntaxError(
-        "bash: l'exécution en arrière-plan (&) n'est pas disponible dans cette simulation",
-      );
+      pos++;
+      items[items.length - 1] = { connector, pipeline, source, background: true };
+      connector = ';';
+      continue;
     }
     if (next.value === ';') {
       pos++;

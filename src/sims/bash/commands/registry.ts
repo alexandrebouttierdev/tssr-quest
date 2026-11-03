@@ -45,12 +45,21 @@ import { rmdir } from './rmdir';
 import { cut, less, more, printf, sleep, sort, tee, tr, uniq } from './text-tools';
 import { touch } from './touch';
 import { wc } from './wc';
+import { bg, fg, jobs, kill, killall, nohup, ps, top } from './processes';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
     apropos,
+    bg,
+    fg,
+    jobs,
+    kill,
+    killall,
+    nohup,
+    ps,
+    top,
     cat,
     cd,
     clear,

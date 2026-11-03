@@ -203,6 +203,17 @@ export interface CommandRecord {
   readonly time: number;
 }
 
+/** Tâche lancée en arrière-plan (`commande &`). */
+export interface Job {
+  /** Numéro de tâche (`%1`). */
+  readonly id: number;
+  readonly pid: number;
+  /** Texte de la commande, tel que tapé. */
+  readonly command: string;
+  /** Fin prévue (ms) ; `null` pour une tâche qui ne s'arrête pas seule. */
+  readonly endsAt: number | null;
+}
+
 /** Session ouverte sur la machine. */
 export interface Session {
   readonly user: string;
@@ -214,6 +225,8 @@ export interface Session {
   readonly sudoAuthenticated: boolean;
   /** Code de retour de la dernière commande (`$?`). */
   readonly lastExitCode: number;
+  /** Tâches en arrière-plan de la session. */
+  readonly jobs?: readonly Job[];
 }
 
 /** Une machine simulée : poste client, serveur Linux ou Windows. */

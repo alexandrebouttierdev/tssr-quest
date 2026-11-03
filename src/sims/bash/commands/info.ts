@@ -252,6 +252,9 @@ DESCRIPTION
   },
 };
 
+/** Primitives de bash qui existent aussi en programme (/usr/bin/echo, /usr/bin/kill…). */
+const SHELL_BUILTINS = new Set(['echo', 'pwd', 'true', 'false', 'kill', 'printf', 'test']);
+
 /** Commande interne `type` : nature d'une commande. */
 export const type: BashCommand = {
   name: 'type',
@@ -272,7 +275,8 @@ DESCRIPTION
     let stderr = '';
     for (const name of args) {
       if (aliases[name]) stdout += `${name} est un alias vers « ${aliases[name]} »\n`;
-      else if (env.commands[name]?.builtin) stdout += `${name} est une primitive du shell\n`;
+      else if (env.commands[name]?.builtin || SHELL_BUILTINS.has(name))
+        stdout += `${name} est une primitive du shell\n`;
       else if ((USR_BIN as readonly string[]).includes(name))
         stdout += `${name} est /usr/bin/${name}\n`;
       else if ((USR_SBIN as readonly string[]).includes(name))

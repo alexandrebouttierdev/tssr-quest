@@ -83,7 +83,12 @@ describe('parser Bash', () => {
     expect(() => parse('ls &&')).toThrow('fin de fichier prématurée');
   });
 
-  it("refuse l'exécution en arrière-plan, non simulée", () => {
-    expect(() => parse('sleep 10 &')).toThrow(BashSyntaxError);
+  it('marque les pipelines lancés en arrière-plan avec &', () => {
+    const script = parse('sleep 10 & echo ok');
+
+    expect(script.items.map((i) => [i.source, i.background ?? false])).toEqual([
+      ['sleep 10', true],
+      ['echo ok', false],
+    ]);
   });
 });

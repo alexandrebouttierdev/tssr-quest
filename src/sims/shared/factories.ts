@@ -105,6 +105,13 @@ export interface DebianServerOptions {
     readonly iface?: string;
   };
   readonly rootPassword?: string;
+  /** Processus supplémentaires (programme qui s'emballe, script oublié…). */
+  readonly processes?: readonly {
+    readonly user: string;
+    readonly command: string;
+    readonly cpu?: number;
+    readonly rss?: number;
+  }[];
 }
 
 /** Paquets toujours installés sur le serveur de base. */
@@ -766,6 +773,23 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       start: now - 300_000,
     },
   );
+
+  let extraPid = 1500;
+  for (const extra of options.processes ?? []) {
+    processes.push({
+      pid: extraPid,
+      ppid: 1,
+      user: extra.user,
+      command: extra.command,
+      cpu: extra.cpu ?? 0,
+      rss: extra.rss ?? 4096,
+      vsz: (extra.rss ?? 4096) * 3,
+      tty: '?',
+      stat: (extra.cpu ?? 0) > 50 ? 'R' : 'S',
+      start: now - 5 * 3_600_000,
+    });
+    extraPid += 37;
+  }
 
   const machine: Machine = {
     hostname,

@@ -61,6 +61,10 @@ export interface ListItem {
   /** `;` (toujours), `&&` (si succès), `||` (si échec). Le premier élément porte `;`. */
   readonly connector: ';' | '&&' | '||';
   readonly pipeline: Pipeline;
+  /** Lancé en arrière-plan (`&`). */
+  readonly background?: boolean;
+  /** Texte du pipeline, pour la liste des tâches. */
+  readonly source?: string;
 }
 
 /** Ligne complète : une liste de pipelines. */

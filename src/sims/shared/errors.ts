@@ -14,6 +14,7 @@ export const ERRNO_MESSAGES = {
   ENOSPC: 'Aucun espace disponible sur le périphérique',
   EINVAL: 'Argument invalide',
   EBUSY: 'Périphérique ou ressource occupé',
+  ESRCH: 'Aucun processus de ce type',
 } as const;
 
 /** Code d'erreur système. */

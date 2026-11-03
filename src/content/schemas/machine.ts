@@ -62,6 +62,16 @@ export const machineSpecSchema = z.strictObject({
     )
     .optional(),
   files: z.record(z.string().startsWith('/'), fileSpecSchema).optional(),
+  processes: z
+    .array(
+      z.strictObject({
+        user: z.string().min(1),
+        command: z.string().min(1),
+        cpu: z.number().min(0).max(100).optional(),
+        rss: z.number().int().positive().optional(),
+      }),
+    )
+    .optional(),
   network: z
     .strictObject({
       address: z.string().optional(),
