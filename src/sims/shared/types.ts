@@ -240,4 +240,6 @@ export interface Machine {
   readonly bootTime: number;
   /** Prochain PID attribué. */
   readonly nextPid: number;
+  /** Date du dernier `updatedb` (base de `locate`) ; par défaut, le démarrage. */
+  readonly locateDbTime?: number;
 }

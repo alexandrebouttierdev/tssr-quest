@@ -113,7 +113,10 @@ EXEMPLES
     const dirs: Entry[] = [];
     for (const operand of operands) {
       const path = env.resolve(operand);
-      const found = statPath(env.machine, path, env.user);
+      // Avec -l ou -d, un lien donné en argument est montré lui-même (lstat), pas sa cible.
+      const found = statPath(env.machine, path, env.user, {
+        follow: !(flags.has('l') || flags.has('d')),
+      });
       if (!found.ok) {
         stderr += `ls: impossible d'accéder à '${operand}': ${strerror(found.error)}\n`;
         exitCode = 2;

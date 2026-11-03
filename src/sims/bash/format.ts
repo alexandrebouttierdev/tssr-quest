@@ -6,6 +6,9 @@ import type { FsNode } from '@sims/shared/types';
 /** Collation française qui ignore la ponctuation, comme `ls` en fr_FR (strcoll). */
 const COLLATOR = new Intl.Collator('fr', { ignorePunctuation: true, sensitivity: 'base' });
 
+/** Départage à égalité : minuscules avant majuscules, comme la collation glibc fr_FR. */
+const TIE_BREAKER = new Intl.Collator('fr', { sensitivity: 'variant', caseFirst: 'lower' });
+
 /**
  * Compare deux noms de fichiers comme `ls` en locale française.
  *
@@ -14,7 +17,7 @@ const COLLATOR = new Intl.Collator('fr', { ignorePunctuation: true, sensitivity:
  * @returns Négatif, nul ou positif.
  */
 export function compareNames(a: string, b: string): number {
-  return COLLATOR.compare(a, b) || (a < b ? -1 : a > b ? 1 : 0);
+  return COLLATOR.compare(a, b) || TIE_BREAKER.compare(a, b) || (a < b ? -1 : a > b ? 1 : 0);
 }
 
 /**

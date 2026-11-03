@@ -19,30 +19,92 @@ import { sudo } from './sudo';
 import { systemctl } from './systemctl';
 import { falseCommand, trueCommand } from './true-false';
 import { whoami } from './whoami';
+import { cp, mv } from './cp-mv';
+import { find } from './find';
+import { egrep, grep } from './grep';
+import { head, tail } from './head-tail';
+import {
+  apropos,
+  date,
+  file,
+  groups,
+  history,
+  id,
+  nano,
+  stat,
+  type,
+  uname,
+  which,
+  whatis,
+  who,
+} from './info';
+import { ln } from './ln';
+import { locate, updatedb } from './locate';
+import { mkdir } from './mkdir';
+import { rmdir } from './rmdir';
+import { cut, less, more, printf, sleep, sort, tee, tr, uniq } from './text-tools';
+import { touch } from './touch';
+import { wc } from './wc';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
+    apropos,
     cat,
     cd,
     clear,
+    cp,
     curl,
+    cut,
+    date,
     df,
     du,
     echo,
+    egrep,
     exit,
     exportCommand,
     falseCommand,
+    file,
+    find,
+    grep,
+    groups,
+    head,
+    history,
     hostname,
+    id,
     journalctl,
+    less,
+    ln,
+    locate,
     ls,
     man,
+    mkdir,
+    more,
+    mv,
+    nano,
+    printf,
     pwd,
     rm,
+    rmdir,
+    sleep,
+    sort,
+    stat,
     sudo,
     systemctl,
+    tail,
+    tee,
+    touch,
+    tr,
     trueCommand,
+    type,
+    uname,
+    uniq,
+    updatedb,
+    wc,
+    whatis,
+    which,
+    who,
     whoami,
   ].map((c) => [c.name, c]),
 );

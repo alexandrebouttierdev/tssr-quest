@@ -10,7 +10,7 @@ const ACCESS_BITS: Record<AccessMode, number> = { read: 0o4, write: 0o2, exec: 0
 export const STICKY_BIT = 0o1000;
 
 /**
- * Groupes effectifs d'un compte : groupe principal puis groupes secondaires.
+ * Groupes effectifs d'un compte : groupe principal puis groupes secondaires (par GID).
  *
  * @param machine - Machine simulée.
  * @param user - Nom du compte.
@@ -21,8 +21,8 @@ export function userGroups(machine: Machine, user: string): string[] {
   if (!account) return [];
   const secondary = Object.values(machine.groups)
     .filter((g) => g.members.includes(user) && g.name !== account.group)
-    .map((g) => g.name)
-    .sort();
+    .sort((a, b) => a.gid - b.gid)
+    .map((g) => g.name);
   return [account.group, ...secondary];
 }
 

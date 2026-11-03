@@ -227,6 +227,8 @@ function runSimple(
     ctx,
     commands,
     Object.fromEntries(assignments),
+    false,
+    line,
   );
   if (outcome.machine) state.machine = outcome.machine;
   if (outcome.effects) state.effects.push(...outcome.effects);
@@ -275,6 +277,7 @@ function execute(
   commands: Readonly<Record<string, BashCommand>>,
   extraEnv: Readonly<Record<string, string>>,
   viaSudo = false,
+  line = '',
 ): CommandOutcome {
   const commandName = name.includes('/') ? name.slice(name.lastIndexOf('/') + 1) : name;
   const command = Object.hasOwn(commands, commandName) ? commands[commandName] : undefined;
@@ -297,8 +300,17 @@ function execute(
     env: {
       ...machine.session.env,
       ...extraEnv,
-      ...(viaSudo ? { USER: user, LOGNAME: user, HOME: account?.home ?? '/root' } : {}),
+      // sudo remplace le PATH par le secure_path de /etc/sudoers.
+      ...(viaSudo
+        ? {
+            USER: user,
+            LOGNAME: user,
+            HOME: account?.home ?? '/root',
+            PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+          }
+        : {}),
     },
+    line,
     stdin,
     isTerminal,
     ctx,
@@ -307,7 +319,19 @@ function execute(
       resolveUserPath(path, machine.session.cwd, machine.session.env['HOME'] ?? '/'),
     runAs: (asUser, argv) => {
       const [inner = '', ...innerArgs] = argv;
-      return execute(state, inner, innerArgs, asUser, stdin, isTerminal, ctx, commands, {}, true);
+      return execute(
+        state,
+        inner,
+        innerArgs,
+        asUser,
+        stdin,
+        isTerminal,
+        ctx,
+        commands,
+        {},
+        true,
+        line,
+      );
     },
   };
   return command.run(args, env);

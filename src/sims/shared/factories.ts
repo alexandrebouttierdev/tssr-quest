@@ -436,6 +436,9 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
   const etc = (path: string, content: string, mode = 0o644, group = 'root') => {
     fs[path] = file('root', group, mode, t, content);
   };
+  // Périphériques spéciaux utiles aux redirections (2>/dev/null…).
+  for (const device of ['null', 'zero', 'random', 'urandom', 'tty'])
+    fs[`/dev/${device}`] = file('root', device === 'tty' ? 'tty' : 'root', 0o666, t, '');
   etc('/etc/hostname', `${hostname}\n`);
   etc('/etc/hosts', hostsFile(net));
   etc('/etc/os-release', OS_RELEASE);
@@ -808,6 +811,8 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
     history: [],
     bootTime,
     nextPid: 2200,
+    // La base de locate est reconstruite chaque nuit par cron.daily (vers 6 h 25).
+    locateDbTime: now - 3 * 3_600_000,
   };
   return syncAccountFiles(machine, now);
 }

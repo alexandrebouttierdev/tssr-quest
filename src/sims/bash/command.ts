@@ -17,6 +17,8 @@ export interface CommandEnv {
   readonly isTerminal: boolean;
   /** Contexte de simulation (horloge, aléatoire). */
   readonly ctx: SimContext;
+  /** Ligne complète tapée par le joueur (pour `history`). */
+  readonly line: string;
   /** Transforme un chemin saisi en chemin absolu normalisé (gère `~`). */
   resolve(path: string): string;
   /** Exécute une autre commande sous un autre compte (utilisé par `sudo`). */

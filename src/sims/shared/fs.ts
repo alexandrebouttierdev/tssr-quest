@@ -194,6 +194,8 @@ export function writeFile(
   content: string,
   options: { append?: boolean; now: number },
 ): FsResult<Machine> {
+  // /dev/null avale tout ce qu'on y écrit.
+  if (normalizePath(path) === '/dev/null') return ok(machine);
   const added = new TextEncoder().encode(content).length;
   const found = statPath(machine, path, user);
   if (found.ok) {
