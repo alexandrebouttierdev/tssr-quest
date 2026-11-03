@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : 0.9 — bilan de la phase 0, E2E de la mission d'Hugo, tag `v0.1.0`
-- **Prochaine action** : phase 1 — commencer par les commandes Bash des chapitres 4 et 5 (lot 1 : `mkdir rmdir touch cp mv ln head tail wc grep cut sort uniq tr tee find stat file date uname id who history`), puis `sims/vim`
+- **Dernière tâche terminée** : phase 1 — commandes Bash du ch. 4, lot fichiers/filtres/recherche (mkdir … find, locate, stat, date, id…)
+- **Prochaine action** : phase 1 — processus et archives (ps, top, kill, killall, jobs/fg/bg/nohup + `&`, tar, gzip/gunzip, zip/unzip), puis `sims/vim`, puis commandes du ch. 5
 
 ## Environnement
 
@@ -47,6 +47,18 @@ Il est mis à jour à chaque tâche terminée.
 - [x] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
 - [x] React : `App`, `GameCanvas`, HUD minimal (niveau, XP), `DialogueBox`, `MissionWindow`, `Terminal`.
 - [x] Mission `linux-admin.intranet-down` jouable de bout en bout (vérifiée dans Chromium par script Playwright).
+
+## Phase 1 — Tranche Linux (suivi)
+
+**Simulateurs**
+- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 : fichiers, filtres, recherche, info ✅ ; processus, archives ⏳ ; ch. 5 ⏳
+- [ ] `sims/vim` et le composant `<VimEditor>`.
+- [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
+
+**Contenu** : 22 missions ch. 4-5, épreuves, badges, 3 quêtes secondaires — à faire.
+**Monde** : cartes DSI, couloir, formation ; PNJ ; Light2D ; portes et transitions ; sons — à faire.
+**Interface** : écran titre, création du personnage, menus, options, sauvegardes, montée de niveau, mobile — à faire.
+**Publication** : PWA, déploiement, itch.io — à faire.
 
 ## Décisions
 
