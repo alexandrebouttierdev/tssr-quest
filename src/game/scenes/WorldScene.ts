@@ -19,7 +19,6 @@ interface WorldKeys {
   left: Phaser.Input.Keyboard.Key[];
   right: Phaser.Input.Keyboard.Key[];
   run: Phaser.Input.Keyboard.Key;
-  interact: Phaser.Input.Keyboard.Key[];
 }
 
 /**
@@ -40,6 +39,9 @@ export class WorldScene extends Phaser.Scene {
   }
 
   create(): void {
+    // Phaser réutilise l'instance de scène à chaque redémarrage : on repart d'un état propre.
+    this.npcs = [];
+    this.wasMoving = false;
     const services = servicesOf(this);
     const settings = services.store.getState().settings;
     this.map = parseTiledMap(
@@ -149,9 +151,10 @@ export class WorldScene extends Phaser.Scene {
       left: [key(K.LEFT), key(K.Q), key(K.A)],
       right: [key(K.RIGHT), key(K.D)],
       run: key(K.SHIFT),
-      interact: [key(K.E), key(K.SPACE), key(K.ENTER)],
     };
-    for (const k of this.keys.interact) k.on('down', () => this.tryInteract());
+    // Événements du plugin clavier : ils sont retirés à l'arrêt de la scène (pas d'écouteur fantôme).
+    for (const name of ['keydown-E', 'keydown-SPACE', 'keydown-ENTER'])
+      kb.on(name, () => this.tryInteract());
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) =>
       this.onPointer(pointer.worldX, pointer.worldY),
     );

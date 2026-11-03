@@ -5,9 +5,9 @@ Il est mis à jour à chaque tâche terminée.
 
 ## État actuel
 
-- **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.7 monde Phaser + 0.8 interface React (HUD, dialogue, fenêtre de mission, terminal, notifications)
-- **Prochaine action** : 0.9 — test E2E Playwright de la mission d'Hugo, CI complète en local, bilan et tag `v0.1.0`
+- **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
+- **Dernière tâche terminée** : 0.9 — bilan de la phase 0, E2E de la mission d'Hugo, tag `v0.1.0`
+- **Prochaine action** : phase 1 — commencer par les commandes Bash des chapitres 4 et 5 (lot 1 : `mkdir rmdir touch cp mv ln head tail wc grep cut sort uniq tr tee find stat file date uname id who history`), puis `sims/vim`
 
 ## Environnement
 
@@ -103,4 +103,29 @@ Il est mis à jour à chaque tâche terminée.
 
 ## Bilans de phase
 
-_(à venir)_
+### Phase 0 — Fondations (`v0.1.0`, 3 novembre 2026)
+
+**Fait** : toutes les cases de la phase 0 de docs/11 (cochées aussi dans la roadmap).
+
+- Outillage : Vite 8, React 19, TypeScript 6 strict, ESLint 9 (dépendances entre dossiers, TSDoc obligatoire), Prettier, hooks Git, Vitest 4 (logique + interface), Playwright, CI GitHub Actions.
+- Socle : bus typé, aléatoire à graine, store Zustand + Immer (8 tranches), sauvegarde versionnée (Zod, migrations, export/import, IndexedDB gzip).
+- Simulateurs : machine Debian 12 (fs avec droits POSIX, comptes, services systemd avec pannes réévaluées, disques, journaux) ; Bash (lexer, parser, expansion, interpréteur, pipes, redirections) et 21 commandes aux sorties fr_FR fidèles.
+- Contenu : schémas Zod, compilation, validation croisée, rejeu des solutions ; chapitre 5 + mission `linux-admin.intranet-down`, dialogues d'Hugo, 2 fiches.
+- Moteur : missions (5 types d'étapes, conditions, indices, erreurs, XP), dialogues (choix, effets, conditions), progression, orchestrateur.
+- Monde : salle serveurs Tiled, joueur 8 directions + clic/A*, Hugo recoloré avec marqueur, lumière d'ambiance, LED, poussière, bloom.
+- Interface : HUD, dialogues, fenêtre de mission (terminal, choix, saisie, ordre), notifications.
+
+**Chiffres** : 550 tests unitaires et de composants, 2 tests E2E ; couverture globale 90,9 % des lignes (sims 96 %, engine > 90 %, core 99 %, content 97 %, ui 97 %) ; JS 520 Ko gzip.
+
+**Reste / reporté** (noté dans Décisions) : écran titre et création du personnage, portraits, Light2D, sudo avec mot de passe, `&`, variantes de révision, complétion des sous-commandes — tout cela est prévu en phase 1.
+
+**Tester le jeu** :
+
+```bash
+npm install
+npm run dev            # http://localhost:5173 (compile aussi le contenu)
+```
+
+Flèches/ZQSD (ou WASD) pour marcher, Maj pour courir, clic pour aller quelque part. Va voir Hugo (le « ! » à droite de la salle), appuie sur E, puis dans le terminal : `systemctl status apache2`, `df -h`, `ls -lh /var/log`, `sudo rm /var/log/debug.log`, `sudo systemctl restart apache2`. La partie est sauvegardée automatiquement en fin de mission (IndexedDB) ; pour repartir de zéro, vider les données du site.
+
+Vérifications : `npm run lint && npm run typecheck && npm run test:coverage && npm run test:content && npm run build && npm run test:e2e`.

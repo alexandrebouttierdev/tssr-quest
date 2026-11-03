@@ -14,7 +14,19 @@ export default defineConfig({
     baseURL: 'http://localhost:4173',
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 810 },
+        // WebGL logiciel : Phaser, la lumière et le bloom tournent aussi sans GPU.
+        launchOptions: {
+          args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+        },
+      },
+    },
+  ],
   webServer: {
     command:
       'npm run content:build && npx vite build --mode test && npx vite preview --port 4173 --strictPort',

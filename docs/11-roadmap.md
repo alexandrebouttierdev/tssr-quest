@@ -16,35 +16,35 @@ Le jeu se construit en **six phases**. Chaque phase se termine par une version j
 Objectif : toutes les briques techniques en place, avec une seule mission jouable de bout en bout.
 
 **Projet et outillage**
-- [ ] Initialiser Vite + React + TypeScript strict, alias d'import, ESLint, Prettier, hooks Git.
-- [ ] Configurer Vitest (couverture et seuils), Testing Library, Playwright, CI GitHub Actions.
-- [ ] Créer l'arborescence de `02-architecture.md` avec un `README.md` par dossier.
+- [x] Initialiser Vite + React + TypeScript strict, alias d'import, ESLint, Prettier, hooks Git.
+- [x] Configurer Vitest (couverture et seuils), Testing Library, Playwright, CI GitHub Actions.
+- [x] Créer l'arborescence de `02-architecture.md` avec un `README.md` par dossier.
 
 **Socle**
-- [ ] `core/events` : bus typé + tests.
-- [ ] `core/store` : store Zustand vanilla + hook React + tranches `player`, `progress`, `progression`, `ui`, `settings` + tests.
-- [ ] `core/random` : générateur à graine + tests.
-- [ ] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
+- [x] `core/events` : bus typé + tests.
+- [x] `core/store` : store Zustand vanilla + hook React + tranches `player`, `progress`, `progression`, `ui`, `settings` + tests.
+- [x] `core/random` : générateur à graine + tests.
+- [x] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
 
 **Contenu**
-- [ ] Schémas Zod : chapitre, mission, étapes `dialogue`, `choice`, `input`, `ordering`, `terminal` ; dialogue ; PNJ ; zone.
-- [ ] `scripts/build-content.ts` et plugin Vite de rechargement à chaud.
-- [ ] `scripts/validate-content.ts` et `scripts/replay-solutions.ts`.
+- [x] Schémas Zod : chapitre, mission, étapes `dialogue`, `choice`, `input`, `ordering`, `terminal` ; dialogue ; PNJ ; zone.
+- [x] `scripts/build-content.ts` et plugin Vite de rechargement à chaud.
+- [x] `scripts/validate-content.ts` et `scripts/replay-solutions.ts`.
 
 **Simulateur Bash (version 1)**
-- [ ] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
-- [ ] `sims/bash` : lexer, parser, interpréteur (pipes, redirections, `;` `&&` `||`, variables, jokers).
-- [ ] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide`.
+- [x] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
+- [x] `sims/bash` : lexer, parser, interpréteur (pipes, redirections, `;` `&&` `||`, variables, jokers).
+- [x] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide`.
 
 **Moteur**
-- [ ] `engine/missions` : runner, registre d'étapes, conditions `command`, `service`, `disk`, `file`, `all/any/not`.
-- [ ] `engine/dialogue` : interpréteur de nœuds, choix, effets, conditions.
-- [ ] `engine/progression` : XP, niveaux, compétences.
+- [x] `engine/missions` : runner, registre d'étapes, conditions `command`, `service`, `disk`, `file`, `all/any/not`.
+- [x] `engine/dialogue` : interpréteur de nœuds, choix, effets, conditions.
+- [x] `engine/progression` : XP, niveaux, compétences.
 
 **Jeu et interface**
-- [ ] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, chargement d'une carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
-- [ ] React : `App`, `GameCanvas`, HUD minimal (niveau, XP), `DialogueBox`, `MissionWindow`, `Terminal`.
-- [ ] Mission `linux-admin.intranet-down` jouable de bout en bout.
+- [x] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, chargement d'une carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
+- [x] React : `App`, `GameCanvas`, HUD minimal (niveau, XP), `DialogueBox`, `MissionWindow`, `Terminal`.
+- [x] Mission `linux-admin.intranet-down` jouable de bout en bout.
 
 **Validation de la phase** : la mission d'Hugo fonctionne dans le navigateur, la CI est verte, couverture au-dessus des seuils.
 

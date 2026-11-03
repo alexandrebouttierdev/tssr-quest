@@ -33,6 +33,7 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: true,
-    chunkSizeWarningLimit: 1600,
+    // Phaser représente l'essentiel du paquet (≈ 520 Ko compressés, budget : 5 Mo).
+    chunkSizeWarningLimit: 2000,
   },
 });
