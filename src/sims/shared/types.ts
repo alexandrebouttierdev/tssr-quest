@@ -212,6 +212,8 @@ export interface Session {
   readonly env: Readonly<Record<string, string>>;
   /** Vrai quand `sudo` a déjà reçu le mot de passe (horodatage sudo). */
   readonly sudoAuthenticated: boolean;
+  /** Code de retour de la dernière commande (`$?`). */
+  readonly lastExitCode: number;
 }
 
 /** Une machine simulée : poste client, serveur Linux ou Windows. */

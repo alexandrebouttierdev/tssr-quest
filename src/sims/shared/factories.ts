@@ -785,6 +785,7 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       cwd,
       previousCwd: null,
       sudoAuthenticated: false,
+      lastExitCode: 0,
       env: {
         HOME: account.home,
         USER: sessionUser,
