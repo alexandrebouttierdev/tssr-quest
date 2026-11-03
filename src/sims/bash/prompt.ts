@@ -8,6 +8,8 @@ import type { Machine } from '@sims/shared/types';
  * @returns L'invite, sans espace finale.
  */
 export function bashPrompt(machine: Machine): string {
+  // Une question en attente (mot de passe…) remplace l'invite du shell.
+  if (machine.session.pending) return machine.session.pending.prompt.trimEnd();
   const { user, cwd, env } = machine.session;
   const home = env['HOME'] ?? '';
   const shown =

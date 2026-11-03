@@ -169,7 +169,7 @@ describe('commande sudo', () => {
     expect(runLine(machine, 'sudo -u fantome ls').stderr).toBe(
       'sudo: utilisateur inconnu : fantome\n',
     );
-    expect(runLine(machine, 'sudo -i').stderr).toContain("l'option -i n'est pas disponible");
+    expect(runLine(machine, 'sudo -k').stderr).toContain("l'option -k n'est pas disponible");
     expect(runLine(machine, 'sudo').stderr).toContain('utilisation : sudo');
   });
 });

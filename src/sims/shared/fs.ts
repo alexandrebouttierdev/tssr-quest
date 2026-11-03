@@ -242,7 +242,7 @@ export function writeFile(
       type: 'file',
       owner: user,
       group: inheritedGroup(machine, user, parentNode),
-      mode: 0o666 & ~DEFAULT_UMASK,
+      mode: 0o666 & ~(machine.session.umask ?? DEFAULT_UMASK),
       mtime: options.now,
       content,
     }),
@@ -295,7 +295,7 @@ export function makeDir(
     owner: user,
     group: inheritedGroup(current, user, parentNode),
     // Un dossier créé dans un dossier setgid hérite aussi du bit setgid.
-    mode: (0o777 & ~DEFAULT_UMASK) | (parentNode.mode & SETGID_BIT),
+    mode: (0o777 & ~(current.session.umask ?? DEFAULT_UMASK)) | (parentNode.mode & SETGID_BIT),
     mtime: options.now,
   };
   return ok(setNode(current, joinPath(parent.value.path, basename(target)), dir));

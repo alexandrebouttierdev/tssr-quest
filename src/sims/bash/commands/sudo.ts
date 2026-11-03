@@ -1,4 +1,5 @@
 import { userGroups } from '@sims/shared/permissions';
+import { switchUser } from '../pending';
 import { failure, type BashCommand } from '../command';
 
 /** Commande `sudo` : exécute une commande en tant que root (ou autre compte avec -u). */
@@ -30,6 +31,10 @@ EXEMPLES
       if (option === '-u') {
         target = args[index + 1] ?? '';
         index += 2;
+      } else if (option === '-i' || option === '-s') {
+        // Shell root : sudo -i (connexion) ou sudo -s ; exit pour revenir.
+        if (env.user !== 'root' && !userGroups(env.machine, env.user).includes('sudo')) break;
+        return { exitCode: 0, machine: switchUser(env.machine, 'root', option === '-i') };
       } else if (option === '--') {
         index++;
         break;

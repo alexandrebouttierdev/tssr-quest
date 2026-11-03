@@ -9,6 +9,7 @@ import type { BashCommand, CommandEnv, CommandOutcome } from './command';
 import { ExpansionError, expandToString, expandWords, type ExpandEnv } from './expand';
 import { BashSyntaxError } from './lexer';
 import { parse } from './parser';
+import { answerPending } from './pending';
 
 /** Morceau de sortie affiché au terminal, dans l'ordre d'écriture. */
 export interface ShellOutput {
@@ -59,6 +60,14 @@ export function runLine(
   commands: Readonly<Record<string, BashCommand>>,
 ): ShellResult {
   const state: RunState = { machine, output: [], effects: [] };
+  // Une question est en attente (mot de passe, confirmation) : la ligne en est la réponse.
+  if (machine.session.pending) {
+    const answered = answerPending(machine, line, ctx);
+    state.machine = answered.machine;
+    if (answered.stdout) state.output.push({ stream: 'stdout', text: answered.stdout });
+    if (answered.stderr) state.output.push({ stream: 'stderr', text: answered.stderr });
+    return finish(state, answered.exitCode);
+  }
   let script: Script;
   try {
     script = parse(line);

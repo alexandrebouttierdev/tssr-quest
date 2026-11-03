@@ -46,6 +46,8 @@ export type StepView =
       readonly lines: readonly TerminalLine[];
       /** Éditeur ouvert par `vim` dans ce terminal, s'il y en a un. */
       readonly editor?: EditorView;
+      /** La saisie attendue est un mot de passe (masquée). */
+      readonly secret?: boolean;
     }
   | {
       readonly type: 'editor';

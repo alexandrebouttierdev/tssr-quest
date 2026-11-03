@@ -70,6 +70,16 @@ export interface UserAccount {
   readonly password: string | null;
   /** Compte verrouillé (`passwd -l`, `usermod -L`). */
   readonly locked: boolean;
+  /** Jour du dernier changement de mot de passe (jours depuis 1970) ; 0 = à changer à la prochaine connexion. */
+  readonly lastChange?: number;
+  /** Durée de validité maximale du mot de passe, en jours (99999 = illimitée). */
+  readonly maxDays?: number;
+  /** Délai minimal entre deux changements, en jours. */
+  readonly minDays?: number;
+  /** Jours d'avertissement avant l'expiration. */
+  readonly warnDays?: number;
+  /** Date d'expiration du compte (`AAAA-MM-JJ`), ou `null`. */
+  readonly expires?: string | null;
 }
 
 /** Groupe local. */
@@ -214,6 +224,18 @@ export interface Job {
   readonly endsAt: number | null;
 }
 
+/** Question en attente d'une réponse du joueur (mot de passe, confirmation…). */
+export interface PendingPrompt {
+  /** Gestionnaire qui traitera la réponse. */
+  readonly kind: string;
+  /** Texte affiché à la place de l'invite du shell. */
+  readonly prompt: string;
+  /** Saisie masquée (mot de passe). */
+  readonly secret: boolean;
+  /** Données propres au gestionnaire. */
+  readonly data: Readonly<Record<string, string>>;
+}
+
 /** Session ouverte sur la machine. */
 export interface Session {
   readonly user: string;
@@ -227,6 +249,12 @@ export interface Session {
   readonly lastExitCode: number;
   /** Tâches en arrière-plan de la session. */
   readonly jobs?: readonly Job[];
+  /** Masque de création des fichiers (022 par défaut). */
+  readonly umask?: number;
+  /** Question en attente (passwd, su, adduser…). */
+  readonly pending?: PendingPrompt;
+  /** Session d'où l'on vient (après su ou sudo -i) : `exit` y retourne. */
+  readonly parent?: Session;
 }
 
 /** Une machine simulée : poste client, serveur Linux ou Windows. */

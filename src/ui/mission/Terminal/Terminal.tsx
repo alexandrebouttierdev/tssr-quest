@@ -17,6 +17,8 @@ export interface TerminalProps {
   readonly disabled?: boolean;
   /** Message affiché au-dessus de la sortie (aide du jeu). */
   readonly hint?: string;
+  /** Saisie masquée (mot de passe), jamais gardée dans l'historique. */
+  readonly secret?: boolean;
 }
 
 /** Plus long préfixe commun d'une liste de mots. */
@@ -41,6 +43,7 @@ export function Terminal({
   onComplete,
   disabled = false,
   hint,
+  secret = false,
 }: TerminalProps) {
   const [value, setValue] = useState('');
   const [history, setHistory] = useState<string[]>([]);
@@ -56,7 +59,7 @@ export function Terminal({
 
   const submit = (line: string) => {
     onSubmit(line);
-    if (line.trim()) {
+    if (line.trim() && !secret) {
       setHistory((h) => [...h, line]);
       setCursor(history.length + 1);
     } else {
@@ -144,7 +147,8 @@ export function Terminal({
           ref={inputRef}
           id="terminal-input"
           className={styles['input']}
-          aria-label={STRINGS.terminal.label}
+          aria-label={secret ? STRINGS.terminal.password : STRINGS.terminal.label}
+          type={secret ? 'password' : 'text'}
           value={value}
           disabled={disabled}
           autoComplete="off"

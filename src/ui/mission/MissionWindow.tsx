@@ -157,6 +157,7 @@ function MissionStep({ run }: { run: MissionRunView }) {
               <Terminal
                 prompt={step.prompt}
                 lines={step.lines}
+                secret={step.secret ?? false}
                 hint={STRINGS.terminal.welcome}
                 onSubmit={(line) => submit({ line })}
                 onComplete={complete}

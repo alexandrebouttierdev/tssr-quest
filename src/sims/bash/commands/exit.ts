@@ -15,6 +15,10 @@ DESCRIPTION
        Termine le shell et ferme la session SSH. Le code de retour vaut CODE,
        ou celui de la dernière commande.`,
   run(args, env) {
+    // Dans une session ouverte par su ou sudo -i, exit revient à la session d'origine.
+    const parent = env.machine.session.parent;
+    if (parent)
+      return { exitCode: 0, stdout: 'déconnexion\n', machine: { ...env.machine, session: parent } };
     const raw = args[0];
     if (raw !== undefined && !/^-?\d+$/.test(raw)) {
       return {

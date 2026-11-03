@@ -78,6 +78,7 @@ export const STRINGS = {
   },
   terminal: {
     label: 'Commande',
+    password: 'Mot de passe (saisie masquée)',
     output: 'Sortie du terminal',
     welcome: 'Tape « aide » pour voir les commandes disponibles.',
     keys: 'Touches rapides',

@@ -49,11 +49,38 @@ import { bg, fg, jobs, kill, killall, nohup, ps, top } from './processes';
 import { gunzip, gzip, tar, unzip, zcat, zip } from './archives';
 import { sed } from './sed';
 import { vi, vim } from './vim';
+import {
+  adduser,
+  chage,
+  gpasswd,
+  groupadd,
+  groupdel,
+  passwd,
+  su,
+  useradd,
+  userdel,
+  usermod,
+} from './accounts';
+import { chgrp, chmod, chown, umask } from './permissions';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
+    adduser,
+    chage,
+    chgrp,
+    chmod,
+    chown,
+    gpasswd,
+    groupadd,
+    groupdel,
+    passwd,
+    su,
+    umask,
+    useradd,
+    userdel,
+    usermod,
     vi,
     vim,
     sed,
