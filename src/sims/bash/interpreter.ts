@@ -130,7 +130,22 @@ function runBackground(
   const source = item.source ?? '';
   const words = source.split(/\s+/);
   let i = 0;
-  while (words[i] === 'sudo' || words[i] === 'nohup') i++;
+  let niceness = 0;
+  while (words[i] === 'sudo' || words[i] === 'nohup' || words[i] === 'nice') {
+    // nice lance le programme avec une priorité plus basse : ps montre le programme lui-même.
+    if (words[i] === 'nice') {
+      if (words[i + 1] === '-n') {
+        niceness = Number(words[i + 2] ?? 10);
+        i += 2;
+      } else if (/^-\d+$/.test(words[i + 1] ?? '')) {
+        niceness = Number((words[i + 1] ?? '-10').slice(1));
+        i++;
+      } else {
+        niceness = 10;
+      }
+    }
+    i++;
+  }
   const program = words[i] ?? '';
   const now = ctx.now.getTime();
   let endsAt: number | null | undefined;
@@ -164,13 +179,15 @@ function runBackground(
         pid,
         ppid: 1187,
         user: session.user,
-        command: source,
+        // nice exécute le programme : ps montre le programme, pas « nice -n 10 … ».
+        command: source.replace(/\bnice\s+(?:-n\s+-?\d+\s+|-\d+\s+)?/, ''),
         cpu: program === 'yes' ? 99 : 0,
         rss: 1024,
         vsz: 5480,
         tty: 'pts/0',
-        stat: 'S',
+        stat: niceness > 0 ? 'SN' : niceness < 0 ? 'S<' : 'S',
         start: now,
+        ...(niceness !== 0 ? { nice: Math.max(-20, Math.min(19, niceness)) } : {}),
       },
     ],
     session: { ...session, jobs: [...jobs, { id, pid, command: `${source} &`, endsAt }] },

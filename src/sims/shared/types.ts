@@ -157,6 +157,8 @@ export interface Process {
   readonly stat: string;
   /** Date de lancement (ms). */
   readonly start: number;
+  /** Gentillesse (`nice`) de -20 à 19 ; 0 par défaut. */
+  readonly nice?: number;
 }
 
 /** Interface réseau. */

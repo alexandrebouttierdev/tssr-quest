@@ -1,4 +1,5 @@
 import { writeFile } from '@sims/shared/fs';
+import { loadText, memoryStats, uptimeParts, uptimeText } from '@sims/shared/system';
 import {
   cpuSeconds,
   parseSignal,
@@ -182,20 +183,16 @@ DESCRIPTION
     const now = env.ctx.now.getTime();
     const machine = env.machine;
     const p = parisParts(now);
-    const up = Math.floor((now - machine.bootTime) / 1000);
-    const days = Math.floor(up / 86_400);
-    const hours = Math.floor((up % 86_400) / 3600);
-    const minutes = Math.floor((up % 3600) / 60);
-    const load = machine.processes.reduce((sum, proc) => sum + proc.cpu, 0) / 100;
-    const used = machine.processes.reduce((sum, proc) => sum + proc.rss, 0) / 1024 + 300;
-    const total = TOTAL_MEMORY_KIB / 1024;
+    const mem = memoryStats(machine);
+    const used = mem.used / 1024;
+    const total = mem.total / 1024;
     const cpuBusy = Math.min(100, machine.processes.reduce((sum, proc) => sum + proc.cpu, 0) + 1.6);
     const header = [
-      `top - ${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}:${String(p.second).padStart(2, '0')} up ${days} days, ${String(hours).padStart(2)}:${String(minutes).padStart(2, '0')},  1 user,  load average: ${load.toFixed(2).replace('.', ',')}, ${(load * 0.6).toFixed(2).replace('.', ',')}, ${(load * 0.3).toFixed(2).replace('.', ',')}`,
+      `top - ${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}:${String(p.second).padStart(2, '0')} ${uptimeText(uptimeParts(machine, now))},  1 user,  load average: ${loadText(machine)}`,
       `Tâches: ${String(machine.processes.length + 1).padStart(3)} total,   1 en cours, ${String(machine.processes.length).padStart(3)} en veille,   0 arrêté,   0 zombie`,
       `%Cpu(s): ${fr(cpuBusy * 0.8).padStart(4)} ut, ${fr(cpuBusy * 0.2).padStart(4)} sy,  0,0 ni, ${fr(100 - cpuBusy).padStart(4)} id,  0,0 wa,  0,0 hi,  0,0 si,  0,0 st`,
-      `MiB Mem : ${fr(total).padStart(8)} total, ${fr(total - used - 746).padStart(8)} libr, ${fr(used).padStart(8)} util, ${fr(746.2).padStart(8)} tamp/cache`,
-      `MiB Éch : ${fr(975).padStart(8)} total, ${fr(975).padStart(8)} libr, ${fr(0).padStart(8)} util. ${fr(total - used).padStart(8)} dispo Mem`,
+      `MiB Mem : ${fr(total).padStart(8)} total, ${fr(mem.free / 1024).padStart(8)} libr, ${fr(used).padStart(8)} util, ${fr(mem.buffCache / 1024).padStart(8)} tamp/cache`,
+      `MiB Éch : ${fr(mem.swapTotal / 1024).padStart(8)} total, ${fr((mem.swapTotal - mem.swapUsed) / 1024).padStart(8)} libr, ${fr(mem.swapUsed / 1024).padStart(8)} util. ${fr(mem.available / 1024).padStart(8)} dispo Mem`,
       '',
     ];
     const sorted = [...machine.processes]
@@ -208,8 +205,8 @@ DESCRIPTION
         return [
           String(proc.pid),
           proc.user.slice(0, 8),
-          '20',
-          '0',
+          String(20 + (proc.nice ?? 0)),
+          String(proc.nice ?? 0),
           String(proc.vsz),
           String(proc.rss),
           String(Math.round(proc.rss * 0.6)),
