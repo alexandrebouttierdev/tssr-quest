@@ -222,6 +222,16 @@ export interface CronEntry {
   readonly command: string;
 }
 
+/** Travail programmé par `at`. */
+export interface AtJob {
+  readonly id: number;
+  readonly user: string;
+  /** Date de lancement (ms). */
+  readonly time: number;
+  /** Commandes à exécuter (une par ligne). */
+  readonly commands: string;
+}
+
 /** Trace d'une commande simple exécutée, lue par les conditions de mission. */
 export interface CommandRecord {
   /** Commande simple après expansion (`sudo systemctl status apache2`). */
@@ -302,6 +312,8 @@ export interface Machine {
   /** Journaux par unité (`apache2`, `ssh`) ; la clé `kernel` regroupe le noyau. */
   readonly logs: Readonly<Record<string, readonly LogLine[]>>;
   readonly crontabs: Readonly<Record<string, readonly CronEntry[]>>;
+  /** Travaux `at` en attente. */
+  readonly atJobs?: readonly AtJob[];
   readonly session: Session;
   /** Historique des commandes exécutées (lu par les conditions `command`). */
   readonly history: readonly CommandRecord[];

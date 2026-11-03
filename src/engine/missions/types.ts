@@ -1,5 +1,6 @@
 import type { FeedbackView, TerminalLine } from '@core/store/mission-run.slice';
 import type { Rng } from '@core/random/rng';
+import type { EditorHook } from '@sims/shared/simulator';
 import type { Machine } from '@sims/shared/types';
 import type { VimState } from '@sims/vim';
 
@@ -15,6 +16,8 @@ export type StepData =
       readonly type: 'terminal';
       readonly lines: readonly TerminalLine[];
       readonly editor?: VimState | null;
+      /** Action à mener quand l'éditeur se fermera (`crontab -e`). */
+      readonly editorHook?: EditorHook | null;
     }
   | { readonly type: 'editor'; readonly editor: VimState }
   | { readonly type: 'choice' }

@@ -1,6 +1,7 @@
 import type { CommandLineSimulator } from '@sims/shared/simulator';
 import { formatSystemdTimestamp } from '@sims/shared/time-format';
 import type { Machine } from '@sims/shared/types';
+import { finishCrontabEdit } from './commands/cron';
 import { ALL_BASH_COMMANDS } from './commands/registry';
 import { completeBash } from './completion';
 import { runLine } from './interpreter';
@@ -28,6 +29,16 @@ export const bashSimulator: CommandLineSimulator<Machine> = {
     };
   },
   complete: (state, partial) => completeBash(state, partial, ALL_BASH_COMMANDS),
+  afterEdit(state, hook, ctx) {
+    const result = finishCrontabEdit(state, hook, ctx.now.getTime());
+    return {
+      state: result.machine,
+      stdout: '',
+      stderr: result.stderr,
+      exitCode: result.exitCode,
+      output: [{ stream: 'stderr', text: result.stderr }],
+    };
+  },
   banner(state, ctx) {
     const lastLogin = formatSystemdTimestamp(ctx.now.getTime() - 25 * 60_000).split(' ');
     // sshd affiche la dernière connexion en anglais, au format de ctime().

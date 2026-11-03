@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : free, uptime, nice, renice (mémoire et charge partagées avec top dans `sims/shared/system.ts`)
-- **Prochaine action** : phase 1 — commandes du ch. 5 restantes : planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, fstab, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron ; puis les missions des ch. 4-5
+- **Dernière tâche terminée** : planification (crontab -l/-e/-r, fichier, `crontab -` ; at, atq, atrm) + sous-shells `( … )` + Ctrl+D dans le terminal
+- **Prochaine action** : phase 1 — commandes du ch. 5 restantes : disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, fstab, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron ; puis les missions des ch. 4-5
 
 ## Environnement
 
@@ -53,7 +53,7 @@ Il est mis à jour à chaque tâche terminée.
 ## Phase 1 — Tranche Linux (suivi)
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice) ✅
+- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at) ✅
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
 
@@ -122,9 +122,14 @@ Il est mis à jour à chaque tâche terminée.
 | D55 | 2026-11-03 | `ping` en français (iputils 20221126 traduit sous Debian : « 64 octets de… temps= »), `ifupdown` et `iproute2` en anglais (non traduits), sauf les erreurs système (strerror) ; sans `-c`, 4 paquets puis « ^C » | Fidélité à une Debian 12 en fr_FR ; le terminal n'a pas de sortie continue. |
 | D56 | 2026-11-03 | Numéro d'inœud de `stat` dérivé du chemin (stable) | Il changeait à chaque fichier ajouté au système simulé. |
 | D57 | 2026-11-03 | `free` en français (procps-ng traduit : « utilisé, libre, tamp/cache, disponible, Échange ») ; `uptime`, `top` (1re ligne) et `renice` (util-linux, traductions dans un paquet non installé) en anglais, erreurs système en français | Fidélité à une Debian 12 en fr_FR. |
+| D58 | 2026-11-03 | Tables cron dans /var/spool/cron/crontabs/<compte> (en-tête « DO NOT EDIT », mode 600, groupe crontab) ; `crontab -e` = vim sur /tmp/crontab.XXXXXX/crontab puis installation à la fermeture via `EditorHook` / `afterEdit` du simulateur ; pas de question « retry » (les modifications restent dans le fichier temporaire) | Fidèle à Debian (cron 3.0pl1) ; le terminal n'a pas d'éditeur au choix (select-editor) : vim d'office. |
+| D59 | 2026-11-03 | `at` dans un paquet non installé par défaut (comme sur Debian) ; invite « at> » terminée par Ctrl+D (nouvelle touche du terminal, affichée `<EOT>`) | Pédagogie (installer l'outil) et fidélité. |
+| D60 | 2026-11-03 | Sous-shells `( … )` dans le simulateur Bash (tube et redirections en sortie ; la session est rétablie) | Recette classique `(crontab -l; echo …) | crontab -`. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés
+
+- Corrigé : le terminal de mission ignorait les lignes vides, ce qui bloquait les questions dont la réponse par défaut est Entrée (champs d'adduser, `[O/n]` d'APT, invite `at>`). Test ajouté (`vim-steps.test.ts`).
 
 - Un test a échoué une fois sous `test:coverage` pendant la refonte puis est passé trois fois de suite ; cause non identifiée (probablement un minuteur des tests du HUD sous charge). À surveiller.
 

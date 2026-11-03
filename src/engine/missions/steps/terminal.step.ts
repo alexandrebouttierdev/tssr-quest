@@ -122,8 +122,26 @@ export const terminalStep: StepHandler<TerminalStep> = {
         key.data.key,
         ctx.now.getTime(),
       );
+      const hook = run.step.data.type === 'terminal' ? (run.step.data.editorHook ?? null) : null;
+      // Éditeur fermé après `crontab -e` : crontab vérifie et installe la table.
+      if (result.editor === null && hook && bashSimulator.afterEdit) {
+        const after = bashSimulator.afterEdit(result.machine, hook, { now: ctx.now, rng: ctx.rng });
+        const lines = [...previous];
+        for (const chunk of after.output ?? []) lines.push(...toLines(chunk.stream, chunk.text));
+        return {
+          data: {
+            type: 'terminal',
+            lines: lines.slice(-MAX_LINES),
+            editor: null,
+            editorHook: null,
+          },
+          machines: { ...run.machines, [step.machine]: after.state },
+          verdict: null,
+          feedback: run.step.feedback,
+        };
+      }
       return {
-        data: { type: 'terminal', lines: previous, editor: result.editor },
+        data: { type: 'terminal', lines: previous, editor: result.editor, editorHook: hook },
         machines: { ...run.machines, [step.machine]: result.machine },
         verdict: null,
         feedback: run.step.feedback,
@@ -134,9 +152,11 @@ export const terminalStep: StepHandler<TerminalStep> = {
     const machine = machineOf(step, run);
     const echo: TerminalLine = {
       kind: 'input',
-      text: `${bashSimulator.prompt(machine)} ${parsed.data.line}`,
+      // Ctrl+D s'affiche « <EOT> », comme dans la console.
+      text: `${bashSimulator.prompt(machine)} ${parsed.data.line === '\u0004' ? '<EOT>' : parsed.data.line}`,
     };
-    if (parsed.data.line.trim() === '') {
+    // Une ligne vide ne fait rien… sauf répondre à une question en attente (Entrée = défaut).
+    if (parsed.data.line.trim() === '' && !machine.session.pending) {
       return {
         data: { type: 'terminal', lines: [...previous, echo] },
         verdict: null,
@@ -151,13 +171,14 @@ export const terminalStep: StepHandler<TerminalStep> = {
     const editPath = result.effects?.find((e) => e.type === 'open-editor');
     const editor =
       editPath?.type === 'open-editor' ? openEditor(result.state, editPath.path) : null;
+    const editorHook = editPath?.type === 'open-editor' ? (editPath.onClose ?? null) : null;
     // Erreur comptée : une action qui modifie l'état (pas une lecture) a échoué.
     const failedAction =
       result.exitCode !== 0 &&
       result.state.history.at(-1)?.ok === false &&
       signature(parsed.data.line) !== null;
     return {
-      data: { type: 'terminal', lines: lines.slice(-MAX_LINES), editor },
+      data: { type: 'terminal', lines: lines.slice(-MAX_LINES), editor, editorHook },
       machines: { ...run.machines, [step.machine]: result.state },
       verdict: failedAction ? false : null,
       feedback: kept ? { kind: 'info', code: 'session-kept-open' } : null,

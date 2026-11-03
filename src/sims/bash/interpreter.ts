@@ -4,12 +4,12 @@ import { resolveUserPath } from '@sims/shared/path';
 import type { SimEffect } from '@sims/shared/simulator';
 import type { CommandRecord, Machine, SimContext } from '@sims/shared/types';
 import { USR_BIN, USR_SBIN } from '@sims/shared/debian-files';
-import type { Pipeline, Script, SimpleCommand } from './ast';
+import type { Pipeline, Script, SimpleCommand, Subshell } from './ast';
 import type { BashCommand, CommandEnv, CommandOutcome } from './command';
 import { ExpansionError, expandToString, expandWords, type ExpandEnv } from './expand';
 import { BashSyntaxError } from './lexer';
 import { parse } from './parser';
-import { answerPending } from './pending';
+import { answerPending, END_OF_INPUT } from './pending';
 
 /** Morceau de sortie affiché au terminal, dans l'ordre d'écriture. */
 export interface ShellOutput {
@@ -68,6 +68,8 @@ export function runLine(
     if (answered.stderr) state.output.push({ stream: 'stderr', text: answered.stderr });
     return finish(state, answered.exitCode);
   }
+  // Ctrl+D sur une ligne vide sans question en attente : rien à faire ici.
+  if (line === END_OF_INPUT) return finish(state, machine.session.lastExitCode);
   let script: Script;
   try {
     script = parse(line);
@@ -224,6 +226,29 @@ function runPipeline(
   return status;
 }
 
+/** Signal interne : la commande est un sous-shell, sans mots à développer. */
+class SubshellMarker extends Error {}
+
+/**
+ * Exécute un sous-shell `( … )` : les fichiers modifiés restent, mais la session
+ * (répertoire courant, variables) revient à son état d'avant, comme dans bash.
+ */
+function runSubshell(
+  state: RunState,
+  body: string,
+  ctx: SimContext,
+  commands: Readonly<Record<string, BashCommand>>,
+): CommandOutcome {
+  const sub = runLine(state.machine, body, ctx, commands);
+  state.machine = { ...sub.machine, session: state.machine.session };
+  const join = (stream: 'stdout' | 'stderr') =>
+    sub.output
+      .filter((c) => c.stream === stream)
+      .map((c) => c.text)
+      .join('');
+  return { stdout: join('stdout'), stderr: join('stderr'), exitCode: sub.exitCode, ok: true };
+}
+
 /** Contexte d'expansion construit à partir de l'état courant. */
 function expandEnv(
   state: RunState,
@@ -255,7 +280,7 @@ function expandEnv(
 /** Exécute une commande simple ; renvoie son code et ce qu'elle écrit dans le tube. */
 function runSimple(
   state: RunState,
-  command: SimpleCommand,
+  command: SimpleCommand | Subshell,
   stdin: string,
   isLast: boolean,
   line: string,
@@ -267,13 +292,19 @@ function runSimple(
   let argv: string[];
   let assignments: [string, string][];
   try {
+    if (command.type === 'subshell') throw new SubshellMarker();
     const env = expandEnv(state, ctx, commands);
     assignments = command.assignments.map((a) => [a.name, expandToString(a.value, env)]);
     argv = expandWords(command.words, expandEnv(state, ctx, commands));
   } catch (error) {
-    if (!(error instanceof ExpansionError)) throw error;
-    stderr(`${error.message}\n`);
-    return { status: 1, piped: '' };
+    if (error instanceof SubshellMarker) {
+      argv = ['('];
+      assignments = [];
+    } else {
+      if (!(error instanceof ExpansionError)) throw error;
+      stderr(`${error.message}\n`);
+      return { status: 1, piped: '' };
+    }
   }
 
   // Redirections, dans l'ordre d'écriture (`> f 2>&1` n'est pas `2>&1 > f`).
@@ -333,19 +364,22 @@ function runSimple(
   }
 
   const [name = '', ...args] = argv;
-  const outcome = execute(
-    state,
-    name,
-    args,
-    session.user,
-    input,
-    fds[1]?.kind === 'terminal',
-    ctx,
-    commands,
-    Object.fromEntries(assignments),
-    false,
-    line,
-  );
+  const outcome: CommandOutcome =
+    command.type === 'subshell'
+      ? runSubshell(state, command.body, ctx, commands)
+      : execute(
+          state,
+          name,
+          args,
+          session.user,
+          input,
+          fds[1]?.kind === 'terminal',
+          ctx,
+          commands,
+          Object.fromEntries(assignments),
+          false,
+          line,
+        );
   if (outcome.machine) state.machine = outcome.machine;
   if (outcome.effects) state.effects.push(...outcome.effects);
 
@@ -367,6 +401,8 @@ function runSimple(
   };
   route(outcome.stdout, 1);
   route(outcome.stderr, 2);
+  // Les commandes du sous-shell ont déjà leur trace dans l'historique.
+  if (command.type === 'subshell') return { status: outcome.exitCode, piped };
 
   const record: CommandRecord = {
     command: argv.join(' '),

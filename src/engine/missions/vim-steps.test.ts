@@ -153,4 +153,43 @@ describe('vim dans les missions', () => {
   it('rejoue les solutions avec des touches vim', () => {
     expect(replayMission(mission, ctx()).map((r) => r.solved)).toEqual([true, true]);
   });
+
+  it('installe la table cron éditée par crontab -e à la fermeture de vim', () => {
+    let run = submitInput(mission, startMission(mission, ctx()), { line: 'crontab -e' }, ctx());
+    expect(missionView(mission, run).step).toMatchObject({ type: 'terminal', editor: {} });
+    run = keys(run, 'Go0 3 * * * /bin/true');
+    run = submitInput(mission, run, { key: 'Escape' }, ctx());
+    run = keys(run, ':wq');
+    run = submitInput(mission, run, { key: 'Enter' }, ctx());
+
+    const view = missionView(mission, run);
+    expect(view.step).not.toHaveProperty('editor');
+    expect(view.step?.type === 'terminal' && view.step.lines.at(-1)).toEqual({
+      kind: 'stderr',
+      text: 'crontab: installing new crontab',
+    });
+    expect(run.machines['srv']?.crontabs['hugo']).toEqual([
+      { schedule: '0 3 * * *', command: '/bin/true' },
+    ]);
+  });
+
+  it('transmet une ligne vide et Ctrl+D aux questions en attente', () => {
+    let run = submitInput(
+      mission,
+      startMission(mission, ctx()),
+      { line: 'sudo apt install at' },
+      ctx(),
+    );
+    run = submitInput(mission, run, { line: 'sudo apt install -y at' }, ctx());
+    run = submitInput(mission, run, { line: 'at now + 5 minutes' }, ctx());
+    run = submitInput(mission, run, { line: 'echo test' }, ctx());
+    run = submitInput(mission, run, { line: '\u0004' }, ctx());
+    const lines = run.step.data.type === 'terminal' ? run.step.data.lines : [];
+    expect(lines.some((l) => l.text.endsWith('<EOT>'))).toBe(true);
+    expect(run.machines['srv']?.atJobs).toHaveLength(1);
+    // Entrée seule répond « oui » à la confirmation d'APT.
+    run = submitInput(mission, run, { line: 'sudo apt install apache2' }, ctx());
+    run = submitInput(mission, run, { line: '' }, ctx());
+    expect(run.machines['srv']?.services['apache2']?.state).toBe('active');
+  });
 });

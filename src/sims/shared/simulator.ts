@@ -6,8 +6,22 @@ export type SimEffect =
   | { readonly type: 'clear' }
   /** Fermer la session (`exit`, `logout`). */
   | { readonly type: 'exit' }
-  /** Ouvrir l'éditeur sur un fichier (`vim`). */
-  | { readonly type: 'open-editor'; readonly path: string };
+  /** Ouvrir l'éditeur sur un fichier (`vim`, `crontab -e`). */
+  | { readonly type: 'open-editor'; readonly path: string; readonly onClose?: EditorHook };
+
+/**
+ * Action à mener quand l'éditeur se ferme : `crontab -e` installe la table éditée
+ * dans un fichier temporaire, comme le vrai `crontab`.
+ */
+export type EditorHook = {
+  readonly kind: 'crontab';
+  /** Compte dont on installe la table. */
+  readonly user: string;
+  /** Fichier temporaire édité. */
+  readonly file: string;
+  /** Contenu au moment de l'ouverture (pour « no changes made »). */
+  readonly original: string;
+};
 
 /** Résultat d'une ligne de commande exécutée. */
 export interface ExecResult<TState> {
@@ -39,4 +53,6 @@ export interface CommandLineSimulator<TState> {
   complete(state: TState, partial: string): readonly string[];
   /** Message d'accueil affiché à l'ouverture de la session. */
   banner(state: TState, ctx: SimContext): string;
+  /** Action à la fermeture de l'éditeur (installation de `crontab -e`), si le simulateur en a. */
+  afterEdit?(state: TState, hook: EditorHook, ctx: SimContext): ExecResult<TState>;
 }

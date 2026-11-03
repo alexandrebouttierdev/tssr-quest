@@ -5,6 +5,7 @@ import type {
   Redirection,
   Script,
   SimpleCommand,
+  Subshell,
   Word,
 } from './ast';
 import { BashSyntaxError, tokenize, type Token } from './lexer';
@@ -113,17 +114,62 @@ export function parse(line: string): Script {
     };
   };
 
+  /** `( … )` : tout jusqu'à la parenthèse fermante correspondante, puis des redirections. */
+  const parseSubshell = (): Subshell => {
+    const open = tokens[pos];
+    let depth = 0;
+    let close = -1;
+    for (let i = pos; i < tokens.length; i++) {
+      const t = tokens[i];
+      if (t?.type !== 'op') continue;
+      if (t.value === '(') depth++;
+      if (t.value === ')' && --depth === 0) {
+        close = i;
+        break;
+      }
+    }
+    if (close < 0) throw prematureEnd();
+    const closeToken = tokens[close];
+    const body = line.slice(open?.end ?? 0, closeToken?.start ?? line.length).trim();
+    if (!body) throw unexpected(closeToken);
+    pos = close + 1;
+    const redirections: Redirection[] = [];
+    let lastEnd = closeToken?.end ?? line.length;
+    while (pos < tokens.length) {
+      const token = tokens[pos];
+      if (token?.type !== 'op' || COMMAND_TERMINATORS.has(token.value)) break;
+      const parsed = parseRedirection(token.value, tokens[pos + 1]);
+      if (!parsed) throw unexpected(token);
+      redirections.push(parsed.redirection);
+      lastEnd = tokens[pos + parsed.consumed - 1]?.end ?? lastEnd;
+      pos += parsed.consumed;
+    }
+    if (pos < tokens.length && tokens[pos]?.type === 'word') throw unexpected(tokens[pos]);
+    return {
+      type: 'subshell',
+      body,
+      redirections,
+      source: line.slice(open?.start ?? 0, lastEnd).trim(),
+    };
+  };
+
+  /** Une commande du pipeline : sous-shell ou commande simple. */
+  const parseCommand = (): SimpleCommand | Subshell => {
+    const token = peek();
+    return token?.type === 'op' && token.value === '(' ? parseSubshell() : parseSimple();
+  };
+
   const parsePipeline = (): Pipeline => {
     let negated = false;
     if (isBareWord(peek(), '!')) {
       negated = true;
       pos++;
     }
-    const commands = [parseSimple()];
+    const commands = [parseCommand()];
     while (peek()?.type === 'op' && (peek() as { value: string }).value === '|') {
       pos++;
       if (pos >= tokens.length) throw prematureEnd();
-      commands.push(parseSimple());
+      commands.push(parseCommand());
     }
     return { negated, commands };
   };

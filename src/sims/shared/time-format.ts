@@ -133,6 +133,34 @@ export function formatSystemdTimestamp(ms: number): string {
   return `${EN_WEEKDAYS[p.weekday] ?? 'Sun'} ${p.year}-${pad2(p.month)}-${pad2(p.day)} ${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)} ${p.zone}`;
 }
 
+/** Mois abrégés en anglais (sortie de `at`, en-tête de cron). */
+const EN_MONTHS = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+
+/**
+ * Date au format de `ctime` (C) : `Tue Nov  3 23:00:00 2026`, utilisée par `at`, `atq`
+ * et l'en-tête des tables cron.
+ *
+ * @param ms - Horodatage.
+ * @returns La date formatée, heure de Paris.
+ */
+export function formatAtDate(ms: number): string {
+  const p = parisParts(ms);
+  return `${EN_WEEKDAYS[p.weekday] ?? 'Sun'} ${EN_MONTHS[p.month - 1] ?? 'Jan'} ${String(p.day).padStart(2)} ${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)} ${p.year}`;
+}
+
 /** Ajoute un « s » au pluriel. */
 function plural(count: number, word: string): string {
   return `${count} ${word}${count > 1 ? 's' : ''}`;

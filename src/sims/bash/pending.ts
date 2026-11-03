@@ -1,5 +1,7 @@
 import { syncAccountFiles } from '@sims/shared/factories';
+import { addAtJob } from '@sims/shared/cron';
 import { applyPlan, decodePlan } from '@sims/shared/packages';
+import { formatAtDate } from '@sims/shared/time-format';
 import type { Machine, PendingPrompt, SimContext, UserAccount } from '@sims/shared/types';
 
 /** Résultat du traitement d'une réponse. */
@@ -9,6 +11,9 @@ export interface PendingResult {
   readonly stderr: string;
   readonly exitCode: number;
 }
+
+/** Caractère envoyé par Ctrl+D (fin de saisie). */
+export const END_OF_INPUT = '\u0004';
 
 /** Gestionnaire d'une question en attente. */
 type PendingHandler = (
@@ -163,6 +168,23 @@ const HANDLERS: Readonly<Record<string, PendingHandler>> = {
     if (!/^(|o|oui|y|yes)$/i.test(answer.trim())) return done(machine, '', 'Annulation.\n', 1);
     const applied = applyPlan(machine, decodePlan(prompt.data), ctx.now.getTime());
     return done(applied.machine, applied.stdout, applied.stderr, applied.exitCode);
+  },
+  at: (machine, answer, prompt) => {
+    // Ctrl+D termine la saisie : le travail est enregistré.
+    if (answer === END_OF_INPUT) {
+      const time = Number(prompt.data['time'] ?? 0);
+      const { machine: next, job } = addAtJob(
+        machine,
+        prompt.data['user'] ?? 'root',
+        time,
+        prompt.data['commands'] ?? '',
+      );
+      return done(next, '', `job ${job.id} at ${formatAtDate(time)}\n`);
+    }
+    return ask(machine, {
+      ...prompt,
+      data: { ...prompt.data, commands: `${prompt.data['commands'] ?? ''}${answer}\n` },
+    });
   },
   su: (machine, answer, prompt) => {
     const target = prompt.data['user'] ?? 'root';

@@ -50,10 +50,19 @@ export interface SimpleCommand {
   readonly source: string;
 }
 
+/** Sous-shell `( … )` : une ligne exécutée à part, sa sortie redirigée au besoin. */
+export interface Subshell {
+  readonly type: 'subshell';
+  /** Texte entre les parenthèses. */
+  readonly body: string;
+  readonly redirections: readonly Redirection[];
+  readonly source: string;
+}
+
 /** Pipeline : commandes reliées par `|`, éventuellement niée par `!`. */
 export interface Pipeline {
   readonly negated: boolean;
-  readonly commands: readonly SimpleCommand[];
+  readonly commands: readonly (SimpleCommand | Subshell)[];
 }
 
 /** Élément d'une liste : le connecteur qui le précède décide s'il s'exécute. */

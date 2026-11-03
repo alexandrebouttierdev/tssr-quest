@@ -603,6 +603,14 @@ export const PACKAGE_CATALOG: Readonly<Record<string, PackageDefinition>> = Obje
       downloadSize: 4_096,
       depends: ['php8.2'],
     }),
+    pkg('at', '3.2.5-1', 'Delayed job execution and batch processing', {
+      section: 'admin',
+      installedSize: 159,
+      downloadSize: 46_080,
+      depends: [],
+      bin: ['at', 'atq', 'atrm', 'batch'],
+      sbin: ['atd'],
+    }),
     pkg('htop', '3.2.2-2', 'interactive processes viewer', {
       section: 'utils',
       installedSize: 391,

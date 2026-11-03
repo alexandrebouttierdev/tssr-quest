@@ -131,6 +131,10 @@ export function Terminal({
       event.preventDefault();
       setValue('');
       setSuggestions([]);
+    } else if (event.ctrlKey && (event.key === 'd' || event.key === 'D')) {
+      // Fin de saisie (invite « at> », par exemple).
+      event.preventDefault();
+      submit('\u0004');
     } else if (event.ctrlKey && (event.key === 'l' || event.key === 'L')) {
       event.preventDefault();
       submit('clear');

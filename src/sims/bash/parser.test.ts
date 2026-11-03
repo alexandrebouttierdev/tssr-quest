@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { BashSyntaxError } from './lexer';
+import type { SimpleCommand, Subshell } from './ast';
 import { parse } from './parser';
+
+/** Première commande du premier pipeline, supposée simple. */
+const simple = (line: string, index = 0): SimpleCommand => {
+  const cmd = parse(line).items[0]?.pipeline.commands[index];
+  if (cmd?.type !== 'simple') throw new Error('commande simple attendue');
+  return cmd;
+};
 
 /** Texte brut d'un mot sans expansion. */
 const text = (w: { parts: readonly { type: string; value?: string; name?: string }[] }) =>
@@ -8,21 +16,17 @@ const text = (w: { parts: readonly { type: string; value?: string; name?: string
 
 describe('parser Bash', () => {
   it('produit une commande simple', () => {
-    const script = parse('ls -l /var');
-
-    const cmd = script.items[0]?.pipeline.commands[0];
-    expect(cmd?.words.map(text)).toEqual(['ls', '-l', '/var']);
-    expect(cmd?.source).toBe('ls -l /var');
+    const cmd = simple('ls -l /var');
+    expect(cmd.words.map(text)).toEqual(['ls', '-l', '/var']);
+    expect(cmd.source).toBe('ls -l /var');
   });
 
   it('produit un pipeline', () => {
     const script = parse('cat f | grep x | wc -l');
 
-    expect(script.items[0]?.pipeline.commands.map((c) => text(c.words[0]!))).toEqual([
-      'cat',
-      'grep',
-      'wc',
-    ]);
+    expect(
+      script.items[0]?.pipeline.commands.map((c) => text((c as SimpleCommand).words[0]!)),
+    ).toEqual(['cat', 'grep', 'wc']);
   });
 
   it('produit une liste avec ses connecteurs', () => {
@@ -37,7 +41,7 @@ describe('parser Bash', () => {
   });
 
   it('lit les redirections', () => {
-    const cmd = parse('cmd > out 2>> err < in 2>&1 &> all').items[0]?.pipeline.commands[0];
+    const cmd = simple('cmd > out 2>> err < in 2>&1 &> all');
 
     expect(
       cmd?.redirections.map((r) =>
@@ -47,14 +51,14 @@ describe('parser Bash', () => {
   });
 
   it('lit les affectations en tête de commande', () => {
-    const cmd = parse('A=1 B=x cmd C=2').items[0]?.pipeline.commands[0];
+    const cmd = simple('A=1 B=x cmd C=2');
 
-    expect(cmd?.assignments.map((a) => `${a.name}=${text(a.value)}`)).toEqual(['A=1', 'B=x']);
-    expect(cmd?.words.map(text)).toEqual(['cmd', 'C=2']);
+    expect(cmd.assignments.map((a) => `${a.name}=${text(a.value)}`)).toEqual(['A=1', 'B=x']);
+    expect(cmd.words.map(text)).toEqual(['cmd', 'C=2']);
   });
 
   it('accepte une affectation seule', () => {
-    const cmd = parse('NOM=hugo').items[0]?.pipeline.commands[0];
+    const cmd = simple('NOM=hugo');
 
     expect(cmd?.assignments).toHaveLength(1);
     expect(cmd?.words).toHaveLength(0);
@@ -90,5 +94,17 @@ describe('parser Bash', () => {
       ['sleep 10', true],
       ['echo ok', false],
     ]);
+  });
+
+  it('lit un sous-shell, ses redirections, et refuse une parenthèse non fermée', () => {
+    const sub = parse('(crontab -l; echo "x") | crontab -').items[0]?.pipeline
+      .commands[0] as Subshell;
+    expect(sub).toMatchObject({ type: 'subshell', body: 'crontab -l; echo "x"' });
+    const redirected = parse('(cd /tmp; ls) > liste.txt').items[0]?.pipeline
+      .commands[0] as Subshell;
+    expect(redirected.redirections).toHaveLength(1);
+    expect(() => parse('(ls')).toThrow(BashSyntaxError);
+    expect(() => parse('()')).toThrow(BashSyntaxError);
+    expect(() => parse('(ls) pwd')).toThrow(BashSyntaxError);
   });
 });
