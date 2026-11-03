@@ -63,7 +63,10 @@ export const missionSchema = z
       if (ids.has(step.id))
         ctx.addIssue({ code: 'custom', message: `étape en double : ${step.id}` });
       ids.add(step.id);
-      if (step.type === 'terminal' && !mission.machines?.[step.machine]) {
+      if (
+        (step.type === 'terminal' || step.type === 'editor') &&
+        !mission.machines?.[step.machine]
+      ) {
         ctx.addIssue({
           code: 'custom',
           message: `machine inconnue « ${step.machine} » dans l'étape ${step.id}`,

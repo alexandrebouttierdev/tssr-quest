@@ -218,7 +218,7 @@ export function validateBundle(bundle: ContentBundle): ContentError[] {
         checkText(file, step.question);
         step.options.forEach((o) => checkText(file, o.text));
       }
-      if (step.type === 'terminal') {
+      if (step.type === 'terminal' || step.type === 'editor') {
         checkText(file, step.goal);
         for (const objective of step.objectives) {
           checkText(file, objective.label);

@@ -2,6 +2,7 @@ import type { Step } from '@content/schemas';
 import type { StepHandler } from './step-handler';
 import { choiceStep } from './steps/choice.step';
 import { dialogueStep } from './steps/dialogue.step';
+import { editorStep } from './steps/editor.step';
 import { inputStep } from './steps/input.step';
 import { orderingStep } from './steps/ordering.step';
 import { terminalStep } from './steps/terminal.step';
@@ -10,6 +11,7 @@ import { terminalStep } from './steps/terminal.step';
 const HANDLERS = {
   choice: choiceStep,
   dialogue: dialogueStep,
+  editor: editorStep,
   input: inputStep,
   ordering: orderingStep,
   terminal: terminalStep,

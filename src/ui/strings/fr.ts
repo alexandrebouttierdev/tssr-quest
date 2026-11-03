@@ -85,6 +85,12 @@ export const STRINGS = {
     up: '↑',
     ctrlC: 'Ctrl+C',
   },
+  editor: {
+    label: (file: string) => `Éditeur vim : ${file}`,
+    keys: "Touches de l'éditeur",
+    escape: 'Échap',
+    hint: 'vim : « i » pour écrire, Échap puis « :wq » pour enregistrer et quitter.',
+  },
   sheets: {
     title: 'Fiche « À retenir »',
     close: 'Fermer',

@@ -9,6 +9,18 @@ export interface TerminalLine {
   readonly text: string;
 }
 
+/** Ce que l'interface affiche de l'éditeur vim. */
+export interface EditorView {
+  readonly fileName: string;
+  readonly lines: readonly string[];
+  readonly cursor: { readonly row: number; readonly col: number };
+  readonly mode: 'normal' | 'insert' | 'command' | 'search';
+  readonly commandLine: string;
+  readonly message: string | null;
+  readonly messageIsError: boolean;
+  readonly number: boolean;
+}
+
 /** Objectif affiché dans la fenêtre de mission. */
 export interface ObjectiveView {
   readonly id: string;
@@ -32,6 +44,14 @@ export type StepView =
       readonly machine: string;
       readonly prompt: string;
       readonly lines: readonly TerminalLine[];
+      /** Éditeur ouvert par `vim` dans ce terminal, s'il y en a un. */
+      readonly editor?: EditorView;
+    }
+  | {
+      readonly type: 'editor';
+      readonly id: string;
+      readonly goal: string;
+      readonly editor: EditorView;
     }
   | {
       readonly type: 'choice';

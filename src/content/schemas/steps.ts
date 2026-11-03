@@ -93,6 +93,18 @@ export const terminalStepSchema = z.strictObject({
   solution: z.array(z.string().min(1)).min(1),
 });
 
+/** Étape « éditeur » : modifier un fichier dans vim. */
+export const editorStepSchema = z.strictObject({
+  ...stepBase,
+  type: z.literal('editor'),
+  machine: slugSchema,
+  file: z.string().startsWith('/'),
+  goal: playerTextSchema,
+  objectives: z.array(objectiveSchema).min(1),
+  /** Touches de la solution (texte tel quel, `<Esc>`, `<CR>`…), rejouées par les tests. */
+  solution: z.array(z.string().min(1)).min(1),
+});
+
 /** Étape de mission (union discriminée par `type`). */
 export const stepSchema = z.union([
   dialogueStepSchema,
@@ -100,6 +112,7 @@ export const stepSchema = z.union([
   inputStepSchema,
   orderingStepSchema,
   terminalStepSchema,
+  editorStepSchema,
 ]);
 
 /** Étape de mission. */
@@ -112,5 +125,7 @@ export type InputStep = z.infer<typeof inputStepSchema>;
 export type OrderingStep = z.infer<typeof orderingStepSchema>;
 /** Étape de terminal. */
 export type TerminalStep = z.infer<typeof terminalStepSchema>;
+/** Étape d'éditeur. */
+export type EditorStep = z.infer<typeof editorStepSchema>;
 /** Étape de dialogue. */
 export type DialogueStep = z.infer<typeof dialogueStepSchema>;

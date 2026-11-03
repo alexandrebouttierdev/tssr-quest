@@ -8,6 +8,7 @@ import { FEEDBACK_TEXT, PRIORITY_LABELS, STRINGS } from '../strings/fr';
 import styles from './MissionWindow.module.css';
 import { ChoiceStepView, InputStepView, OrderingStepView } from './steps';
 import { Terminal } from './Terminal/Terminal';
+import { VimEditor } from './VimEditor/VimEditor';
 
 /**
  * Fenêtre de mission (docs/08) : en-tête du ticket, objectifs, indices, fiche, et le
@@ -70,7 +71,12 @@ function MissionStep({ run }: { run: MissionRunView }) {
             <p className={styles['stepCount']}>
               {STRINGS.mission.step(run.stepIndex, run.stepCount)}
             </p>
-            {step.type === 'terminal' && <p className={styles['goal']}>{step.goal}</p>}
+            {(step.type === 'terminal' || step.type === 'editor') && (
+              <p className={styles['goal']}>{step.goal}</p>
+            )}
+            {(step.type === 'editor' || (step.type === 'terminal' && step.editor)) && (
+              <p className={styles['goal']}>{STRINGS.editor.hint}</p>
+            )}
             {run.objectives.length > 0 && (
               <>
                 <h3 className={styles['subtitle']}>{STRINGS.mission.objectives}</h3>
@@ -141,7 +147,13 @@ function MissionStep({ run }: { run: MissionRunView }) {
             )}
           </aside>
           <div className={styles['main']}>
-            {step.type === 'terminal' && (
+            {step.type === 'editor' && (
+              <VimEditor view={step.editor} onKey={(key) => submit({ key })} />
+            )}
+            {step.type === 'terminal' && step.editor && (
+              <VimEditor view={step.editor} onKey={(key) => submit({ key })} />
+            )}
+            {step.type === 'terminal' && !step.editor && (
               <Terminal
                 prompt={step.prompt}
                 lines={step.lines}

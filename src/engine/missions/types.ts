@@ -1,6 +1,7 @@
 import type { FeedbackView, TerminalLine } from '@core/store/mission-run.slice';
 import type { Rng } from '@core/random/rng';
 import type { Machine } from '@sims/shared/types';
+import type { VimState } from '@sims/vim';
 
 /** Contexte d'exécution fourni par le moteur (horloge et aléatoire de la partie). */
 export interface EngineContext {
@@ -10,7 +11,12 @@ export interface EngineContext {
 
 /** Données propres au type de l'étape en cours. */
 export type StepData =
-  | { readonly type: 'terminal'; readonly lines: readonly TerminalLine[] }
+  | {
+      readonly type: 'terminal';
+      readonly lines: readonly TerminalLine[];
+      readonly editor?: VimState | null;
+    }
+  | { readonly type: 'editor'; readonly editor: VimState }
   | { readonly type: 'choice' }
   | { readonly type: 'input' }
   /** Ordre d'affichage des éléments (indices dans l'ordre correct). */

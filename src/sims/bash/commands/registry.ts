@@ -48,11 +48,14 @@ import { wc } from './wc';
 import { bg, fg, jobs, kill, killall, nohup, ps, top } from './processes';
 import { gunzip, gzip, tar, unzip, zcat, zip } from './archives';
 import { sed } from './sed';
+import { vi, vim } from './vim';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
   [
     aide,
+    vi,
+    vim,
     sed,
     gunzip,
     gzip,
