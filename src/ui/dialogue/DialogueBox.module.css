@@ -1,11 +1,12 @@
 /* Fenêtre de dialogue : en bas, centrée, compacte pour laisser voir le monde. */
 
 .box {
+  zoom: var(--screen-scale);
   position: absolute;
   left: 50%;
   bottom: max(20px, env(safe-area-inset-bottom));
   translate: -50% 0;
-  width: min(900px, calc(100% - 32px));
+  width: min(900px, calc(100% / var(--screen-scale) - 32px));
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: end;

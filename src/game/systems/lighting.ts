@@ -11,6 +11,35 @@ export interface LightSpec {
   readonly radius: number;
   readonly intensity: number;
   readonly flicker: boolean;
+  /** Lumière qui pulse lentement (gyrophare, alerte). */
+  readonly pulse: boolean;
+}
+
+/** Teinte d'ambiance d'une pièce (zone `ambiance` de la carte). */
+export interface AmbienceSpec {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly tint: number;
+}
+
+/**
+ * Lit une zone d'ambiance de la carte.
+ *
+ * @param object - Objet `ambiance` du calque `zones`.
+ * @returns La zone et sa teinte, ou `null` sans teinte valide.
+ */
+export function ambienceFromObject(object: MapObject): AmbienceSpec | null {
+  const tint = object.properties['tint'];
+  if (typeof tint !== 'string' || !/^#[0-9a-f]{6}$/i.test(tint)) return null;
+  return {
+    x: object.x,
+    y: object.y,
+    width: object.width,
+    height: object.height,
+    tint: parseHex(tint),
+  };
 }
 
 /**
@@ -28,6 +57,7 @@ export function lightFromObject(object: MapObject): LightSpec {
     radius: typeof p['radius'] === 'number' ? p['radius'] : 48,
     intensity: typeof p['intensity'] === 'number' ? p['intensity'] : 0.6,
     flicker: p['flicker'] === true,
+    pulse: p['pulse'] === true,
   };
 }
 
@@ -61,15 +91,17 @@ export function createFxTextures(scene: Phaser.Scene): void {
 }
 
 /**
- * Pose l'éclairage d'ambiance : un voile sombre en mode multiplication sur toute la
- * carte, puis des halos additifs (plafonniers, écrans) qui scintillent au besoin.
+ * Pose l'éclairage : une teinte multipliée par pièce (salle serveurs froide, coin pause
+ * chaud), ou un voile uniforme si la carte n'en décrit pas, puis des halos additifs
+ * (néons, LED, écrans, lampes) qui grésillent ou pulsent au besoin.
  *
  * @param scene - Scène du monde.
  * @param width - Largeur de la carte (px).
  * @param height - Hauteur de la carte (px).
  * @param ambient - Luminosité ambiante de 0 (nuit noire) à 1 (plein jour).
  * @param lights - Sources de lumière.
- * @param reducedMotion - Coupe le scintillement.
+ * @param reducedMotion - Coupe le scintillement et les pulsations.
+ * @param ambiences - Teintes des pièces.
  */
 export function createLighting(
   scene: Phaser.Scene,
@@ -78,18 +110,28 @@ export function createLighting(
   ambient: number,
   lights: readonly LightSpec[],
   reducedMotion: boolean,
+  ambiences: readonly AmbienceSpec[] = [],
 ): void {
-  const shadeValue = Math.round(255 * ambient);
-  const shadeColor = Phaser.Display.Color.GetColor(
-    Math.round(shadeValue * 0.82),
-    Math.round(shadeValue * 0.88),
-    shadeValue,
-  );
-  scene.add
-    .rectangle(0, 0, width, height, shadeColor)
-    .setOrigin(0)
-    .setBlendMode(Phaser.BlendModes.MULTIPLY)
-    .setDepth(DEPTH.darkness);
+  if (ambiences.length === 0) {
+    const shadeValue = Math.round(255 * ambient);
+    const shadeColor = Phaser.Display.Color.GetColor(
+      Math.round(shadeValue * 0.82),
+      Math.round(shadeValue * 0.88),
+      shadeValue,
+    );
+    scene.add
+      .rectangle(0, 0, width, height, shadeColor)
+      .setOrigin(0)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY)
+      .setDepth(DEPTH.darkness);
+  }
+  for (const zone of ambiences) {
+    scene.add
+      .rectangle(zone.x, zone.y, zone.width, zone.height, zone.tint)
+      .setOrigin(0)
+      .setBlendMode(Phaser.BlendModes.MULTIPLY)
+      .setDepth(DEPTH.darkness);
+  }
   for (const light of lights) {
     const halo = scene.add
       .image(light.x, light.y, ASSET_KEYS.light)
@@ -98,7 +140,8 @@ export function createLighting(
       .setAlpha(light.intensity)
       .setScale((light.radius * 2) / 128)
       .setDepth(DEPTH.glow);
-    if (light.flicker && !reducedMotion) {
+    if (reducedMotion) continue;
+    if (light.flicker) {
       scene.tweens.add({
         targets: halo,
         alpha: { from: light.intensity, to: light.intensity * 0.35 },
@@ -107,6 +150,16 @@ export function createLighting(
         repeat: -1,
         repeatDelay: 2600,
         ease: 'Stepped',
+      });
+    }
+    if (light.pulse) {
+      scene.tweens.add({
+        targets: halo,
+        alpha: { from: light.intensity, to: light.intensity * 0.15 },
+        duration: 900,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
       });
     }
   }
@@ -143,7 +196,8 @@ export function applyCameraFx(scene: Phaser.Scene, bloom: boolean): void {
   if (scene.game.renderer.type !== Phaser.WEBGL) return;
   const camera = scene.cameras.main;
   camera.postFX.clear();
-  if (bloom) camera.postFX.addBloom(0xffffff, 1, 1, 0.8, 1.1, 4);
+  // Bloom discret : il fait baver les LED et les écrans, pas le décor.
+  if (bloom) camera.postFX.addBloom(0xffffff, 1, 1, 0.5, 0.6, 4);
   // Vignettage discret : il habille les bords sans assombrir la zone de jeu.
-  camera.postFX.addVignette(0.5, 0.5, 1, 0.12);
+  camera.postFX.addVignette(0.5, 0.5, 1.05, 0.08);
 }

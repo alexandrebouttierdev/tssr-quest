@@ -69,18 +69,20 @@ partie est sauvegardée automatiquement **sur ton appareil** (aucun compte, aucu
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/salle-serveurs.png" alt="La salle serveurs : rangées de baies, allée froide éclairée en bleu, Hugo à son poste"></td>
-    <td width="50%"><img src="docs/images/dialogue.png" alt="Dialogue avec Hugo, l'administrateur systèmes"></td>
+    <td width="50%"><img src="docs/images/salle-serveurs.png" alt="La salle serveurs : baies vues de face et de dos, allée froide éclairée en bleu, chemins de câbles aériens"></td>
+    <td width="50%"><img src="docs/images/coin-pause.png" alt="Le coin pause : parquet, canapé, machine à café, lumière chaude"></td>
   </tr>
   <tr>
-    <td align="center"><sub>La salle serveurs</sub></td>
+    <td align="center"><sub>La salle serveurs : allées froides et chaudes</sub></td>
+    <td align="center"><sub>Le coin pause, à côté de la supervision</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/images/dialogue.png" alt="Dialogue avec Hugo, l'administrateur systèmes, et ses réponses numérotées"></td>
+    <td width="50%"><img src="docs/images/terminal.png" alt="Mission « L'intranet est tombé » : terminal avec systemctl status et df -h, objectifs cochés"></td>
+  </tr>
+  <tr>
     <td align="center"><sub>Hugo, administrateur systèmes</sub></td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="docs/images/terminal.png" alt="Mission « L'intranet est tombé » : terminal avec systemctl status et df -h, objectifs cochés"></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center"><sub>Ticket #2046 « L'intranet est tombé » : Apache ne démarre plus, /var est plein</sub></td>
+    <td align="center"><sub>Ticket #2046 : Apache ne démarre plus, /var est plein</sub></td>
   </tr>
 </table>
 

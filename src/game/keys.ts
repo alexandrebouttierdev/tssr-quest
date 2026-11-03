@@ -3,6 +3,8 @@
  */
 export const ASSET_KEYS = {
   tilesetServerRoom: 'tile-salle-serveurs',
+  /** Le même jeu de tuiles découpé en images, pour les bulles d'interaction. */
+  tileSprites: 'tile-sprites',
   character: 'npc-technicien',
   mapServerRoom: 'map-salle-serveurs',
   light: 'fx-light',
@@ -13,6 +15,7 @@ export const ASSET_KEYS = {
 /** Chemins des fichiers, relatifs à la racine du site (`public/`). */
 export const ASSET_PATHS = {
   [ASSET_KEYS.tilesetServerRoom]: 'tilesets/tile-salle-serveurs.png',
+  [ASSET_KEYS.tileSprites]: 'tilesets/tile-salle-serveurs.png',
   [ASSET_KEYS.character]: 'sprites/characters/npc-technicien.png',
   [ASSET_KEYS.mapServerRoom]: 'maps/salle-serveurs.tmj',
 } as const;
@@ -26,6 +29,8 @@ export const CHARACTER_FRAME = { width: 16, height: 24 } as const;
 /** Profondeur d'affichage des couches au-dessus des personnages. */
 export const DEPTH = {
   floor: 0,
+  details: 0.2,
+  shadows: 0.5,
   walls: 1,
   furnitureLow: 2,
   lights: 9000,

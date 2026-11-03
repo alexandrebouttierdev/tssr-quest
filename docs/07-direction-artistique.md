@@ -6,7 +6,8 @@ Du **pixel art moderne** : la lisibilité et le charme des sprites 16 px, avec l
 
 ## Résolution et rendu
 
-- Résolution logique : environ **320 × 180 px** (≈ 20 × 11 tuiles), zoomée en nombre entier (×4 en 720p, ×6 en 1080p) selon l'écran. La largeur logique s'adapte à la fenêtre pour la remplir sans bandes noires (`src/platform/viewport.ts`). *Révisé le 3 novembre 2026 : à 480 × 270, toute la salle tenait à l'écran et les personnages étaient trop petits.*
+- Résolution logique : environ **256 × 144 px** (≈ 16 × 9 tuiles), zoomée en nombre entier (×5 en 720p et 768p, ×7 en 1080p, ×10 en 1440p) selon l'écran. La largeur logique s'adapte à la fenêtre pour la remplir sans bandes noires (`src/platform/viewport.ts`). *Révisé le 3 novembre 2026 (deux fois) : à 480 × 270 puis 320 × 180, les personnages restaient trop petits.*
+- L'interface (HUD, dialogues, missions) grandit avec l'écran : facteur `--screen-scale` de 1,3 au-delà de 2200 px de large et de 1,7 en 4K.
 - `pixelArt: true`, `roundPixels: true` dans la config Phaser : aucun flou.
 - Caméra qui suit le joueur avec un lissage (`lerp 0.12`) et une zone morte, sans jamais sortir de la carte.
 - L'interface React n'est pas pixelisée à la même échelle : elle utilise une police pixel nette, rendue en CSS à taille entière, pour rester lisible sur mobile.
@@ -31,9 +32,21 @@ Règle : les accents ne servent qu'à ce qui est interactif ou porteur d'informa
 - Les PNJ principaux ont un **portrait** de 48 × 48 px pour les dialogues, avec 3 expressions (neutre, content, inquiet).
 - Le joueur est personnalisable : sprites découpés en calques (corps, tenue, cheveux) recolorés à la volée par une palette indexée.
 
+## Assets générés (refonte du 3 novembre 2026)
+
+Les assets du monde sont **dessinés par du code**, pixel par pixel, dans `assets/generators/` (`npm run assets:build`), sans dépendance : encodeur PNG maison (`lib/pixels.ts`).
+
+- `tilesets/labcorp.ts` : 111 images de 16 px. Sols (faux plancher en 4 variantes, allées froides perforées, allée chaude, moquette, parquet, rubalise, rampe de câbles), détails au sol (câbles, chaises, petits objets), murs et leurs équipements (extincteur, tableau électrique, horloge, affiche, fenêtres, porte avec panneau de sortie, climatiseur, tableau blanc), murs d'écrans de supervision animés, cloison vitrée, baies de face (serveurs, stockage, réseau avec brassage coloré, lames, presque vides) et de dos (ventilateurs qui tournent, alimentations, faisceaux), onduleurs, climatisations de précision, chemins de câbles aériens, mobilier (postes vus de face et de dos, fauteuils, plantes, café, fontaine, bibliothèque, canapé, lampe, tables hautes, imprimante), bulles d'interaction. Perspective 3/4, lumière du haut à gauche, ombre à droite.
+- `maps/salle-serveurs.ts` : la carte du plateau technique (salle serveurs, supervision, coin pause), avec les animations au format Tiled.
+- `portraits.ts` : portraits 48 × 48 en 3 expressions, d'après la palette et le champ `portrait` des PNJ.
+
 ## Lumière
 
 C'est ce qui rend le pixel art « moderne ».
+
+- **Teinte d'ambiance par pièce** (zones `ambiance` de la carte, multipliées sur le décor) : salle serveurs froide, supervision neutre, coin pause chaud.
+- **Ombres portées** calculées depuis la carte (`src/game/systems/shadows.ts`) sous les murs et le mobilier bloquant.
+- Halos additifs : néons (dont un qui grésille), lueur des allées froides, LED des façades, écrans, lampes ; gyrophare d'alerte qui pulse (`pulse: true`). Bloom discret et vignettage léger.
 
 - **Pipeline Light2D de Phaser** sur les calques de décor, avec des normal maps simples générées pour les murs et les baies (optionnel en phase 1, prévu dès la phase 2).
 - Sources de lumière posées dans Tiled : plafonniers, écrans, LED des baies, néons du NOC, lampes de bureau.

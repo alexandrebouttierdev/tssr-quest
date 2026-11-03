@@ -6,7 +6,7 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : retours de l'auteur — rendu agrandi et éclairci, écran titre, README illustré, publication GitHub Pages ; avant cela comptes, droits, apt/dpkg
+- **Dernière tâche terminée** : refonte graphique complète (design system, portraits, dialogues, HUD, fenêtres de mission, notifications, jeu de tuiles et carte générés, lumière par pièce, ombres, animations) — branche `dev`
 - **Prochaine action** : tests dédiés de `apt`/`apt-get`/`dpkg` (src/sims/shared/packages.ts, commands/apt.ts) ; puis phase 1 — commandes du ch. 5 restantes : réseau (ip, ping, ss, ifup/ifdown), mémoire (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron
 
 ## Environnement
@@ -114,9 +114,15 @@ Il est mis à jour à chaque tâche terminée.
 | D47 | 2026-11-03 | Publication sur GitHub Pages (workflow `pages.yml`, base `/tssr-quest/` via `BASE_PATH`), avant le VPS prévu par docs/02 | Demande de l'auteur : un lien direct pour jouer. docs/02 mis à jour. |
 | D48 | 2026-11-03 | APT simulé : catalogue de paquets réels de bookworm, mises à jour publiées sur une suite et révélées par `apt update` si sources.list la contient ; commandes liées à un paquet (`package`) introuvables s'il est absent | Fidélité (pas de mise à jour sans `apt update`, sources.list cassé = erreurs réelles) et missions « paquets » rejouables. |
 | D49 | 2026-11-03 | Travail sur la branche `dev`, `master` réservée à la publication (déploiement Pages) | Demande de l'auteur. docs/10 mis à jour (remplace « main protégée »). |
+| D50 | 2026-11-03 | Refonte graphique : assets du monde générés par du code (`assets/generators`, encodeur PNG maison, `npm run assets:build`) plutôt que dessinés à la main | Aucun outil graphique dans l'environnement ; reproductible, versionné, retouchable. Pas de dépendance ajoutée. |
+| D51 | 2026-11-03 | Vue ≈ 16 × 9 tuiles (×5 en 720p, ×7 en 1080p, ×10 en 1440p) et `--screen-scale` de l'interface sur grand écran | Demande de l'auteur : personnages plus grands, interface lisible en 1080p et 1440p. docs/07 mis à jour. |
+| D52 | 2026-11-03 | Carte du plateau technique recomposée (40 × 24) : salle serveurs, supervision, coin pause ; Hugo à son bureau de la supervision, même case qu'avant (32, 11) | Variété et ambiances par pièce ; les tests E2E gardent leurs coordonnées. |
+| D53 | 2026-11-03 | Tickets ouverts, alertes et objectif actif calculés dans `engine/tickets/ticket-board.ts` et fournis au HUD par les services d'interface, avec l'horloge du moteur | Pas de logique dans React (règle de CLAUDE.md). |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés
+
+- Un test a échoué une fois sous `test:coverage` pendant la refonte puis est passé trois fois de suite ; cause non identifiée (probablement un minuteur des tests du HUD sous charge). À surveiller.
 
 - **Tags non poussés** : le proxy git de la session cloud refuse `git push origin v0.1.0` (HTTP 403) alors que la branche `master` passe. Le tag annoté `v0.1.0` est sur le commit `2255fab` ; à pousser depuis un poste local : `git fetch origin && git tag -a v0.1.0 2255fab -m "Phase 0 — Fondations" && git push origin v0.1.0` (ou créer la release sur GitHub).
 - Redémarrage de `WorldScene` : Phaser réutilise l'instance de scène, il faut réinitialiser les tableaux dans `create()` et préférer `keyboard.on('keydown-X')` aux écouteurs posés sur les objets `Key` (corrigé).

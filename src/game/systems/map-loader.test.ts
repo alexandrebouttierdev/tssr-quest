@@ -9,8 +9,14 @@ describe('lecture des cartes Tiled', () => {
   const map = parseTiledMap(raw);
 
   it('lit la carte de la salle serveurs et ses calques', () => {
-    expect([map.width, map.height, map.tileSize]).toEqual([36, 22, 16]);
-    expect([...map.tileLayers.keys()]).toEqual(['sol', 'murs', 'mobilier-bas', 'mobilier-haut']);
+    expect([map.width, map.height, map.tileSize]).toEqual([40, 24, 16]);
+    expect([...map.tileLayers.keys()]).toEqual([
+      'sol',
+      'details',
+      'murs',
+      'mobilier-bas',
+      'mobilier-haut',
+    ]);
     expect(map.properties['zoneId']).toBe('salle-serveurs');
   });
 
@@ -18,26 +24,41 @@ describe('lecture des cartes Tiled', () => {
     expect(objectsOfType(map, 'entites', 'spawn')[0]?.properties['id']).toBe('depart');
     expect(objectsOfType(map, 'entites', 'npc')[0]?.properties).toEqual({
       npcId: 'hugo',
-      facing: 'left',
+      facing: 'down',
     });
-    expect(objectsOfType(map, 'lumieres', 'light').length).toBeGreaterThan(4);
+    expect(objectsOfType(map, 'lumieres', 'light').length).toBeGreaterThan(20);
+    expect(objectsOfType(map, 'zones', 'ambiance').map((z) => z.name)).toEqual([
+      'salle-serveurs',
+      'supervision',
+      'pause',
+    ]);
     expect(objectsOfType(map, 'absent', 'x')).toEqual([]);
   });
 
-  it('construit une grille de collisions où murs et baies bloquent', () => {
+  it('construit une grille de collisions où murs, cloison et baies bloquent', () => {
     const grid = collisionGrid(map, [{ x: 32, y: 11 }]);
 
     expect(grid[0]?.[0]).toBe(true);
-    expect(grid[3]?.[17]).toBe(false);
-    expect(grid[5]?.[3]).toBe(true);
-    expect(grid[4]?.[3]).toBe(false);
+    expect(grid[2]?.[13]).toBe(false);
+    expect(grid[6]?.[3]).toBe(true);
+    expect(grid[7]?.[3]).toBe(false);
+    expect(grid[5]?.[26]).toBe(true);
+    expect(grid[11]?.[26]).toBe(false);
     expect(grid[11]?.[32]).toBe(true);
   });
 
-  it('permet de rejoindre Hugo depuis le point de départ', () => {
-    const grid = collisionGrid(map);
+  it('permet de rejoindre Hugo depuis le point de départ, par la porte de la cloison', () => {
+    const grid = collisionGrid(map, [{ x: 32, y: 11 }]);
 
-    expect(findPath(grid, { x: 17, y: 3 }, { x: 31, y: 12 })).not.toBeNull();
+    expect(findPath(grid, { x: 13, y: 2 }, { x: 32, y: 12 })).not.toBeNull();
+  });
+
+  it('lit les animations de tuiles et les sprites du jeu de tuiles', () => {
+    expect(map.animations.size).toBeGreaterThan(10);
+    for (const animation of map.animations.values()) {
+      expect(animation.gids.length).toBe(animation.durations.length);
+    }
+    expect([...map.sprites.keys()]).toEqual(['bubble_mission', 'bubble_debrief', 'bubble_key']);
   });
 
   it('refuse une carte qui ne respecte pas les conventions', () => {

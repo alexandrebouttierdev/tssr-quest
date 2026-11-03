@@ -45,7 +45,15 @@ const tiledMapSchema = z.object({
         firstgid: z.number(),
         name: z.string(),
         tiles: z
-          .array(z.object({ id: z.number(), properties: z.array(propertySchema).default([]) }))
+          .array(
+            z.object({
+              id: z.number(),
+              properties: z.array(propertySchema).default([]),
+              animation: z
+                .array(z.object({ tileid: z.number(), duration: z.number().positive() }))
+                .optional(),
+            }),
+          )
           .default([]),
       }),
     )
@@ -65,6 +73,12 @@ export interface MapObject {
   readonly properties: Readonly<Record<string, unknown>>;
 }
 
+/** Animation d'une tuile : images (identifiants globaux) et durée de chacune. */
+export interface TileAnimation {
+  readonly gids: readonly number[];
+  readonly durations: readonly number[];
+}
+
 /** Carte lue et vérifiée. */
 export interface ParsedMap {
   readonly width: number;
@@ -73,6 +87,10 @@ export interface ParsedMap {
   readonly properties: Readonly<Record<string, unknown>>;
   /** Noms des tuiles bloquantes (identifiants globaux). */
   readonly collidingGids: ReadonlySet<number>;
+  /** Images du jeu de tuiles utilisées comme sprites (propriété `sprite`), par nom. */
+  readonly sprites: ReadonlyMap<string, number>;
+  /** Animations de tuiles (format Tiled), par identifiant global de la première image. */
+  readonly animations: ReadonlyMap<number, TileAnimation>;
   readonly tileLayers: ReadonlyMap<string, readonly number[]>;
   readonly objectLayers: ReadonlyMap<string, readonly MapObject[]>;
 }
@@ -122,10 +140,20 @@ export function parseTiledMap(raw: unknown): ParsedMap {
   for (const name of REQUIRED_OBJECT_LAYERS)
     if (!objectLayers.has(name)) throw new Error(`Calque d'objets manquant : ${name}`);
   const collidingGids = new Set<number>();
+  const animations = new Map<number, TileAnimation>();
+  const sprites = new Map<string, number>();
   for (const tileset of map.tilesets) {
     for (const tile of tileset.tiles) {
+      const sprite = flatten(tile.properties)['sprite'];
+      if (typeof sprite === 'string') sprites.set(sprite, tile.id);
       if (flatten(tile.properties)['collides'] === true)
         collidingGids.add(tileset.firstgid + tile.id);
+      if (tile.animation && tile.animation.length > 1) {
+        animations.set(tileset.firstgid + tile.id, {
+          gids: tile.animation.map((f) => tileset.firstgid + f.tileid),
+          durations: tile.animation.map((f) => f.duration),
+        });
+      }
     }
   }
   return {
@@ -134,6 +162,8 @@ export function parseTiledMap(raw: unknown): ParsedMap {
     tileSize: map.tilewidth,
     properties: flatten(map.properties),
     collidingGids,
+    sprites,
+    animations,
     tileLayers,
     objectLayers,
   };

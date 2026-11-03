@@ -54,19 +54,20 @@ Plus une vingtaine de figurants (utilisateurs) avec des routines : ils marchent 
 
 - Tuiles de **16 × 16 px**, cartes de 40 × 25 tuiles maximum (640 × 400 px avant zoom).
 - Un fichier par zone : `content/maps/<id>.tmj` (format JSON de Tiled).
-- Tilesets externes partagés : `assets/tilesets/<nom>.tsj`.
+- Jeu de tuiles intégré à la carte (le chargeur de Phaser ne lit pas les `.tsj` externes) ; animations de tuiles au format Tiled (`tiles[].animation`), décalées par case à l'exécution ; propriété de tuile `sprite` pour les images réutilisées en sprites (bulles).
 
 **Calques (dans cet ordre)**
 
 | Calque | Type | Rôle |
 | --- | --- | --- |
 | `sol` | Tuiles | Sols, tapis, marquages |
+| `details` | Tuiles (facultatif) | Câbles au sol, chaises, petits objets, sans collision |
 | `murs` | Tuiles | Murs et cloisons, avec propriété `collides: true` sur les tuiles |
 | `mobilier-bas` | Tuiles | Mobilier sous le joueur |
 | `mobilier-haut` | Tuiles | Mobilier au-dessus du joueur (haut des baies, plantes) |
-| `lumieres` | Objets | Sources de lumière (`type: light`, `color`, `radius`, `intensity`, `flicker`) |
+| `lumieres` | Objets | Sources de lumière (`type: light`, `color`, `radius`, `intensity`, `flicker`, `pulse`) |
 | `entites` | Objets | Points d'apparition PNJ, objets interactifs, portes |
-| `zones` | Objets | Rectangles déclencheurs (entrée de pièce, ambiance sonore, zone de pluie) |
+| `zones` | Objets | Rectangles déclencheurs (entrée de pièce, ambiance sonore, zone de pluie) ; `type: ambiance` avec `tint` pour la teinte de la pièce |
 
 **Propriétés des objets du calque `entites`**
 

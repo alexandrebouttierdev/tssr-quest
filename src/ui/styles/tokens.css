@@ -36,6 +36,8 @@
   --font-body: 'Atkinson Hyperlegible', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
   --text-scale: 1;
+  /* Agrandissement de toute l'interface sur les grands écrans (1440p, 4K). */
+  --screen-scale: 1;
   --fs-xs: calc(12px * var(--text-scale));
   --fs-sm: calc(13px * var(--text-scale));
   --fs-md: calc(15px * var(--text-scale));
@@ -77,6 +79,18 @@
   --c-sky: #a8e4f5;
   --radius-legacy: 4px;
   --gap: 8px;
+}
+
+@media (min-width: 2200px) and (min-height: 1200px) {
+  :root {
+    --screen-scale: 1.3;
+  }
+}
+
+@media (min-width: 3200px) and (min-height: 1800px) {
+  :root {
+    --screen-scale: 1.7;
+  }
 }
 
 :root[data-text-size='grand'] {

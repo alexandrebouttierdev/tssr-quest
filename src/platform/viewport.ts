@@ -1,20 +1,20 @@
 /**
  * Dimensionnement de la vue du monde (docs/07).
  *
- * Le jeu affiche environ 20 × 11 tuiles de 16 px, agrandies d'un facteur entier
+ * Le jeu affiche environ 16 × 9 tuiles de 16 px, agrandies d'un facteur entier
  * (pixel art net, sans flou). La taille logique du canevas s'adapte à la fenêtre pour
  * la remplir entièrement : pas de bandes noires, et plus de monde visible sur un
  * écran large plutôt que des personnages minuscules.
  */
 
-/** Hauteur logique visée (≈ 11 tuiles), qui fixe le facteur d'agrandissement. */
-export const TARGET_HEIGHT = 180;
+/** Hauteur logique visée (≈ 9 tuiles), qui fixe le facteur d'agrandissement. */
+export const TARGET_HEIGHT = 144;
 
 /** Largeur logique minimale (portrait, petits écrans). */
 export const MIN_WIDTH = 180;
 
 /** Résolution logique de référence (16:9), utilisée avant de connaître la fenêtre. */
-export const BASE_WIDTH = 320;
+export const BASE_WIDTH = 256;
 
 /** Hauteur logique de référence. */
 export const BASE_HEIGHT = TARGET_HEIGHT;
@@ -30,7 +30,7 @@ export interface Viewport {
 }
 
 /**
- * Zoom entier pour une fenêtre : la plus petite dimension contient environ 180 pixels
+ * Zoom entier pour une fenêtre : la plus petite dimension contient environ 144 pixels
  * de jeu, sans descendre sous 180 pixels de large.
  *
  * @param width - Largeur disponible (px CSS).

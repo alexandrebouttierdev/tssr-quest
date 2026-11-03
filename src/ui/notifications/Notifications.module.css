@@ -1,6 +1,7 @@
 /* Notifications : cartes empilées à droite, au-dessus de l'état du service. */
 
 .stack {
+  zoom: var(--screen-scale);
   position: absolute;
   right: clamp(12px, 1.6vw, 24px);
   top: calc(clamp(12px, 1.6vw, 24px) + 72px);

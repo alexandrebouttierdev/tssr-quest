@@ -16,9 +16,10 @@
 }
 
 .window {
+  zoom: var(--screen-scale);
   position: relative;
-  width: min(1180px, 100%);
-  height: min(760px, 100%);
+  width: min(1180px, calc(100vw / var(--screen-scale) - 32px));
+  height: min(760px, calc(100vh / var(--screen-scale) - 32px));
   display: flex;
   flex-direction: column;
   background: var(--panel);

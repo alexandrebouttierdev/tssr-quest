@@ -1,29 +1,43 @@
 /**
- * Animation des tuiles du décor : LED des baies (états A/B) et curseur des écrans.
- * Les identifiants globaux sont ceux du jeu de tuiles « salle serveurs » (gid = indice + 1).
+ * Animation des tuiles du décor (LED, écrans, ventilateurs, vapeur du café), décrite
+ * dans la carte au format Tiled. Chaque tuile reçoit un décalage qui dépend de sa
+ * position : les baies d'une même rangée ne clignotent jamais toutes ensemble.
  */
-
-/** Paires de tuiles qui alternent (LED état A ↔ état B, écran 1 ↔ écran 2). */
-export const TILE_SWAPS: ReadonlyMap<number, number> = new Map([
-  [5, 7],
-  [7, 5],
-  [6, 8],
-  [8, 6],
-  [9, 10],
-  [10, 9],
-]);
+import type { TileAnimation } from './map-loader';
 
 /**
- * Tuile à afficher au pas d'animation donné : une colonne sur deux bascule à chaque pas,
- * pour que les baies ne clignotent pas toutes ensemble.
+ * Décalage (ms) d'une tuile, stable et réparti : un hachage de ses coordonnées.
  *
- * @param gid - Tuile actuelle.
- * @param column - Colonne de la tuile.
- * @param tick - Numéro du pas d'animation.
- * @returns La tuile suivante (inchangée si elle n'est pas animée ou pas concernée).
+ * @param x - Colonne.
+ * @param y - Ligne.
+ * @param cycle - Durée totale de l'animation.
+ * @returns Un décalage dans [0, cycle[.
  */
-export function nextTileFrame(gid: number, column: number, tick: number): number {
-  const swap = TILE_SWAPS.get(gid);
-  if (swap === undefined || (column + tick) % 2 !== 0) return gid;
-  return swap;
+export function tilePhase(x: number, y: number, cycle: number): number {
+  const h = Math.imul(x * 374761393 + y * 668265263, 1274126177) >>> 0;
+  return h % Math.max(1, cycle);
+}
+
+/**
+ * Image d'une tuile animée à un instant donné.
+ *
+ * @param animation - Images et durées.
+ * @param x - Colonne de la tuile.
+ * @param y - Ligne de la tuile.
+ * @param timeMs - Temps écoulé (ms).
+ * @returns L'identifiant global de l'image à afficher.
+ */
+export function animatedGid(
+  animation: TileAnimation,
+  x: number,
+  y: number,
+  timeMs: number,
+): number {
+  const cycle = animation.durations.reduce((s, d) => s + d, 0);
+  let t = (timeMs + tilePhase(x, y, cycle)) % cycle;
+  for (const [i, duration] of animation.durations.entries()) {
+    if (t < duration) return animation.gids[i] ?? animation.gids[0] ?? 0;
+    t -= duration;
+  }
+  return animation.gids[0] ?? 0;
 }

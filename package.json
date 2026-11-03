@@ -22,7 +22,8 @@
     "test:content": "npm run content:build && tsx scripts/validate-content.ts && tsx scripts/replay-solutions.ts",
     "test:e2e": "playwright test",
     "content:build": "tsx scripts/build-content.ts",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "assets:build": "tsx assets/generators/tilesets/labcorp.ts && tsx assets/generators/maps/salle-serveurs.ts && tsx assets/generators/portraits.ts"
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged"

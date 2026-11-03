@@ -4,12 +4,21 @@ import { Npc } from '../entities/Npc';
 import { Player } from '../entities/Player';
 import { ASSET_KEYS, DEPTH, TILESET_NAME } from '../keys';
 import { servicesOf } from '../services';
-import { applyCameraFx, createDust, createLighting, lightFromObject } from '../systems/lighting';
+import {
+  ambienceFromObject,
+  applyCameraFx,
+  createDust,
+  createLighting,
+  lightFromObject,
+  type AmbienceSpec,
+} from '../systems/lighting';
 import { collisionGrid, objectsOfType, parseTiledMap, type ParsedMap } from '../systems/map-loader';
 import { findInteractionTarget } from '../systems/movement';
 import { findPath, findPathToAdjacent, type CollisionGrid } from '../systems/pathfinding';
 import { paletteColorMap, recolorPixels } from '../systems/recolor';
-import { nextTileFrame } from '../systems/tile-animations';
+import { shadowRuns } from '../systems/shadows';
+import { animatedGid } from '../systems/tile-animations';
+import type { TileAnimation } from '../systems/map-loader';
 import type { Facing } from '@core/model';
 
 /** Touches du monde. */
@@ -56,6 +65,11 @@ export class WorldScene extends Phaser.Scene {
     if (!tileset) throw new Error('Jeu de tuiles introuvable');
     const layers = {
       sol: tilemap.createLayer('sol', tileset)?.setDepth(DEPTH.floor),
+      // Calque facultatif : câbles, chaises, petits objets posés au sol.
+      details:
+        tilemap.getLayerIndexByName('details') >= 0
+          ? tilemap.createLayer('details', tileset)?.setDepth(DEPTH.details)
+          : undefined,
       murs: tilemap.createLayer('murs', tileset)?.setDepth(DEPTH.walls),
       bas: tilemap.createLayer('mobilier-bas', tileset)?.setDepth(DEPTH.furnitureLow),
       haut: tilemap.createLayer('mobilier-haut', tileset)?.setDepth(DEPTH.furnitureHigh),
@@ -79,18 +93,25 @@ export class WorldScene extends Phaser.Scene {
       saved.zoneId === zoneId ? saved.facing : 'down',
     );
     const occupied: { x: number; y: number }[] = [];
+    const bubbles = {
+      texture: ASSET_KEYS.tileSprites,
+      mission: this.map.sprites.get('bubble_mission') ?? 0,
+      debrief: this.map.sprites.get('bubble_debrief') ?? 0,
+      key: this.map.sprites.get('bubble_key') ?? 0,
+    };
     for (const object of objectsOfType(this.map, 'entites', 'npc')) {
       const rawId = object.properties['npcId'];
       const npcId = typeof rawId === 'string' ? rawId : '';
       const facing = (object.properties['facing'] as Facing | undefined) ?? 'down';
       const texture = this.npcTexture(npcId);
-      this.npcs.push(new Npc(this, object.x, object.y + 5, texture, npcId, facing));
+      this.npcs.push(new Npc(this, object.x, object.y + 5, texture, npcId, facing, bubbles));
       occupied.push({
         x: Math.floor(object.x / this.map.tileSize),
         y: Math.floor(object.y / this.map.tileSize),
       });
     }
     this.grid = collisionGrid(this.map, occupied);
+    this.drawShadows();
     for (const layer of [layers.murs, layers.bas]) {
       if (!layer) continue;
       layer.setCollisionByProperty({ collides: true });
@@ -115,6 +136,9 @@ export class WorldScene extends Phaser.Scene {
       ambient,
       objectsOfType(this.map, 'lumieres', 'light').map(lightFromObject),
       settings.reducedMotion,
+      objectsOfType(this.map, 'zones', 'ambiance')
+        .map(ambienceFromObject)
+        .filter((a): a is AmbienceSpec => a !== null),
     );
     const dustZone = objectsOfType(this.map, 'zones', 'zone').find(
       (z) => z.properties['dust'] === true,
@@ -125,20 +149,27 @@ export class WorldScene extends Phaser.Scene {
         new Phaser.Geom.Rectangle(dustZone.x, dustZone.y, dustZone.width, dustZone.height),
       );
     applyCameraFx(this, settings.bloom);
-    let tick = 0;
-    this.time.addEvent({
-      delay: 450,
-      loop: true,
-      callback: () => {
-        tick++;
-        for (const layer of [layers.bas, layers.haut]) {
-          layer?.forEachTile((tile) => {
-            const next = nextTileFrame(tile.index, tile.x, tick);
-            if (next !== tile.index) tile.index = next;
-          });
-        }
-      },
-    });
+    // Animations du décor (LED, écrans, ventilateurs), décrites dans la carte.
+    const animated: { tile: Phaser.Tilemaps.Tile; animation: TileAnimation }[] = [];
+    for (const layer of Object.values(layers)) {
+      layer?.forEachTile((tile) => {
+        const animation = this.map.animations.get(tile.index);
+        if (animation) animated.push({ tile, animation });
+      });
+    }
+    if (!settings.reducedMotion && animated.length > 0) {
+      this.time.addEvent({
+        delay: 60,
+        loop: true,
+        callback: () => {
+          const now = this.time.now;
+          for (const { tile, animation } of animated) {
+            const gid = animatedGid(animation, tile.x, tile.y, now);
+            if (tile.index !== gid) tile.index = gid;
+          }
+        },
+      });
+    }
 
     // Entrées.
     const kb = this.input.keyboard;
@@ -167,6 +198,7 @@ export class WorldScene extends Phaser.Scene {
     if (this.bridge.isInputSuspended()) {
       this.player.halt();
       this.bridge.setInteractionTarget(null);
+      for (const npc of this.npcs) npc.setFocused(false);
       return;
     }
     const down = (keys: Phaser.Input.Keyboard.Key[]) => keys.some((k) => k.isDown);
@@ -186,11 +218,36 @@ export class WorldScene extends Phaser.Scene {
       this.npcs.map((n) => ({ id: n.npcId, x: n.x, y: n.y })),
     );
     this.bridge.setInteractionTarget(target?.id ?? null);
+    for (const npc of this.npcs) npc.setFocused(npc.npcId === target?.id);
     const body = this.player.body as Phaser.Physics.Arcade.Body;
     const moving = body.velocity.lengthSq() > 0;
     if (this.wasMoving && !moving)
       this.bridge.savePosition(this.player.x, this.player.y, this.player.facing);
     this.wasMoving = moving;
+  }
+
+  /**
+   * Ombres portées : une bande sombre sous les murs et le mobilier bloquant, plus dense
+   * au contact, légèrement décalée vers la droite.
+   */
+  private drawShadows(): void {
+    const size = this.map.tileSize;
+    const graphics = this.add.graphics().setDepth(DEPTH.shadows);
+    const solid = (gid: number) => this.map.collidingGids.has(gid);
+    const blocked = (x: number, y: number) => this.grid[y]?.[x] ?? true;
+    for (const name of ['murs', 'mobilier-bas']) {
+      const data = this.map.tileLayers.get(name);
+      if (!data) continue;
+      for (const run of shadowRuns(data, this.map.width, solid, blocked)) {
+        const x = run.x * size;
+        const y = (run.y + 1) * size;
+        const w = run.length * size;
+        graphics.fillStyle(0x04070b, 0.36).fillRect(x + 2, y, w, 3);
+        graphics.fillStyle(0x04070b, 0.18).fillRect(x + 3, y + 3, w, 3);
+        if (name === 'mobilier-bas')
+          graphics.fillStyle(0x04070b, 0.2).fillRect(x + w, y - size + 6, 2, size - 3);
+      }
+    }
   }
 
   /** Parle au PNJ ciblé. */

@@ -342,9 +342,11 @@
   }
 }
 
-/* Grands écrans : un HUD un peu plus grand pour rester lisible à distance. */
-@media (min-width: 2200px) {
-  .hud {
-    zoom: 1.25;
-  }
+/* Grands écrans : chaque panneau grandit avec l'échelle de l'interface. */
+.player,
+.status,
+.objective,
+.prompt,
+.controls {
+  zoom: var(--screen-scale);
 }

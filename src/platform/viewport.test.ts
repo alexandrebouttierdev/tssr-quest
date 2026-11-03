@@ -3,9 +3,10 @@ import { integerZoom, viewportFor } from './viewport';
 
 describe('zoom entier', () => {
   it.each([
-    [1920, 1080, 6],
-    [1280, 720, 4],
-    [1366, 768, 4],
+    [2560, 1440, 10],
+    [1920, 1080, 7],
+    [1280, 720, 5],
+    [1366, 768, 5],
     [960, 540, 3],
     [390, 844, 2],
     [100, 100, 1],
@@ -15,9 +16,9 @@ describe('zoom entier', () => {
 });
 
 describe('vue logique', () => {
-  it('remplit toute la fenêtre avec environ 11 tuiles de haut', () => {
-    expect(viewportFor(1280, 720)).toEqual({ zoom: 4, width: 320, height: 180 });
-    expect(viewportFor(1366, 768)).toEqual({ zoom: 4, width: 342, height: 192 });
+  it('remplit toute la fenêtre avec environ 9 tuiles de haut', () => {
+    expect(viewportFor(1280, 720)).toEqual({ zoom: 5, width: 256, height: 144 });
+    expect(viewportFor(1366, 768)).toEqual({ zoom: 5, width: 274, height: 154 });
     expect(viewportFor(390, 844)).toEqual({ zoom: 2, width: 195, height: 422 });
   });
 });

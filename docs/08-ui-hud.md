@@ -24,7 +24,13 @@ Toute l'interface est en **React**, montée dans une couche HTML au-dessus du ca
 
 Quand une fenêtre de mission ou un menu est ouvert, l'entrée clavier du monde est suspendue (`input.mode = "ui"` dans le store).
 
+## Design system
+
+Palette et jetons dans `src/ui/styles/tokens.css` : fond `#111820`, panneaux `#1B2633`, surfaces `#29394A`, accent cyan `#5FB6E0`, succès `#2FBF71`, avertissement `#F2B54A`, erreur `#E0524A`. Police pixel (Pixelify Sans) pour les éléments décoratifs (nom des personnages, logo), Atkinson Hyperlegible pour l'interface et les dialogues, JetBrains Mono pour les terminaux. Panneaux translucides à bordure fine, rayons de 8 à 12 px, ombres douces ; pas de glow ni de bordures épaisses. Boutons et touches partagés (`.btn`, `.btn-primary`, `.kbd`) dans `global.css`. Animations par `motion`, coupées par la réduction des animations.
+
 ## HUD d'exploration
+
+*Version de la refonte : haut gauche portrait pixel, prénom, niveau, grade et XP (gain « +N XP » animé) ; haut droite heure, jour, tickets ouverts, alertes (calculés par `engine/tickets/ticket-board.ts`) ; bas gauche objectif actif (mission en cours avec étape et objectifs cochés, sinon ticket le plus urgent et le collègue à aller voir) ; bas centre invite d'interaction, doublée d'une bulle « E » au-dessus du PNJ. La mini-carte reste à faire.*
 
 | Position | Élément | Détails |
 | --- | --- | --- |
@@ -39,8 +45,8 @@ Sur mobile : joystick virtuel à gauche, bouton d'action à droite, bouton menu 
 
 ## Dialogues
 
-- Boîte en bas, portrait à gauche avec expression, nom et rôle, texte progressif, indicateur ▼.
-- Choix de réponse (2 à 4), navigables au clavier, à la souris, au toucher.
+- Fenêtre en bas, compacte : grand portrait (48 × 48 agrandi ×3) qui déborde au-dessus, liseré coloré selon l'expression, nom (police pixel) et fonction, texte progressif avec curseur, indicateur « Suite · Espace ».
+- Choix de réponse (2 à 4) numérotés, navigables aux flèches, aux chiffres, à la souris et au toucher, avec état de survol et de focus distinct.
 - Un choix peut porter des effets : réputation, drapeau de quête, ouverture de mission, objet donné.
 - Historique des répliques accessible (touche L) pour relire.
 - Format des dialogues : voir `04-moteur-missions.md`.
