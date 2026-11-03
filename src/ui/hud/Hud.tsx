@@ -1,8 +1,12 @@
+import { useEffect, useState } from 'react';
 import { xpProgress } from '@engine/progression/levels';
 import { useGameStore } from '@core/store/use-game-store';
 import { useUiServices } from '../hooks/game-services';
 import { levelTitle, STRINGS } from '../strings/fr';
 import styles from './Hud.module.css';
+
+/** Durée d'affichage du rappel des contrôles (ms). */
+const CONTROLS_HINT_MS = 12_000;
 
 /**
  * HUD d'exploration (docs/08) : carte joueur avec niveau, titre et barre d'XP animée,
@@ -17,6 +21,12 @@ export function Hud() {
   const busy = useGameStore((s) => s.ui.inputMode === 'ui');
   const { bus } = useUiServices();
   const progress = xpProgress(xp);
+  // Rappel des contrôles à l'arrivée, effacé après quelques secondes.
+  const [showControls, setShowControls] = useState(true);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowControls(false), CONTROLS_HINT_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <div className={styles['hud']}>
@@ -47,6 +57,11 @@ export function Hud() {
           <p className={styles['xp']}>{STRINGS.hud.xp(progress.current, progress.needed)}</p>
         </div>
       </div>
+      {showControls && !busy && !prompt && (
+        <p className={styles['controls']} role="note">
+          {STRINGS.controlsHint}
+        </p>
+      )}
       {prompt && !busy && (
         <button
           type="button"

@@ -38,6 +38,30 @@ export const FEEDBACK_TEXT: Readonly<Record<FeedbackCode, string>> = {
 /** Textes de l'interface. */
 export const STRINGS = {
   appTitle: 'TSSR Quest',
+  title: {
+    tagline: 'Le RPG du technicien supérieur systèmes et réseaux',
+    company: 'LabCorp · siège régional · 23 h 47',
+    newGame: 'Nouvelle partie',
+    continue: 'Continuer',
+    menu: 'Menu principal',
+    nameLabel: 'Comment t’appelles-tu ?',
+    namePlaceholder: 'Ton prénom',
+    pronounsLabel: 'Comment parler de toi ?',
+    pronouns: { il: 'il', elle: 'elle', iel: 'iel' },
+    start: 'Commencer le stage',
+    back: 'Retour',
+    overwrite: 'Ta partie en cours sera remplacée.',
+    controlsTitle: 'Contrôles',
+    controls: [
+      ['←↑↓→ ou ZQSD', 'se déplacer'],
+      ['Maj', 'courir'],
+      ['E ou Entrée', 'parler, interagir'],
+      ['Clic', 'aller à un endroit'],
+    ],
+    footer:
+      'Fan-game pédagogique · aucune affiliation avec un éditeur ou un organisme de formation',
+  },
+  controlsHint: '←↑↓→ / ZQSD : se déplacer · Maj : courir · E : parler',
   loading: 'Chargement de LabCorp…',
   contentMissing:
     'Le contenu du jeu est introuvable. Lance « npm run content:build » puis recharge la page.',

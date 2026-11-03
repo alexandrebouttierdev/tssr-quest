@@ -9,6 +9,10 @@ import type {} from '../../src/app/debug';
 /** Attend que le jeu soit chargé et pilotable. */
 async function openGame(page: Page): Promise<void> {
   await page.goto('/');
+  // Écran titre : nouvelle partie avec un prénom.
+  await page.getByRole('button', { name: 'Nouvelle partie' }).click();
+  await page.getByLabel('Comment t’appelles-tu ?').fill('Alex');
+  await page.getByRole('button', { name: 'Commencer le stage' }).click();
   await expect(page.getByTestId('game-canvas').locator('canvas')).toBeVisible();
   await page.waitForFunction(() => window.__TSSR_DEBUG__ !== undefined);
 }

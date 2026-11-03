@@ -1,6 +1,6 @@
 import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderWithServices } from '../test-utils';
 import { Hud } from './Hud';
 
@@ -37,5 +37,19 @@ describe('<Hud>', () => {
     expect(events).toEqual([{ type: 'world/interact', targetId: 'hugo' }]);
     act(() => store.getState().setInputMode('ui'));
     expect(screen.queryByRole('button', { name: /Parler à Hugo/ })).not.toBeInTheDocument();
+  });
+
+  it("rappelle les contrôles à l'arrivée puis les efface", () => {
+    vi.useFakeTimers();
+    try {
+      renderWithServices(<Hud />);
+      expect(screen.getByRole('note')).toHaveTextContent('ZQSD');
+      act(() => {
+        vi.advanceTimersByTime(12_000);
+      });
+      expect(screen.queryByRole('note')).not.toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

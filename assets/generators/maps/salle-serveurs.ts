@@ -256,7 +256,7 @@ const map = {
   tileheight: 16,
   nextlayerid: 8,
   nextobjectid: nextId,
-  properties: [prop('zoneId', 'salle-serveurs'), prop('ambient', 0.62)],
+  properties: [prop('zoneId', 'salle-serveurs'), prop('ambient', 0.9)],
   tilesets: [
     {
       firstgid: 1,

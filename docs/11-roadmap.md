@@ -76,7 +76,7 @@ Objectif : une démo qui donne envie, assez riche pour être partagée sur Linke
 
 **Publication**
 - [ ] Domaine, déploiement automatique sur le VPS, PWA.
-- [ ] Page itch.io, README illustré, GIF de démonstration.
+- [ ] Page itch.io, GIF de démonstration. (README illustré ✅, publication GitHub Pages ✅)
 - [ ] Session de test avec 3 à 5 apprenants, corrections.
 - [ ] Post LinkedIn de lancement (voir `14-communication.md`).
 

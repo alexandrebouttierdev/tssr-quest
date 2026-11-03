@@ -17,6 +17,8 @@ export class PreloadScene extends Phaser.Scene {
       frame.destroy();
       bar.destroy();
     });
+    // Les ressources suivent la base du site (« / » en local, « /tssr-quest/ » sur GitHub Pages).
+    this.load.setBaseURL(import.meta.env.BASE_URL);
     this.load.image(ASSET_KEYS.tilesetServerRoom, ASSET_PATHS[ASSET_KEYS.tilesetServerRoom]);
     this.load.spritesheet(ASSET_KEYS.character, ASSET_PATHS[ASSET_KEYS.character], {
       frameWidth: CHARACTER_FRAME.width,

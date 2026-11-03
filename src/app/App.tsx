@@ -8,6 +8,8 @@ import { Hud } from '@ui/hud/Hud';
 import { MissionWindow } from '@ui/mission/MissionWindow';
 import { Notifications } from '@ui/notifications/Notifications';
 import { STRINGS } from '@ui/strings/fr';
+import { TitleScreen, type NewGameIdentity } from '@ui/title/TitleScreen';
+import { createGameStore } from '@core/store/create-store';
 import { loadGeneratedContent } from './content';
 import { installDebug } from './debug';
 import { GameCanvas } from './GameCanvas';
@@ -72,7 +74,7 @@ function GameScreen({ services }: { services: AppServices }) {
 
 /**
  * Composant racine de l'application React : charge le contenu et la sauvegarde
- * automatique, puis affiche le jeu.
+ * automatique, affiche l'écran titre, puis le jeu.
  *
  * @returns L'arbre complet de l'interface.
  */
@@ -80,20 +82,48 @@ export function App() {
   const content = useMemo(() => loadGeneratedContent(), []);
   const services = useMemo(() => (content ? createAppServices(content) : null), [content]);
   const [ready, setReady] = useState(false);
+  const [hasSave, setHasSave] = useState(false);
+  const [started, setStarted] = useState(false);
 
   useEffect(() => {
     if (!services) return;
     let alive = true;
-    void restoreAutosave(services).then(() => {
-      if (alive) setReady(true);
+    void restoreAutosave(services).then((restored) => {
+      if (!alive) return;
+      setHasSave(restored);
+      setReady(true);
     });
     return () => {
       alive = false;
     };
   }, [services]);
 
+  const startNewGame = useCallback(
+    (identity: NewGameIdentity) => {
+      if (!services) return;
+      // Nouvelle partie : on repart d'un état neuf (la sauvegarde sera remplacée).
+      if (hasSave) services.store.setState(createGameStore().getState());
+      services.store.getState().setPlayerIdentity({
+        name: identity.name,
+        pronouns: identity.pronouns,
+      });
+      setStarted(true);
+    },
+    [services, hasSave],
+  );
+
   if (!services) return <main className="screen message">{STRINGS.contentMissing}</main>;
   if (!ready) return <main className="screen message">{STRINGS.loading}</main>;
+  if (!started) {
+    return (
+      <TitleScreen
+        hasSave={hasSave}
+        savedName={services.store.getState().player.name}
+        onContinue={() => setStarted(true)}
+        onNewGame={startNewGame}
+      />
+    );
+  }
   return (
     <GameStoreProvider store={services.store}>
       <UiServicesProvider services={services.ui}>

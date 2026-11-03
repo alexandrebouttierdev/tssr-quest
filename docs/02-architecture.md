@@ -82,7 +82,7 @@ tssr-quest/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml                  # lint, typecheck, tests, contenu, build, e2e
-│       └── deploy.yml              # déploiement sur le VPS (rsync) à chaque tag
+│       └── pages.yml               # publication du jeu sur GitHub Pages à chaque push sur master
 ├── docs/                           # ce dossier de conception
 ├── reference/                      # prototypes de la phase de conception (lecture seule)
 ├── assets/                         # sources des assets (non servies telles quelles)
@@ -355,7 +355,8 @@ Une seule `WorldScene` recharge la carte à chaque changement de zone (pas une s
 
 ## Déploiement
 
-- Build statique dans `dist/`, servi par Nginx sur le VPS (en-têtes de cache longs pour les fichiers hachés, `index.html` sans cache).
+- **Aujourd'hui** : GitHub Pages, par `.github/workflows/pages.yml` à chaque push sur `master` (build avec `BASE_PATH=/tssr-quest/`, lien direct : https://alexandrebouttierdev.github.io/tssr-quest/).
+- Plus tard : build statique dans `dist/`, servi par Nginx sur le VPS (en-têtes de cache longs pour les fichiers hachés, `index.html` sans cache).
 - Domaine à choisir (ex. `tssrquest.fr`), HTTPS Let's Encrypt.
 - Page itch.io en complément pour la visibilité.
-- Déploiement automatique à chaque tag `v*` par `deploy.yml`.
+- Déploiement automatique sur le VPS à chaque tag `v*` (à écrire le jour où le VPS existe).

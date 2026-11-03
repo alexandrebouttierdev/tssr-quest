@@ -21,7 +21,7 @@
   {
    "name": "ambient",
    "type": "float",
-   "value": 0.62
+   "value": 0.9
   }
  ],
  "tilesets": [

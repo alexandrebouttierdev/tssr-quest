@@ -6,7 +6,7 @@ Du **pixel art moderne** : la lisibilité et le charme des sprites 16 px, avec l
 
 ## Résolution et rendu
 
-- Résolution logique : **480 × 270 px** (16:9), zoomée en nombre entier (×2, ×3, ×4) selon l'écran. Bandes de couleur autour si le ratio ne colle pas.
+- Résolution logique : environ **320 × 180 px** (≈ 20 × 11 tuiles), zoomée en nombre entier (×4 en 720p, ×6 en 1080p) selon l'écran. La largeur logique s'adapte à la fenêtre pour la remplir sans bandes noires (`src/platform/viewport.ts`). *Révisé le 3 novembre 2026 : à 480 × 270, toute la salle tenait à l'écran et les personnages étaient trop petits.*
 - `pixelArt: true`, `roundPixels: true` dans la config Phaser : aucun flou.
 - Caméra qui suit le joueur avec un lissage (`lerp 0.12`) et une zone morte, sans jamais sortir de la carte.
 - L'interface React n'est pas pixelisée à la même échelle : elle utilise une police pixel nette, rendue en CSS à taille entière, pour rester lisible sur mobile.

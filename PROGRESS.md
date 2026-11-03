@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : phase 1 — commandes du ch. 4 complètes + vim
-- **Prochaine action** : phase 1 — commandes du ch. 5 : comptes (useradd, usermod, userdel, groupadd, groupdel, passwd, chage, su), droits (chmod, chown, chgrp, umask), paquets (apt, apt-get, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron
+- **Dernière tâche terminée** : retours de l'auteur — rendu agrandi et éclairci, écran titre, README illustré, publication GitHub Pages ; avant cela comptes, droits, apt/dpkg
+- **Prochaine action** : tests dédiés de `apt`/`apt-get`/`dpkg` (src/sims/shared/packages.ts, commands/apt.ts) ; puis phase 1 — commandes du ch. 5 restantes : réseau (ip, ping, ss, ifup/ifdown), mémoire (free, uptime, nice, renice), planification (crontab, at), disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron
 
 ## Environnement
 
@@ -57,8 +57,8 @@ Il est mis à jour à chaque tâche terminée.
 
 **Contenu** : 22 missions ch. 4-5, épreuves, badges, 3 quêtes secondaires — à faire.
 **Monde** : cartes DSI, couloir, formation ; PNJ ; Light2D ; portes et transitions ; sons — à faire.
-**Interface** : écran titre, création du personnage, menus, options, sauvegardes, montée de niveau, mobile — à faire.
-**Publication** : PWA, déploiement, itch.io — à faire.
+**Interface** : écran titre ✅ (nuit, pluie, baies qui clignotent ; prénom + pronoms ; Continuer) ; rappel des contrôles en jeu ✅ ; menus, options, sauvegardes, montée de niveau, mobile — à faire.
+**Publication** : GitHub Pages ✅ (`pages.yml`, https://alexandrebouttierdev.github.io/tssr-quest/ — activer *Settings → Pages → Source : GitHub Actions*) ; README illustré ✅ ; PWA, itch.io — à faire.
 
 ## Décisions
 
@@ -107,6 +107,10 @@ Il est mis à jour à chaque tâche terminée.
 | D42 | 2026-11-03 | Portraits des dialogues : initiale stylisée en attendant les portraits 48 × 48 (phase 1) | Les portraits ne sont pas encore dessinés. |
 | D43 | 2026-11-03 | La complétion Tab ne complète que commandes et chemins (pas les sous-commandes de systemctl) | Équivalent d'un shell sans bash-completion ; amélioration prévue en phase 1. |
 | D44 | 2026-11-03 | Partie restaurée depuis l'emplacement `auto` au démarrage ; pas encore d'écran titre | L'écran titre et la création du personnage sont en phase 1. |
+| D45 | 2026-11-03 | Vue logique ≈ 320 × 180 (11 tuiles de haut), largeur adaptée à la fenêtre, zoom entier ; ambiance 0,9 et vignettage léger | Retour de l'auteur : « on ne voit rien ». À 480 × 270 toute la salle tenait à l'écran, personnages minuscules, image trop sombre. docs/07 mis à jour. |
+| D46 | 2026-11-03 | Écran titre en React/CSS (pas de canevas) ; « Nouvelle partie » remet un état neuf, « Continuer » reprend `auto` | Règle 7 de CLAUDE.md ; remplace D44. |
+| D47 | 2026-11-03 | Publication sur GitHub Pages (workflow `pages.yml`, base `/tssr-quest/` via `BASE_PATH`), avant le VPS prévu par docs/02 | Demande de l'auteur : un lien direct pour jouer. docs/02 mis à jour. |
+| D48 | 2026-11-03 | APT simulé : catalogue de paquets réels de bookworm, mises à jour publiées sur une suite et révélées par `apt update` si sources.list la contient ; commandes liées à un paquet (`package`) introuvables s'il est absent | Fidélité (pas de mise à jour sans `apt update`, sources.list cassé = erreurs réelles) et missions « paquets » rejouables. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

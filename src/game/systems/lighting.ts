@@ -144,5 +144,6 @@ export function applyCameraFx(scene: Phaser.Scene, bloom: boolean): void {
   const camera = scene.cameras.main;
   camera.postFX.clear();
   if (bloom) camera.postFX.addBloom(0xffffff, 1, 1, 0.8, 1.1, 4);
-  camera.postFX.addVignette(0.5, 0.5, 0.92, 0.28);
+  // Vignettage discret : il habille les bords sans assombrir la zone de jeu.
+  camera.postFX.addVignette(0.5, 0.5, 1, 0.12);
 }

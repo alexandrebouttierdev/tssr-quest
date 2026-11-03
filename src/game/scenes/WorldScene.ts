@@ -102,12 +102,12 @@ export class WorldScene extends Phaser.Scene {
     const camera = this.cameras.main;
     camera.setBounds(0, 0, widthPx, heightPx).setRoundPixels(true);
     camera.startFollow(this.player, true, 0.12, 0.12);
-    camera.setDeadzone(48, 32);
+    camera.setDeadzone(24, 16);
     camera.setBackgroundColor('#0e1116');
 
     // Lumière, poussière, LED, effets de caméra.
     const ambient =
-      typeof this.map.properties['ambient'] === 'number' ? this.map.properties['ambient'] : 0.7;
+      typeof this.map.properties['ambient'] === 'number' ? this.map.properties['ambient'] : 0.9;
     createLighting(
       this,
       widthPx,

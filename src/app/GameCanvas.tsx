@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import Phaser from 'phaser';
 import { createGameConfig } from '@game/config';
 import { provideServices, type WorldServices } from '@game/services';
-import { integerZoom } from '@platform/viewport';
+import { viewportFor } from '@platform/viewport';
 
 /**
  * Crée l'instance Phaser dans un conteneur et la détruit au démontage. React ne
@@ -24,11 +24,16 @@ export function GameCanvas({
     const container = containerRef.current;
     if (!container) return;
     const game = new Phaser.Game(
-      createGameConfig(container, integerZoom(window.innerWidth, window.innerHeight)),
+      createGameConfig(container, viewportFor(window.innerWidth, window.innerHeight)),
     );
     provideServices(game, services);
     onReady?.(game);
-    const onResize = () => game.scale.setZoom(integerZoom(window.innerWidth, window.innerHeight));
+    // La taille logique suit la fenêtre : le monde la remplit toujours, en zoom entier.
+    const onResize = () => {
+      const view = viewportFor(window.innerWidth, window.innerHeight);
+      game.scale.setZoom(view.zoom);
+      game.scale.resize(view.width, view.height);
+    };
     window.addEventListener('resize', onResize);
     return () => {
       window.removeEventListener('resize', onResize);

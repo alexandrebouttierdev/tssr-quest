@@ -27,6 +27,8 @@ export const aliases = {
 };
 
 export default defineConfig({
+  // Sur GitHub Pages, le jeu est servi sous /tssr-quest/ : le workflow passe BASE_PATH.
+  base: process.env['BASE_PATH'] ?? '/',
   plugins: [react(), contentPlugin()],
   resolve: { alias: aliases },
   server: { port: 5173, strictPort: true },
