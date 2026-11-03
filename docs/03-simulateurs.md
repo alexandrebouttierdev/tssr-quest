@@ -36,6 +36,8 @@ export interface ExecResult<TState> {
   readonly exitCode: number;
   /** Effets particuliers pour l'interface (effacer l'écran, ouvrir vim…). */
   readonly effects?: readonly SimEffect[];
+  /** Sorties standard et d'erreur entremêlées dans l'ordre d'écriture. */
+  readonly output?: readonly { stream: 'stdout' | 'stderr'; text: string }[];
 }
 
 /** Un simulateur en mode ligne de commande. */
@@ -47,6 +49,8 @@ export interface CommandLineSimulator<TState> {
   exec(state: TState, line: string, ctx: SimContext): ExecResult<TState>;
   /** Propositions d'autocomplétion pour la saisie en cours. */
   complete(state: TState, partial: string): readonly string[];
+  /** Message d'accueil affiché à l'ouverture de la session (bannière SSH). */
+  banner(state: TState, ctx: SimContext): string;
 }
 ```
 
@@ -108,9 +112,18 @@ export interface BashCommand {
   readonly summary: string;
   /** Page de manuel simplifiée, en français, affichée par `man`. */
   readonly manual: string;
-  run(args: readonly string[], io: CommandIo, machine: Machine, ctx: SimContext): CommandOutcome;
+  /** Commande interne du shell (`cd`, `export`) : `sudo` ne peut pas la lancer. */
+  readonly builtin?: boolean;
+  /** `env` regroupe la machine, le compte effectif, le dossier courant, stdin, le contexte et `runAs` (pour sudo). */
+  run(args: readonly string[], env: CommandEnv): CommandOutcome;
 }
 ```
+
+`CommandOutcome` renvoie la machine modifiée, `stdout`, `stderr`, le code de retour et un drapeau `ok` : une commande informative dont le code est non nul (`systemctl status` d'un service en échec renvoie 3) reste « réussie » pour les conditions de mission.
+
+Fichiers réels : `ast.ts`, `lexer.ts`, `parser.ts`, `expand.ts`, `glob.ts`, `arith.ts`, `interpreter.ts`, `options.ts` (analyse façon getopt), `format.ts` (droits, colonnes, tableaux), `journal-view.ts`, `prompt.ts`, `completion.ts`, `simulator.ts` (`bashSimulator`), `commands/registry.ts`, `test-utils.ts`.
+
+L'exécution en arrière-plan (`&`) et le mot de passe de `sudo` arrivent en phase 1 ; en phase 0, `sudo` ne demande pas de mot de passe.
 
 Les pages `man` sont **en français et simplifiées** (exception assumée à la fidélité, c'est un outil pédagogique), avec la mention « page simplifiée TSSR Quest ».
 
@@ -127,7 +140,9 @@ Les pages `man` sont **en français et simplifiées** (exception assumée à la 
 
 - `rm` sans droits : `rm: impossible de supprimer 'x': Permission non accordée`.
 - `systemctl restart` sans sudo : `Failed to restart x.service: Interactive authentication required.`
-- `sudo` demande le mot de passe la première fois (saisie masquée) si la mission le prévoit.
+- `sudo` demande le mot de passe la première fois (saisie masquée) si la mission le prévoit (phase 1).
+- Une redirection (`sudo echo x > /etc/f`) est faite par le shell avec les droits de l'utilisateur, pas par sudo : « Permission non accordée ».
+- Le journal système n'est lisible que par root et les membres de `adm` ou `systemd-journal` (`journalctl` affiche sinon l'avertissement réel) ; `systemctl status` n'affiche alors pas les lignes de journal.
 - `df -h`, `free -h`, `ip a`, `ss -tlnp` : formats identiques à Debian 12.
 - Les services ont des dépendances et des causes d'échec simulées (disque plein, port déjà utilisé, fichier de config invalide) qui apparaissent dans `systemctl status` et `journalctl -u`.
 - `apache2ctl configtest`, `sshd -t` : valident les fichiers de configuration modifiés dans vim.

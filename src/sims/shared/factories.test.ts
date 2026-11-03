@@ -164,3 +164,14 @@ describe('fichiers de comptes', () => {
     expect(machine.services['mariadb']?.failure).toEqual({ kind: 'port-in-use', port: 3306 });
   });
 });
+
+describe('dossiers intermédiaires des fichiers de mission', () => {
+  it('donne au titulaire les dossiers créés dans son dossier personnel', () => {
+    const machine = createDebianServer({
+      users: ['hugo'],
+      files: { '/home/hugo/projet/x.txt': { owner: 'hugo' } },
+    });
+
+    expect(machine.fs['/home/hugo/projet']).toMatchObject({ owner: 'hugo', group: 'hugo' });
+  });
+});

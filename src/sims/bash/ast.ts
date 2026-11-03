@@ -16,6 +16,8 @@ export type WordPart =
 /** Mot de la ligne de commande. */
 export interface Word {
   readonly parts: readonly WordPart[];
+  /** Texte du mot tel que tapé (pour les messages d'erreur de bash). */
+  readonly raw?: string;
 }
 
 /** Redirection d'entrée ou de sortie. */

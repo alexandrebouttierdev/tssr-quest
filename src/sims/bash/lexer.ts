@@ -221,7 +221,12 @@ export function tokenize(line: string): Token[] {
         i++;
       }
     }
-    tokens.push({ type: 'word', word: { parts: builder.parts }, start, end: i });
+    tokens.push({
+      type: 'word',
+      word: { parts: builder.parts, raw: line.slice(start, i) },
+      start,
+      end: i,
+    });
   }
   return tokens;
 }

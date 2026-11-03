@@ -521,10 +521,15 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       for (const p of Object.keys(fs)) if (isInside(p, path)) delete fs[p];
       continue;
     }
-    for (let parent = dirname(path); !fs[parent]; parent = dirname(parent)) {
-      fs[parent] = dir('root', 'root', 0o755, t);
-    }
     const owner = spec.owner ?? 'root';
+    const ownerHome = users[owner]?.home;
+    for (let parent = dirname(path); !fs[parent]; parent = dirname(parent)) {
+      // Un dossier intermédiaire créé dans le dossier personnel appartient à son titulaire.
+      const inHome = ownerHome !== undefined && owner !== 'root' && isInside(parent, ownerHome);
+      fs[parent] = inHome
+        ? dir(owner, users[owner]?.group ?? owner, 0o755, t)
+        : dir('root', 'root', 0o755, t);
+    }
     const group = spec.group ?? users[owner]?.group ?? 'root';
     const mtime = spec.mtime ?? now - 3_600_000;
     if (spec.type === 'dir') {

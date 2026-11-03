@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.4 — `sims/shared` (machine, fs, droits, services, disques, journaux, fabrique Debian)
-- **Prochaine action** : 0.5 — interpréteur Bash (lexer, parser, expansion, interpréteur) puis commandes de la mission d'Hugo
+- **Dernière tâche terminée** : 0.5 — simulateur Bash v1 (interpréteur + 21 commandes)
+- **Prochaine action** : 0.6 — schémas Zod du contenu, scripts build/validate/replay, moteur de missions, dialogue, progression, mission `linux-admin.intranet-down`
 
 ## Environnement
 
@@ -35,8 +35,8 @@ Il est mis à jour à chaque tâche terminée.
 
 **Simulateur Bash (version 1)**
 - [x] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
-- [ ] `sims/bash` : lexer, parser, interpréteur (pipes, redirections, `;` `&&` `||`, variables, jokers).
-- [ ] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide`.
+- [x] `sims/bash` : lexer, parser, interpréteur (pipes, redirections, `;` `&&` `||`, variables, jokers).
+- [x] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide` (+ `echo exit export true false whoami hostname help logout`).
 
 **Moteur**
 - [ ] `engine/missions` : runner, registre d'étapes, conditions `command`, `service`, `disk`, `file`, `all/any/not`.
@@ -75,6 +75,12 @@ Il est mis à jour à chaque tâche terminée.
 | D22 | 2026-11-03 | Pannes de service (`no-space-left`, `port-in-use`) réévaluées à chaque démarrage | La réussite se vérifie sur l'état : le service redémarre dès que la cause disparaît, quelle que soit la méthode. |
 | D23 | 2026-11-03 | Historique des commandes : champ `ok` distinct du code de retour (ex. `systemctl status` d'un service en échec renvoie 3 mais compte comme exécuté) | Les conditions `command` de docs/04 portent sur une commande « exécutée avec succès ». |
 | D24 | 2026-11-03 | Règle ESLint jsdoc : TSDoc exigée sur fonctions, classes, interfaces, types et constantes exportés (pas sur les fonctions fléchées internes) | Évite de documenter chaque callback d'un objet exporté. |
+| D25 | 2026-11-03 | Interface `BashCommand.run(args, env)` (env = machine, compte, cwd, stdin, ctx, `runAs`) au lieu de `run(args, io, machine, ctx)` ; docs/03 mis à jour | Un seul objet extensible ; `sudo` a besoin de relancer une commande sous root. |
+| D26 | 2026-11-03 | `ExecResult.output` (sorties entremêlées) et `CommandLineSimulator.banner` ajoutés à l'interface commune | Garder l'ordre réel stdout/stderr dans le terminal ; bannière SSH réaliste. |
+| D27 | 2026-11-03 | `ls` en fr_FR : format `%e %b %H:%M` (jour avant le mois, mois alignés sur 5 caractères), tri par collation française qui ignore la ponctuation | Traduction coreutils fr et strcoll de glibc. |
+| D28 | 2026-11-03 | Journal lisible seulement par root, adm, systemd-journal ; la mission d'Hugo mettra hugo dans `adm` | Fidélité Debian ; un admin de LabCorp est logiquement dans `adm`, ce qui lui montre la cause dans `systemctl status`. |
+| D29 | 2026-11-03 | Commandes présentes dans /usr/bin mais pas encore simulées → « commande non disponible dans cette simulation » (code 127) | Recommandation de docs/03 ; distingue d'une vraie faute de frappe (« commande introuvable »). |
+| D30 | 2026-11-03 | `&` (arrière-plan) et mot de passe sudo reportés en phase 1 | Hors du périmètre de la mission d'Hugo ; noté dans docs/03. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

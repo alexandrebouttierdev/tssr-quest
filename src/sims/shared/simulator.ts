@@ -21,6 +21,8 @@ export interface ExecResult<TState> {
   readonly exitCode: number;
   /** Effets particuliers pour l'interface (effacer l'écran, ouvrir vim…). */
   readonly effects?: readonly SimEffect[];
+  /** Sorties standard et d'erreur entremêlées dans l'ordre d'écriture, si le simulateur le sait. */
+  readonly output?: readonly { readonly stream: 'stdout' | 'stderr'; readonly text: string }[];
 }
 
 /** Identifiant d'un simulateur en ligne de commande. */
