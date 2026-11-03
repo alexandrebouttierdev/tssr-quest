@@ -114,7 +114,9 @@ tssr-quest/
 ├── scripts/
 │   ├── build-content.ts            # YAML → JSON validé (src/content/generated)
 │   ├── validate-content.ts         # cohérence globale du contenu
-│   └── replay-solutions.ts         # rejoue la solution de chaque mission
+│   ├── replay-solutions.ts         # rejoue la solution de chaque mission
+│   ├── content-files.ts            # lecture de content/ et écriture du JSON généré
+│   └── vite-content-plugin.ts      # recompilation à chaud en développement
 ├── src/
 │   ├── main.tsx                    # point d'entrée : monte React et Phaser
 │   ├── app/                        # racine React
@@ -161,6 +163,7 @@ tssr-quest/
 │   │   │   ├── conditions.ts       # évaluateur des conditions de réussite
 │   │   │   ├── rewards.ts
 │   │   │   └── *.test.ts
+│   │   ├── game-engine.ts          # orchestrateur : bus → dialogues et missions → store
 │   │   ├── quests/                 # graphe de quêtes, prérequis, journal
 │   │   ├── dialogue/               # interpréteur de dialogues (nœuds, choix, effets)
 │   │   ├── progression/            # XP, niveaux, compétences, avantages
@@ -183,6 +186,8 @@ tssr-quest/
 │   │   └── index.ts                # registre des simulateurs
 │   ├── content/                    # chargement et typage du contenu
 │   │   ├── schemas/                # schémas Zod (mission, dialogue, npc, item, zone)
+│   │   ├── compile.ts              # YAML → paquet validé (pur, sans disque)
+│   │   ├── validate.ts             # cohérence globale (références, cycles, anglais, XP)
 │   │   ├── loader.ts
 │   │   ├── generated/              # JSON produit par scripts/build-content.ts (ignoré par Git)
 │   │   └── *.test.ts

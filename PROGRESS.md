@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 0 — Fondations (`v0.1.0`)
-- **Dernière tâche terminée** : 0.5 — simulateur Bash v1 (interpréteur + 21 commandes)
-- **Prochaine action** : 0.6 — schémas Zod du contenu, scripts build/validate/replay, moteur de missions, dialogue, progression, mission `linux-admin.intranet-down`
+- **Dernière tâche terminée** : 0.6 — contenu (schémas, compilation, validation, rejeu) + moteur (missions, dialogues, progression, orchestrateur) + mission `linux-admin.intranet-down`
+- **Prochaine action** : 0.7 — monde Phaser (config, scènes, carte Tiled de la salle serveurs, joueur, PNJ, pathfinding A*, bridge)
 
 ## Environnement
 
@@ -29,9 +29,9 @@ Il est mis à jour à chaque tâche terminée.
 - [x] `core/save` : sauvegarde IndexedDB, schéma Zod versionné, export/import + tests.
 
 **Contenu**
-- [ ] Schémas Zod : chapitre, mission, étapes `dialogue`, `choice`, `input`, `ordering`, `terminal` ; dialogue ; PNJ ; zone.
-- [ ] `scripts/build-content.ts` et plugin Vite de rechargement à chaud.
-- [ ] `scripts/validate-content.ts` et `scripts/replay-solutions.ts`.
+- [x] Schémas Zod : chapitre, mission, étapes `dialogue`, `choice`, `input`, `ordering`, `terminal` ; dialogue ; PNJ ; zone.
+- [x] `scripts/build-content.ts` et plugin Vite de rechargement à chaud.
+- [x] `scripts/validate-content.ts` et `scripts/replay-solutions.ts`.
 
 **Simulateur Bash (version 1)**
 - [x] `sims/shared` : machine, système de fichiers avec droits, utilisateurs, services, disques, journaux, fabriques.
@@ -39,9 +39,9 @@ Il est mis à jour à chaque tâche terminée.
 - [x] Commandes de la mission d'Hugo : `ls cd pwd cat systemctl journalctl df du rm sudo curl clear man aide` (+ `echo exit export true false whoami hostname help logout`).
 
 **Moteur**
-- [ ] `engine/missions` : runner, registre d'étapes, conditions `command`, `service`, `disk`, `file`, `all/any/not`.
-- [ ] `engine/dialogue` : interpréteur de nœuds, choix, effets, conditions.
-- [ ] `engine/progression` : XP, niveaux, compétences.
+- [x] `engine/missions` : runner, registre d'étapes, conditions `command`, `service`, `disk`, `file`, `all/any/not`.
+- [x] `engine/dialogue` : interpréteur de nœuds, choix, effets, conditions.
+- [x] `engine/progression` : XP, niveaux, compétences.
 
 **Jeu et interface**
 - [ ] Phaser : `BootScene`, `PreloadScene`, `WorldScene`, carte Tiled (salle serveurs), joueur, collisions, caméra, un PNJ, interaction.
@@ -81,6 +81,13 @@ Il est mis à jour à chaque tâche terminée.
 | D28 | 2026-11-03 | Journal lisible seulement par root, adm, systemd-journal ; la mission d'Hugo mettra hugo dans `adm` | Fidélité Debian ; un admin de LabCorp est logiquement dans `adm`, ce qui lui montre la cause dans `systemctl status`. |
 | D29 | 2026-11-03 | Commandes présentes dans /usr/bin mais pas encore simulées → « commande non disponible dans cette simulation » (code 127) | Recommandation de docs/03 ; distingue d'une vraie faute de frappe (« commande introuvable »). |
 | D30 | 2026-11-03 | `&` (arrière-plan) et mot de passe sudo reportés en phase 1 | Hors du périmètre de la mission d'Hugo ; noté dans docs/03. |
+| D31 | 2026-11-03 | XP de mission = étapes (20 + 10 si parfaite) + `rewards.xp` (50 par défaut) | Concilie docs/01 (barème par étape) et docs/04 (`rewards.xp: 150`). |
+| D32 | 2026-11-03 | Erreurs de terminal : seule une commande qui **agit** et échoue compte (lecture et exploration exclues) | « pas les commandes d'exploration » (docs/04) ; règle simple et prévisible. |
+| D33 | 2026-11-03 | Le moteur publie des codes de retour (`correct`, `incorrect`…), traduits par l'interface | Règle 3 de CLAUDE.md : aucun texte joueur dans la logique. Les notifications de fin de mission/niveau sont produites par l'UI à partir des événements. |
+| D34 | 2026-11-03 | `exit` dans un terminal de mission ne ferme pas la fenêtre : la session reste ouverte (code `session-kept-open`) | Évite de perdre l'état de l'étape ; on quitte par le bouton Quitter. |
+| D35 | 2026-11-03 | Étape `input` avec `pattern` : champ `example` obligatoire | Il faut une réponse de référence rejouable par `test:content` (règle 6 de CLAUDE.md). |
+| D36 | 2026-11-03 | Le plugin Vite de contenu lance `tsx scripts/build-content.ts` en sous-processus | La config Vite est chargée sans les alias d'import du projet. |
+| D37 | 2026-11-03 | Chapitre 5 réduit à la seule mission de l'intranet en phase 0 (pas encore d'épreuve) ; `exam` rendu facultatif dans le schéma | Les 21 autres missions arrivent en phase 1. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

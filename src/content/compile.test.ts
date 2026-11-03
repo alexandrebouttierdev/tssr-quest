@@ -120,8 +120,10 @@ describe('validation des références', () => {
       'chapters/05-test/chapter.yaml',
       VALID_CONTENT_FILES['chapters/05-test/chapter.yaml']!.replace(
         'missions: [test.panne, test.suite]',
-        'missions: [test.panne, test.fantome]\nunlocks: { zones: [z], items: [i] }',
-      ).replace('mentor: hugo', 'mentor: personne'),
+        'missions: [test.panne, test.fantome]',
+      )
+        .replace('unlocks: { zones: [salle], items: [cle] }', 'unlocks: { zones: [z], items: [i] }')
+        .replace('mentor: hugo', 'mentor: personne'),
     );
 
     expect(validateBundle(bundle).map((e) => e.message)).toEqual(

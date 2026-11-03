@@ -1,4 +1,6 @@
 import type { StateCreator } from 'zustand';
+// Charge la déclaration du mutateur « zustand/immer » pour tout programme qui voit ces types.
+import type {} from 'zustand/middleware/immer';
 import type { InventoryActions, InventoryState } from './inventory.slice';
 import type { MissionRunActions, MissionRunView } from './mission-run.slice';
 import type { PlayerActions, PlayerState } from './player.slice';

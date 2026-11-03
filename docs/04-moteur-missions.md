@@ -130,7 +130,7 @@ variants:                        # révision : une variante tirée au hasard rem
 | --- | --- | --- |
 | `dialogue` | `node` | Fin du nœud de dialogue |
 | `choice` | `question`, `options[]` (`text`, `correct`, `feedback`), `multiple` | Bonne(s) option(s) choisie(s) |
-| `input` | `question`, `answers[]` ou `pattern`, `normalize` (`lower`, `trim`, `nospace`, `ip`) | Réponse acceptée |
+| `input` | `question`, `answers[]` ou `pattern` (+ `example`, rejoué par les tests), `normalize` (`lower`, `trim`, `nospace`, `ip`) | Réponse acceptée |
 | `ordering` | `question`, `items[]` (ordre correct) | Ordre exact |
 | `matching` | `question`, `pairs[]` | Toutes les paires associées |
 | `terminal` | `sim` (`bash`, `cmd`, `powershell`, `ios`), `machine` ou `device`, `goal`, `objectives[]` | Tous les objectifs vrais |
@@ -202,7 +202,9 @@ nodes:
 
 **Effets disponibles** : `flag`, `unflag`, `reputation`, `giveItem`, `takeItem`, `startMission`, `startStep`, `unlockZone`, `unlockSheet`, `playSound`, `wait`, `moveNpc`, `cutscene`.
 
-**Conditions sur un nœud** (`if`) : `flag`, `missionDone`, `hasItem`, `level`, `skill`, `reputation`, `timeOfDay`, `weather`.
+**Conditions sur un nœud** (`if`) : `flag`, `notFlag`, `missionDone`, `hasItem`, `level` (phase 0) ; `skill`, `reputation`, `timeOfDay`, `weather` arrivent avec les systèmes correspondants.
+
+Le texte peut contenir `{prenom}`, remplacé par le prénom du joueur.
 
 **Sélection du dialogue d'un PNJ** : le moteur choisit, par ordre de priorité, l'intro d'une mission disponible, l'outro d'une mission terminée non débriefée, une réplique liée à une quête secondaire, puis `default`.
 
@@ -224,7 +226,10 @@ stateDiagram-v2
 ```
 
 - Après chaque action du joueur, le runner réévalue les objectifs de l'étape sur le nouvel état et publie la liste à jour dans `missionRun`.
-- Les erreurs comptées : mauvaise option, réponse refusée, commande qui échoue sur un objectif attendu (pas les commandes d'exploration).
+- Les erreurs comptées : mauvaise option, réponse refusée, commande qui échoue sur un objectif attendu (pas les commandes d'exploration). Concrètement, pour une étape de terminal : une commande en échec compte comme erreur si elle **agit** sur le système (tout sauf `ls`, `cat`, `cd`, `df`, `du`, `journalctl`, `man`, `aide`, `systemctl status|is-*|list-units`…).
+- XP d'une mission : 20 par étape réussie (ou `xp` de l'étape), +10 par étape sans erreur ni indice, plus `rewards.xp` à la fin (50 par défaut).
+- Le moteur ne contient aucun texte destiné au joueur : ses retours génériques sont des codes (`correct`, `incorrect`, `step-complete`, `session-kept-open`) traduits par `src/ui/strings`.
+- Organisation : `src/engine/missions/` (`mission-runner.ts`, `step-registry.ts`, `step-handler.ts`, `steps/*.step.ts`, `conditions.ts`, `rewards.ts`, `replay.ts`, `machines.ts`), `src/engine/dialogue/` (`dialogue-runner.ts`, `select-node.ts`), `src/engine/progression/` et l'orchestrateur `src/engine/game-engine.ts` branché sur le bus et le store.
 - Le résultat (`MissionResult`) contient : étapes sans faute, erreurs, indices, durée, note pour les épreuves.
 
 ## Validation du contenu

@@ -7,7 +7,7 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { contentPlugin } from './scripts/vite-content-plugin';
+import { contentPlugin } from './scripts/vite-content-plugin.ts';
 
 /** Construit un chemin absolu à partir de la racine du projet. */
 const fromRoot = (path: string): string => fileURLToPath(new URL(path, import.meta.url));

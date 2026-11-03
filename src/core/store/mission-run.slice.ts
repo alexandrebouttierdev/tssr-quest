@@ -49,10 +49,19 @@ export type StepView =
     }
   | { readonly type: 'dialogue'; readonly id: string };
 
+/**
+ * Code d'un retour générique : l'interface le traduit (src/ui/strings), le moteur
+ * ne contient aucun texte destiné au joueur.
+ */
+export type FeedbackCode = 'correct' | 'incorrect' | 'step-complete' | 'session-kept-open';
+
 /** Retour affiché après une saisie (bonne réponse, erreur expliquée…). */
 export interface FeedbackView {
   readonly kind: 'success' | 'error' | 'info';
-  readonly text: string;
+  /** Texte du contenu (explication, retour d'une option), s'il existe. */
+  readonly text?: string;
+  /** Message générique à traduire par l'interface. */
+  readonly code?: FeedbackCode;
 }
 
 /** Vue de la mission en cours, publiée par le moteur et lue par l'interface. */

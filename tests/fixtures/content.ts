@@ -14,6 +14,8 @@ period: { from: "2026-11-09", to: "2026-11-20" }
 zones: [salle]
 mentor: hugo
 missions: [test.panne, test.suite]
+unlocks: { zones: [salle], items: [cle] }
+badge: { id: badge-test, name: Badge de test }
 `,
   'chapters/05-test/panne.mission.yaml': `
 id: test.panne
