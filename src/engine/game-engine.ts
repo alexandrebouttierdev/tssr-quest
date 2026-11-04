@@ -254,7 +254,8 @@ export function createGameEngine(options: GameEngineOptions): GameEngine {
     }),
     bus.on('mission/continue', () => {
       if (!mission || !run || !run.step.completed) return;
-      const next = advance(mission, run, ctx());
+      const exam = content.chapters.get(mission.chapter)?.exam === mission.id;
+      const next = advance(mission, run, ctx(), { exam });
       if ('result' in next) completeMission(mission, next.result);
       else {
         run = next.run;

@@ -2,6 +2,7 @@ import type { MissionResult } from '@core/model';
 import type { MissionRunView } from '@core/store/mission-run.slice';
 import type { Mission } from '@content/schemas';
 import type { Machine } from '@sims/shared/types';
+import { examXp, gradeExam } from '../grading/grade';
 import { buildMachine } from './machines';
 import { handlerFor } from './step-registry';
 import { currentStep } from './step-handler';
@@ -140,10 +141,16 @@ export type AdvanceResult =
  * @param mission - Mission du contenu.
  * @param run - État courant (l'étape doit être réussie).
  * @param ctx - Horloge et aléatoire.
+ * @param options - `exam` : la mission est l'épreuve du chapitre (notée sur 20).
  * @returns Le nouvel état, et le résultat si c'était la dernière étape.
  * @throws {Error} Si l'étape n'est pas encore réussie.
  */
-export function advance(mission: Mission, run: MissionRun, ctx: EngineContext): AdvanceResult {
+export function advance(
+  mission: Mission,
+  run: MissionRun,
+  ctx: EngineContext,
+  options: { readonly exam?: boolean } = {},
+): AdvanceResult {
   const step = currentStep(mission, run);
   if (!run.step.completed) throw new Error(`L'étape ${step.id} n'est pas terminée`);
   const perfect = run.step.errors === 0 && run.step.hintsRevealed === 0;
@@ -162,13 +169,22 @@ export function advance(mission: Mission, run: MissionRun, ctx: EngineContext): 
       },
     };
   }
-  const result: MissionResult = {
+  const base: MissionResult = {
     perfectSteps: done.perfectSteps,
     totalSteps: mission.steps.length,
     errors: done.totalErrors,
     hintsUsed: done.totalHints,
     durationMs: ctx.now.getTime() - run.startedAt,
     xpEarned: done.stepXp + (mission.rewards.xp ?? DEFAULT_MISSION_XP),
+  };
+  if (!options.exam) return { run: done, result: base };
+  // Épreuve : la note remplace l'XP de fin de mission (200, ou 300 avec la mention).
+  const grade = gradeExam({ hintsUsed: done.totalHints, errors: done.totalErrors });
+  const result: MissionResult = {
+    ...base,
+    xpEarned: done.stepXp + examXp(grade.total),
+    grade: grade.total,
+    gradeDetail: { autonomy: grade.autonomy, rigor: grade.rigor },
   };
   return { run: done, result };
 }

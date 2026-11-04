@@ -34,6 +34,28 @@ describe('<Notifications>', () => {
     expect(screen.getByText('Sauvegarde effectuée')).toBeInTheDocument();
   });
 
+  it('annonce la note d’une épreuve', () => {
+    const { bus } = renderWithServices(<Notifications />);
+    act(() => {
+      bus.emit({
+        type: 'mission/completed',
+        missionId: 'm',
+        result: {
+          perfectSteps: 1,
+          totalSteps: 1,
+          errors: 0,
+          hintsUsed: 0,
+          durationMs: 1,
+          xpEarned: 330,
+          grade: 17.5,
+        },
+      });
+    });
+    expect(
+      screen.getByText('Épreuve réussie : 17,5/20, avec mention ! +330 XP'),
+    ).toBeInTheDocument();
+  });
+
   it('retire une notification au clic', async () => {
     const user = userEvent.setup();
     const { store } = renderWithServices(<Notifications />);

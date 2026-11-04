@@ -118,7 +118,7 @@ La réputation ne bloque jamais la campagne principale.
 Chaque chapitre se termine par une épreuve de synthèse :
 
 - Une mission longue qui combine les notions du chapitre.
-- Une note sur 20 calculée (objectifs atteints, erreurs, indices, méthode).
+- Une note sur 20 calculée (`src/engine/grading`) : **résultat** 12 points (l'épreuve ne se termine qu'objectifs atteints), **autonomie** 4 points (−1 par indice), **rigueur** 4 points (−1 par erreur : mauvaise réponse, action ratée dans un terminal ; explorer n'est pas une erreur). L'XP de l'épreuve (200, 300 avec la mention à partir de 16/20) remplace l'XP de fin de mission.
 - Un badge (« Badge Linux Admin ») affiché dans le profil, téléchargeable en image pour être partagé.
 
 Les mises en situation professionnelle (chapitres 6 et 10) prennent la forme d'un **cahier des charges** remis par Sophie, avec des livrables à rendre et une soutenance en dialogue.

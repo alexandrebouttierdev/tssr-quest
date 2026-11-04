@@ -184,6 +184,28 @@ describe("déroulement d'une mission", () => {
     });
   });
 
+  it('note une épreuve sur 20 et remplace l’XP de fin par celle de l’épreuve', () => {
+    let run = startMission(mission, ctx());
+    run = submitInput(mission, run, { line: 'sytemctl status apache2' }, ctx());
+    run = solveTerminal(revealHint(mission, run));
+    run = advance(mission, run, ctx(), { exam: true }).run;
+    run = submitInput(mission, run, { options: [1] }, ctx());
+    run = submitInput(mission, run, { options: [0] }, ctx());
+    run = advance(mission, run, ctx(), { exam: true }).run;
+    run = submitInput(mission, run, { text: '80' }, ctx());
+    run = advance(mission, run, ctx(), { exam: true }).run;
+    run = submitInput(mission, run, { order: ['0', '1', '2'] }, ctx());
+
+    const end = advance(mission, run, ctx(), { exam: true });
+
+    // 12 + autonomie (4 − 1 indice) + rigueur (4 − 2 erreurs : commande inconnue, mauvaise option).
+    expect('result' in end && end.result).toMatchObject({
+      grade: 17,
+      gradeDetail: { autonomy: 3, rigor: 2 },
+      xpEarned: 30 + 30 + 20 + 20 + 300,
+    });
+  });
+
   it('calcule les récompenses : XP, niveau, compétences, réputation, objets et fiches', () => {
     const outcome = computeRewards(
       mission,

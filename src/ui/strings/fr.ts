@@ -143,6 +143,8 @@ export const STRINGS = {
   notifications: {
     region: 'Notifications',
     missionDone: (xp: number) => `Mission terminée : +${xp} XP`,
+    examDone: (grade: number, xp: number) =>
+      `Épreuve réussie : ${String(grade).replace('.', ',')}/20${grade >= 16 ? ', avec mention' : ''} ! +${xp} XP`,
     levelUp: (level: number, title: string) => `Niveau ${level} ! Tu es maintenant ${title}.`,
     dismiss: 'Fermer la notification',
   },

@@ -60,6 +60,8 @@ export interface MissionResult {
   readonly xpEarned: number;
   /** Note sur 20 pour les épreuves, absente sinon. */
   readonly grade?: number;
+  /** Détail de la note d'une épreuve (points d'autonomie et de rigueur sur 4). */
+  readonly gradeDetail?: { readonly autonomy: number; readonly rigor: number };
 }
 
 /** Identifiant d'un effet sonore ou d'une musique. */

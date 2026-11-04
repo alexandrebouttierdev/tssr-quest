@@ -31,7 +31,10 @@ export function Notifications() {
     const offs = [
       bus.on('mission/completed', ({ result }) => {
         store.getState().pushNotification({
-          message: STRINGS.notifications.missionDone(result.xpEarned),
+          message:
+            result.grade === undefined
+              ? STRINGS.notifications.missionDone(result.xpEarned)
+              : STRINGS.notifications.examDone(result.grade, result.xpEarned),
           kind: 'success',
         });
       }),
