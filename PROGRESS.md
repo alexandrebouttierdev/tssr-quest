@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : disques et LVM (lsblk, blkid, fdisk interactif, mkfs.ext4, mount/umount/fstab, pvcreate, vgcreate, vgextend, lvcreate, lvextend, resize2fs, pvs/vgs/lvs) sur un modèle de stockage (`sims/shared/storage.ts`)
-- **Prochaine action** : phase 1 — dernières commandes du ch. 5 : service, reboot/shutdown, apache2ctl configtest, sshd -t (et panne « configuration invalide ») ; puis conditions user/net/cron/disk-mount ; puis les missions des ch. 4-5 (22 missions, épreuves, badges)
+- **Dernière tâche terminée** : administration (ch. 5) : `apache2ctl`/`apachectl` (configtest), `a2ensite`/`a2dissite`, `sshd -t`, `service`, `reboot`/`shutdown`/`poweroff` (redémarrage simulé), panne « configuration invalide », `PATH` réel (`/usr/sbin` hors du PATH utilisateur)
+- **Prochaine action** : phase 1 — conditions de mission `user`, `net`, `cron`, `disk-mount` + options de machine du contenu (paquets, disques en plus, réseau) ; puis les missions des ch. 4-5 (22 missions, épreuves, badges)
 
 ## Environnement
 
@@ -53,7 +53,7 @@ Il est mis à jour à chaque tâche terminée.
 ## Phase 1 — Tranche Linux (suivi)
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at), disques et LVM ✅
+- [x] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at), disques et LVM, administration (service, reboot, shutdown, apache2ctl, a2ensite, sshd -t) ✅ — **toutes les commandes du ch. 5 sont faites**
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
 
@@ -128,6 +128,9 @@ Il est mis à jour à chaque tâche terminée.
 | D61 | 2026-11-04 | Stockage modélisé à part des montages : disques MBR (secteurs de 512 o), signatures (ext4, swap, LVM2_member), LVM (extents de 4 Mio) dans `machine.storage` ; `machine.disks` reste la vue de `df`. Installation guidée Debian reproduite (sda1 racine, sda2 étendue, sda5 swap) ; disques vierges ajoutés par `extraDisks` | Missions « nouveau disque » et LVM rejouables et fidèles. |
 | D62 | 2026-11-04 | Sorties d'util-linux, e2fsprogs et lvm2 en anglais (leurs traductions sont dans des paquets non installés par défaut sur Debian), erreurs système en français, tailles lsblk/LVM à virgule | Fidélité à une Debian 12 en fr_FR. |
 | D63 | 2026-11-04 | `fdisk` interactif par questions en attente (n, t, d, p, v, o, l, m, w, q) ; les commandes expertes (a, g, x…) répondent « non disponible dans cette simulation » | Couvre le programme TSSR sans simuler les tables GPT. |
+| D64 | 2026-11-04 | `PATH` réel : une commande de `/usr/sbin` n'est trouvée que si le `PATH` la contient (utilisateur Debian : non ; `sudo` : `secure_path` ; `su -`/`sudo -i` : PATH de root ; `su` : PATH conservé) | Erreur classique des débutants (`fdisk` introuvable sans sudo) reproduite fidèlement. |
+| D65 | 2026-11-04 | Vérification des configurations Apache et sshd (`sims/shared/config-check.ts`) partagée entre `apache2ctl configtest`, `sshd -t` et le démarrage du service (panne `config-invalid`, aussi déclarable dans une mission) | Une même faute donne le même message partout, comme sur le vrai système. |
+| D66 | 2026-11-04 | `reboot` simulé : seul ce qui est permanent survit (fstab, interfaces auto/allow-hotplug, services activés) ; la session revient à la connexion SSH d'origine ; notes en français entre parenthèses pour ce que le jeu abrège (console, mode urgence) | Vérification « ça tient après redémarrage » possible dans les missions. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

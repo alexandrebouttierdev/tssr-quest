@@ -28,6 +28,8 @@ export interface DebianFixtureOptions {
   readonly now?: number;
   /** Paquets installés en plus, mises à jour publiées, dpkg interrompu. */
   readonly packages?: PackagesSpec;
+  /** Disques supplémentaires vierges (sdb, sdc…). */
+  readonly extraDisks?: DebianServerOptions['extraDisks'];
 }
 
 /**
@@ -52,6 +54,7 @@ export function debianServer(options: DebianFixtureOptions): Machine {
     ...(options.services ? { services: options.services } : {}),
     ...(options.now !== undefined ? { now: options.now } : {}),
     ...(options.packages ? { packages: options.packages } : {}),
+    ...(options.extraDisks ? { extraDisks: options.extraDisks } : {}),
   };
   return createDebianServer(full);
 }

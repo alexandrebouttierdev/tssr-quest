@@ -426,6 +426,30 @@ function isInstalledBinary(machine: Machine, name: string): boolean {
   return ['/usr/bin', '/usr/sbin'].some((dir) => machine.fs[`${dir}/${name}`]?.type === 'file');
 }
 
+/** PATH imposé par sudo (secure_path de /etc/sudoers). */
+const SECURE_PATH = '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin';
+
+/**
+ * Vrai si le programme se trouve dans un dossier du PATH. Un programme sans fichier
+ * dans /usr/bin ou /usr/sbin (commande interne, aide du jeu) est toujours trouvé.
+ *
+ * @param machine - Machine simulée.
+ * @param name - Nom du programme.
+ * @param path - Valeur du PATH.
+ * @returns Vrai si le shell le trouve.
+ */
+export function inPath(machine: Machine, name: string, path: string): boolean {
+  const homes = ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin'].filter(
+    (dir) => machine.fs[`${dir}/${name}`]?.type === 'file',
+  );
+  if (homes.length === 0) return true;
+  // /bin et /sbin sont des liens vers /usr/bin et /usr/sbin (fusion de /usr).
+  const dirs = path
+    .split(':')
+    .map((dir) => (dir === '/bin' ? '/usr/bin' : dir === '/sbin' ? '/usr/sbin' : dir));
+  return homes.some((home) => dirs.includes(home));
+}
+
 /** Lance une commande par son nom, sous un compte donné. */
 function execute(
   state: RunState,
@@ -447,7 +471,14 @@ function execute(
     registered?.package && !state.machine.packages[registered.package]?.installed
       ? undefined
       : registered;
-  if (!command || (viaSudo && command.builtin)) {
+  // Un programme rangé dans /usr/sbin n'est trouvé que si ce dossier est dans le PATH :
+  // sous Debian, un utilisateur ordinaire (et `su` sans « - ») ne l'a pas.
+  const path = viaSudo
+    ? SECURE_PATH
+    : (extraEnv['PATH'] ?? state.machine.session.env['PATH'] ?? '/usr/bin:/bin');
+  const reachable =
+    !command || command.builtin || name.includes('/') || inPath(state.machine, commandName, path);
+  if (!command || !reachable || (viaSudo && command.builtin)) {
     const prefix = viaSudo ? 'sudo' : 'bash';
     if (!command && !registered && isInstalledBinary(state.machine, commandName)) {
       return {
@@ -472,7 +503,7 @@ function execute(
             USER: user,
             LOGNAME: user,
             HOME: account?.home ?? '/root',
-            PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+            PATH: SECURE_PATH,
           }
         : {}),
     },

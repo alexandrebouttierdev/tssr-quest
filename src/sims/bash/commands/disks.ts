@@ -38,7 +38,7 @@ const DMESG = '       dmesg(1) may have more information after failed mount syst
  * @param spec - Désignation.
  * @returns Le chemin canonique, ou `null`.
  */
-function resolveSpec(machine: Machine, spec: string): string | null {
+export function resolveSpec(machine: Machine, spec: string): string | null {
   const storage = storageOf(machine);
   const match = /^(UUID|LABEL)=["']?([^"']+)["']?$/.exec(spec);
   if (match) {
@@ -395,7 +395,7 @@ interface FstabEntry {
 }
 
 /** Lit /etc/fstab ; signale les lignes illisibles. */
-function readFstab(machine: Machine): { entries: FstabEntry[]; errors: string } {
+export function readFstab(machine: Machine): { entries: FstabEntry[]; errors: string } {
   const node = machine.fs['/etc/fstab'];
   const entries: FstabEntry[] = [];
   let errors = '';
@@ -427,7 +427,12 @@ function mountOptions(disk: Disk): string {
 }
 
 /** Monte un périphérique sur un dossier, avec les contrôles de mount(8). */
-function mountDevice(env: CommandEnv, machine: Machine, spec: string, dir: string): CommandOutcome {
+export function mountDevice(
+  env: CommandEnv,
+  machine: Machine,
+  spec: string,
+  dir: string,
+): CommandOutcome {
   const path = resolveSpec(machine, spec);
   const shownDir = dir;
   const target = normalizePath(env.resolve(dir));

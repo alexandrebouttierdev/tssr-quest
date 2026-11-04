@@ -10,7 +10,9 @@ import type { AptSuite } from './types';
 /** Fichier (ou dossier) installé par un paquet. */
 export interface PackageFile {
   readonly path: string;
-  readonly type: 'file' | 'dir';
+  readonly type: 'file' | 'dir' | 'symlink';
+  /** Cible d'un lien symbolique. */
+  readonly target?: string;
   readonly mode: number;
   readonly content?: string;
   /** Taille déclarée (octets) d'un binaire. */
@@ -457,7 +459,7 @@ export const PACKAGE_CATALOG: Readonly<Record<string, PackageDefinition>> = Obje
       installedSize: 465,
       downloadSize: 224_256,
       depends: ['apache2-bin', 'apache2-data', 'apache2-utils'],
-      sbin: ['apache2ctl', 'a2ensite', 'a2dissite', 'a2enmod', 'a2dismod'],
+      sbin: ['apache2ctl', 'apachectl', 'a2ensite', 'a2dissite', 'a2enmod', 'a2dismod'],
       service: 'apache2',
       files: [
         folder('/etc/apache2'),
@@ -466,6 +468,14 @@ export const PACKAGE_CATALOG: Readonly<Record<string, PackageDefinition>> = Obje
         folder('/etc/apache2/sites-available'),
         folder('/etc/apache2/sites-enabled'),
         conf('/etc/apache2/sites-available/000-default.conf', APACHE_DEFAULT_SITE),
+        // Le paquet active le site par défaut (a2ensite 000-default).
+        {
+          path: '/etc/apache2/sites-enabled/000-default.conf',
+          type: 'symlink',
+          mode: 0o777,
+          target: '../sites-available/000-default.conf',
+          config: true,
+        },
         folder('/var/log/apache2', 0o750, 'root', 'adm'),
         folder('/var/www'),
         folder('/var/www/html'),
@@ -682,6 +692,29 @@ export const PACKAGE_CATALOG: Readonly<Record<string, PackageDefinition>> = Obje
       downloadSize: 450_560,
       depends: [],
       bin: ['fail2ban-client'],
+    }),
+    pkg(
+      'systemd-sysv',
+      '252.31-1~deb12u1',
+      'system and service manager - SysV compatibility symlinks',
+      {
+        section: 'admin',
+        priority: 'important',
+        installedSize: 104,
+        downloadSize: 41_984,
+        depends: ['systemd'],
+        sbin: ['reboot', 'shutdown', 'poweroff', 'halt'],
+        base: true,
+      },
+    ),
+    pkg('init-system-helpers', '1.65.2', 'helper tools for all init systems', {
+      section: 'admin',
+      priority: 'required',
+      installedSize: 133,
+      downloadSize: 39_936,
+      depends: [],
+      sbin: ['service', 'invoke-rc.d', 'update-rc.d'],
+      base: true,
     }),
     pkg('e2fsprogs', '1.47.0-2', 'ext2/ext3/ext4 file system utilities', {
       section: 'admin',

@@ -102,7 +102,9 @@ export type ServiceFailure =
   /** Le disque qui porte /var est plein. */
   | { readonly kind: 'no-space-left'; readonly path: string }
   /** Un autre service écoute déjà sur le port. */
-  | { readonly kind: 'port-in-use'; readonly port: number };
+  | { readonly kind: 'port-in-use'; readonly port: number }
+  /** Fichier de configuration invalide : messages du programme qui le vérifie. */
+  | { readonly kind: 'config-invalid'; readonly messages: readonly string[] };
 
 /** Un service (unité systemd) de la machine. */
 export interface ServiceState {
@@ -317,6 +319,8 @@ export interface Machine {
   readonly atJobs?: readonly AtJob[];
   /** Disques, partitions, signatures et LVM (ce que voient lsblk, fdisk, LVM). */
   readonly storage?: Storage;
+  /** Arrêt programmé par `shutdown` (annulable par `shutdown -c`). */
+  readonly scheduledShutdown?: { readonly time: number; readonly reboot: boolean };
   readonly session: Session;
   /** Historique des commandes exécutées (lu par les conditions `command`). */
   readonly history: readonly CommandRecord[];

@@ -51,7 +51,7 @@ export const machineSpecSchema = z.strictObject({
         .strictObject({
           state: z.enum(['active', 'inactive', 'failed']),
           enabled: z.boolean().optional(),
-          failure: z.enum(['no-space-left', 'port-in-use']).nullable().optional(),
+          failure: z.enum(['no-space-left', 'port-in-use', 'config-invalid']).nullable().optional(),
         })
         .nullable(),
     )

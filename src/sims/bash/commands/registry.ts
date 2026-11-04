@@ -83,6 +83,17 @@ import {
   vgextend,
   vgs,
 } from './disks';
+import {
+  a2dissite,
+  a2ensite,
+  apache2ctl,
+  apachectl,
+  poweroff,
+  reboot,
+  service,
+  shutdown,
+  sshd,
+} from './admin';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
@@ -120,6 +131,15 @@ export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromE
     vgcreate,
     vgextend,
     vgs,
+    a2dissite,
+    a2ensite,
+    apache2ctl,
+    apachectl,
+    poweroff,
+    reboot,
+    service,
+    shutdown,
+    sshd,
     chage,
     chgrp,
     chmod,

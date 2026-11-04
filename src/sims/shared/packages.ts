@@ -656,6 +656,17 @@ function installFiles(fs: Record<string, FsNode>, def: PackageDefinition, now: n
       continue;
     }
     if (f.config && fs[f.path]) continue;
+    if (f.type === 'symlink') {
+      fs[f.path] = {
+        type: 'symlink',
+        owner,
+        group,
+        mode: 0o777,
+        mtime: now,
+        target: f.target ?? '',
+      };
+      continue;
+    }
     fs[f.path] = {
       type: 'file',
       owner,

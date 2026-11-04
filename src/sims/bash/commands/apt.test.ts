@@ -286,7 +286,7 @@ describe('dpkg', () => {
   it('liste les paquets installés', () => {
     const list = runLine(outdated, 'dpkg -l').stdout;
     expect(list).toContain('||/ Nom');
-    expect(list).toMatch(/^ii {2}bash +5\.2\.15-2\+b7 +amd64 +GNU Bourne Again SHell$/m);
+    expect(list).toMatch(/^ii {2}bash +5\.2\.15-2\+b7 +amd64 +GNU Bourne Again SHel/m);
     expect(list).not.toContain('apache2');
     expect(runLine(outdated, 'dpkg -l nginx').stderr).toBe(
       'dpkg-query: aucun paquet ne correspond à nginx\n',

@@ -19,6 +19,7 @@ import {
 import { diskForPath } from './disks';
 import { fileSize } from './node-size';
 import { dirname, isInside, normalizePath } from './path';
+import { checkServiceConfig } from './config-check';
 import { PACKAGE_CATALOG } from './package-catalog';
 import { initialStorage } from './storage';
 import { seedPackageFiles } from './packages';
@@ -81,7 +82,7 @@ export interface DiskSpec {
 export interface ServiceSpec {
   readonly state: ServiceActiveState;
   readonly enabled?: boolean;
-  readonly failure?: 'no-space-left' | 'port-in-use' | null;
+  readonly failure?: 'no-space-left' | 'port-in-use' | 'config-invalid' | null;
 }
 
 /** Paquets décrits par une mission. */
@@ -762,6 +763,11 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       if (spec.failure === 'no-space-left') failure = { kind: 'no-space-left', path: '/var' };
       if (spec.failure === 'port-in-use')
         failure = { kind: 'port-in-use', port: def.ports[0] ?? 80 };
+      if (spec.failure === 'config-invalid') {
+        // La configuration fautive vient des fichiers de la mission.
+        const probe = { fs, users, groups } as unknown as Machine;
+        failure = { kind: 'config-invalid', messages: checkServiceConfig(probe, name).errors };
+      }
       const since = spec.state === 'failed' ? now - 72 * 60_000 : startedAt;
       services[name] = {
         name,

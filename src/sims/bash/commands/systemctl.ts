@@ -60,6 +60,19 @@ export function renderStatus(
       `    Process: ${pid} ExecStart=${def?.execStart ?? ''} (code=exited, status=${status})`,
     );
   }
+  // ssh.service vérifie sa configuration (ExecStartPre=/usr/sbin/sshd -t) avant de démarrer.
+  if (
+    service.state === 'failed' &&
+    service.failure?.kind === 'config-invalid' &&
+    service.name === 'ssh'
+  ) {
+    const pid =
+      [...(machine.logs[service.name] ?? [])].reverse().find((l) => l.ident === def?.ident)?.pid ??
+      812;
+    lines.push(
+      `    Process: ${pid} ExecStartPre=/usr/sbin/sshd -t (code=exited, status=255/EXCEPTION)`,
+    );
+  }
   if (service.state === 'active' && service.mainPid !== null) {
     const procs = machine.processes.filter(
       (p) => p.pid === service.mainPid || p.ppid === service.mainPid,

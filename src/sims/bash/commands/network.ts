@@ -641,12 +641,20 @@ interface IfaceStanza {
   readonly options: Readonly<Record<string, string>>;
 }
 
-/** Lit /etc/network/interfaces : déclarations `iface` et interfaces `auto`. */
-function readInterfaces(machine: Machine): { stanzas: IfaceStanza[]; auto: string[] } {
+/**
+ * Lit /etc/network/interfaces : déclarations `iface`, interfaces `auto` (levées par
+ * `ifup -a`) et `allow-hotplug` (levées au démarrage quand la carte est détectée).
+ */
+export function readInterfaces(machine: Machine): {
+  stanzas: IfaceStanza[];
+  auto: string[];
+  hotplug: string[];
+} {
   const node = machine.fs['/etc/network/interfaces'];
   const stanzas: IfaceStanza[] = [];
   const auto: string[] = [];
-  if (node?.type !== 'file') return { stanzas, auto };
+  const hotplug: string[] = [];
+  if (node?.type !== 'file') return { stanzas, auto, hotplug };
   let current: { name: string; method: string; options: Record<string, string> } | null = null;
   for (const raw of node.content.split('\n')) {
     const line = raw.replace(/#.*/, '').trim();
@@ -658,13 +666,16 @@ function readInterfaces(machine: Machine): { stanzas: IfaceStanza[]; auto: strin
     } else if (keyword === 'auto') {
       auto.push(...rest);
       current = null;
-    } else if (keyword === 'allow-hotplug' || keyword === 'source') {
+    } else if (keyword === 'allow-hotplug') {
+      hotplug.push(...rest);
+      current = null;
+    } else if (keyword === 'source') {
       current = null;
     } else if (current) {
       current.options[keyword] = rest.join(' ');
     }
   }
-  return { stanzas, auto };
+  return { stanzas, auto, hotplug };
 }
 
 /** Message d'ifupdown sans les droits root. */
@@ -672,7 +683,7 @@ const IFUPDOWN_LOCK = (cmd: string) =>
   `${cmd}: failed to open lockfile /run/network/.ifstate.lock: Permission denied\n`;
 
 /** Active une interface d'après sa déclaration. */
-function bringUp(machine: Machine, stanza: IfaceStanza, env: CommandEnv): CommandOutcome {
+export function bringUp(machine: Machine, stanza: IfaceStanza, env: CommandEnv): CommandOutcome {
   const iface = machine.interfaces.find((i) => i.name === stanza.name);
   if (!iface)
     return {

@@ -38,7 +38,7 @@ describe('useradd et adduser', () => {
   });
 
   it('refuse les cas invalides', () => {
-    expect(runLine(machine, 'useradd bob').stderr).toBe(
+    expect(runLine(machine, '/usr/sbin/useradd bob').stderr).toBe(
       'useradd : Permission non accordée.\nuseradd : impossible de verrouiller /etc/passwd ; réessayez plus tard.\n',
     );
     expect(runLine(machine, 'sudo useradd julie').stderr).toBe(
@@ -96,7 +96,7 @@ describe('useradd et adduser', () => {
     ).toContain('appartient déjà');
     expect(runLine(machine, 'sudo adduser fantome compta').exitCode).toBe(1);
     expect(runLine(machine, 'sudo adduser julie fantome').exitCode).toBe(1);
-    expect(runLine(machine, 'adduser bob').exitCode).toBe(1);
+    expect(runLine(machine, '/usr/sbin/adduser bob').exitCode).toBe(1);
     expect(runLine(machine, 'sudo adduser julie').stderr).toContain('existe déjà');
     expect(runLine(machine, 'sudo adduser').exitCode).toBe(1);
   });
@@ -139,7 +139,7 @@ describe('usermod, userdel, groupes', () => {
   });
 
   it('signale les erreurs de usermod', () => {
-    expect(runLine(machine, 'usermod -L julie').exitCode).toBe(1);
+    expect(runLine(machine, '/usr/sbin/usermod -L julie').exitCode).toBe(1);
     expect(runLine(machine, 'sudo usermod -L fantome').stderr).toBe(
       "usermod : l'utilisateur « fantome » n'existe pas\n",
     );
@@ -159,7 +159,7 @@ describe('usermod, userdel, groupes', () => {
       'est actuellement utilisé par le processus',
     );
     expect(runLine(machine, 'sudo userdel fantome').exitCode).toBe(6);
-    expect(runLine(machine, 'userdel julie').exitCode).toBe(1);
+    expect(runLine(machine, '/usr/sbin/userdel julie').exitCode).toBe(1);
   });
 
   it('crée et supprime des groupes, gère leurs membres', () => {
@@ -174,13 +174,13 @@ describe('usermod, userdel, groupes', () => {
     expect(runLine(machine, 'sudo groupadd -f compta').exitCode).toBe(0);
     expect(runLine(machine, 'sudo groupadd -g 1000 x').exitCode).toBe(4);
     expect(runLine(machine, 'sudo groupadd Rh').exitCode).toBe(3);
-    expect(runLine(machine, 'groupadd rh').exitCode).toBe(10);
+    expect(runLine(machine, '/usr/sbin/groupadd rh').exitCode).toBe(10);
     expect(runLine(machine, 'sudo groupadd -Z x').exitCode).toBe(2);
     expect(runLine(machine, 'sudo groupdel julie').stderr).toBe(
       "groupdel : impossible de supprimer le groupe primaire de l'utilisateur « julie »\n",
     );
     expect(runLine(machine, 'sudo groupdel fantome').exitCode).toBe(6);
-    expect(runLine(machine, 'groupdel compta').exitCode).toBe(10);
+    expect(runLine(machine, '/usr/sbin/groupdel compta').exitCode).toBe(10);
     expect(runLine(machine, 'sudo gpasswd -d julie compta').exitCode).toBe(3);
     expect(runLine(machine, 'sudo gpasswd -a fantome compta').exitCode).toBe(3);
     expect(runLine(machine, 'sudo gpasswd -a julie fantome').exitCode).toBe(3);
@@ -263,5 +263,22 @@ describe('passwd, chage, su', () => {
     });
     expect(runLine(machine, 'su fantome').exitCode).toBe(1);
     expect(runLine(debianServer({ user: 'julie' }), 'sudo -i').state.session.user).toBe('julie');
+  });
+});
+
+describe('PATH des administrateurs', () => {
+  it('ne trouve pas les programmes de /usr/sbin sans les droits, comme Debian', () => {
+    expect(runLine(machine, 'useradd bob')).toMatchObject({
+      stderr: 'bash: useradd : commande introuvable\n',
+      exitCode: 127,
+    });
+    expect(runLine(machine, '/sbin/useradd bob').stderr).toContain('Permission non accordée');
+    expect(runLine(machine, 'sudo useradd bob').exitCode).toBe(0);
+    // su sans « - » garde le PATH de l'utilisateur ; su - et sudo -s donnent celui de root.
+    const withRootPassword = runLines(machine, ['sudo passwd root', 'Racine1', 'Racine1']).state;
+    const su = runLines(withRootPassword, ['su', 'Racine1', 'useradd bob']);
+    expect(su.stderr).toBe('bash: useradd : commande introuvable\n');
+    expect(runLines(withRootPassword, ['su -', 'Racine1', 'useradd bob']).exitCode).toBe(0);
+    expect(runLines(machine, ['sudo -s', 'useradd bob']).exitCode).toBe(0);
   });
 });

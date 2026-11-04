@@ -34,7 +34,21 @@ EXEMPLES
       } else if (option === '-i' || option === '-s') {
         // Shell root : sudo -i (connexion) ou sudo -s ; exit pour revenir.
         if (env.user !== 'root' && !userGroups(env.machine, env.user).includes('sudo')) break;
-        return { exitCode: 0, machine: switchUser(env.machine, 'root', option === '-i') };
+        const shell = switchUser(env.machine, 'root', option === '-i');
+        // sudo impose son secure_path au shell root : /usr/sbin y est, contrairement à `su`.
+        return {
+          exitCode: 0,
+          machine: {
+            ...shell,
+            session: {
+              ...shell.session,
+              env: {
+                ...shell.session.env,
+                PATH: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',
+              },
+            },
+          },
+        };
       } else if (option === '--') {
         index++;
         break;

@@ -147,7 +147,9 @@ Les pages `man` sont **en français et simplifiées** (exception assumée à la 
 - Tâches de fond : `&`, `jobs`, `fg`, `bg`, `kill %N` ; `sleep N &`, `tail -f &`, `ping &` et `yes &` restent actifs (la fin d'un `sleep` est annoncée « Fini » à la commande suivante).
 - Archives simulées : le contenu d'un `.tar`, `.gz` ou `.zip` est conservé (JSON derrière un marqueur), avec des tailles réalistes.
 - Les services ont des dépendances et des causes d'échec simulées (disque plein, port déjà utilisé, fichier de config invalide) qui apparaissent dans `systemctl status` et `journalctl -u`.
-- `apache2ctl configtest`, `sshd -t` : valident les fichiers de configuration modifiés dans vim.
+- `apache2ctl configtest`, `sshd -t` : valident les fichiers de configuration modifiés dans vim (directives inconnues, sections non fermées, valeurs refusées, avec les messages réels `AH00526`, `Bad configuration option`…). La même vérification est faite au démarrage du service : une configuration fausse le met en échec (`ExecStartPre=/usr/sbin/sshd -t … status=255/EXCEPTION` pour ssh).
+- `PATH` : les commandes de `/usr/sbin` (`fdisk`, `service`, `reboot`, `apache2ctl`…) ne sont trouvées que si le `PATH` les contient. Celui d'un utilisateur Debian ne les contient pas (`bash: fdisk : commande introuvable`) ; `sudo` utilise `secure_path`, `su -` et `sudo -i` le `PATH` de root, `su` sans tiret garde celui de l'utilisateur.
+- `reboot`, `shutdown -r now`, `poweroff` : redémarrage simulé. Seul le permanent survit : services activés (`systemctl enable`), montages de `/etc/fstab`, interfaces `auto`/`allow-hotplug` de `/etc/network/interfaces`. Une adresse posée avec `ip`, un montage à la main ou un service seulement démarré sont perdus ; une ligne de `fstab` qui ne monte pas (sans `nofail`) est signalée comme au vrai démarrage. `shutdown +N` / `HH:MM` programme, `shutdown -c` annule.
 
 ## `sims/cmd` et `sims/powershell`
 

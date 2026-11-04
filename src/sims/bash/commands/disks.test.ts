@@ -47,20 +47,20 @@ describe('lsblk et blkid', () => {
   });
 
   it('donne UUID et types', () => {
-    const out = runLine(mounted, 'blkid').stdout;
+    const out = runLine(mounted, '/usr/sbin/blkid').stdout;
     expect(out).toMatch(
       /^\/dev\/sdb1: UUID="[\w-]+" TYPE="LVM2_member" PARTUUID="[0-9a-f]{8}-01"$/m,
     );
     expect(out).toMatch(
       /^\/dev\/mapper\/vg_data-lv_partage: UUID="[0-9a-f-]+" BLOCK_SIZE="4096" TYPE="ext4"$/m,
     );
-    expect(runLine(machine, 'blkid /dev/sdb').exitCode).toBe(2);
+    expect(runLine(machine, '/usr/sbin/blkid /dev/sdb').exitCode).toBe(2);
   });
 });
 
 describe('fdisk', () => {
   it('liste les disques en root seulement', () => {
-    expect(runLine(machine, 'fdisk -l').stderr).toBe(
+    expect(runLine(machine, '/usr/sbin/fdisk -l').stderr).toBe(
       'fdisk: cannot open /dev/sda: Permission non accordée\n',
     );
     const out = runLine(partitioned, 'sudo fdisk -l /dev/sdb').stdout;
@@ -168,7 +168,7 @@ describe('mkfs.ext4', () => {
     expect(runLine(machine, 'sudo mkfs.ext4 /dev/sdc1').stderr).toContain(
       'The file /dev/sdc1 does not exist and no size was specified.',
     );
-    expect(runLine(machine, 'mkfs.ext4 /dev/sdb').stderr).toContain(
+    expect(runLine(machine, '/usr/sbin/mkfs.ext4 /dev/sdb').stderr).toContain(
       'Could not open /dev/sdb: Permission non accordée',
     );
     expect(runLine(machine, 'sudo mkfs.ext4').exitCode).toBe(1);
@@ -254,7 +254,9 @@ describe('LVM', () => {
     );
     expect(runLine(mounted, 'sudo lvs').stdout).toContain('  lv_partage vg_data -wi-ao---- 5,00g');
     expect(runLine(machine, 'sudo pvs').stdout ?? '').toBe('');
-    expect(runLine(mounted, 'pvs').stderr).toContain('WARNING: Running as a non-root user.');
+    expect(runLine(mounted, '/usr/sbin/pvs').stderr).toContain(
+      'WARNING: Running as a non-root user.',
+    );
   });
 
   it('agrandit un volume et son système de fichiers', () => {
@@ -327,7 +329,7 @@ describe('LVM', () => {
     expect(runLine(mounted, 'sudo resize2fs /dev/sdz').stderr).toContain(
       'Aucun fichier ou dossier de ce type',
     );
-    expect(runLine(mounted, 'resize2fs /dev/sdb1').exitCode).toBe(1);
+    expect(runLine(mounted, '/usr/sbin/resize2fs /dev/sdb1').exitCode).toBe(1);
     expect(runLine(mounted, 'sudo resize2fs').exitCode).toBe(1);
   });
 

@@ -194,7 +194,7 @@ describe('ifup et ifdown', () => {
   });
 
   it('demande les droits root et connaît les interfaces déclarées', () => {
-    expect(runLine(machine, 'ifup ens33').stderr).toBe(
+    expect(runLine(machine, '/usr/sbin/ifup ens33').stderr).toBe(
       'ifup: failed to open lockfile /run/network/.ifstate.lock: Permission denied\n',
     );
     expect(runLine(machine, 'sudo ifup eth9').stderr).toBe('ifup: unknown interface eth9\n');

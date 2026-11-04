@@ -1,3 +1,4 @@
+import { checkServiceConfig } from './config-check';
 import { freeBytes } from './disks';
 import { appendLogs } from './journal';
 import { SERVICE_CATALOG, type ServiceDefinition } from './service-catalog';
@@ -23,6 +24,9 @@ function activeFailure(
   name: string,
   def: ServiceDefinition,
 ): ServiceFailure | null {
+  // Le programme vérifie d'abord sa configuration (apachectl configtest, sshd -t).
+  const config = checkServiceConfig(machine, name);
+  if (!config.ok) return { kind: 'config-invalid', messages: config.errors };
   const failure = machine.services[name]?.failure;
   if (failure?.kind === 'no-space-left' && freeBytes(machine, failure.path) < MIN_FREE_BYTES) {
     return failure;
@@ -58,7 +62,14 @@ export function failureLogLines(
 ): LogLine[] {
   const unit = `${def.name}.service`;
   const messages =
-    failure.kind === 'no-space-left' ? def.noSpaceMessages : def.portInUseMessages(failure.port);
+    failure.kind === 'no-space-left'
+      ? def.noSpaceMessages
+      : failure.kind === 'port-in-use'
+        ? def.portInUseMessages(failure.port)
+        : failure.messages;
+  // sshd -t termine avec le code 255, que systemd affiche « 255/EXCEPTION ».
+  const status =
+    failure.kind === 'config-invalid' && def.name === 'ssh' ? '255/EXCEPTION' : '1/FAILURE';
   return [
     systemdLine(time, `Starting ${unit} - ${def.description}...`),
     ...messages.map((message) => ({ time, ident: def.ident, pid, message })),
@@ -73,7 +84,7 @@ export function failureLogLines(
           },
         ]
       : []),
-    systemdLine(time, `${unit}: Control process exited, code=exited, status=1/FAILURE`),
+    systemdLine(time, `${unit}: Control process exited, code=exited, status=${status}`),
     systemdLine(time, `${unit}: Failed with result 'exit-code'.`),
     systemdLine(time, `Failed to start ${unit} - ${def.description}.`),
   ];
