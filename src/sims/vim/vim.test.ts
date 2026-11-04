@@ -88,6 +88,26 @@ describe('déplacements et édition en mode normal', () => {
   });
 });
 
+describe('suppression et remplacement de mots', () => {
+  const words = openVim('/x', 'Incidents : A_COMPLETER fin\n', false);
+
+  it('supprime un mot avec ses espaces (dw), ou jusqu’à la fin de ligne (d$, D)', () => {
+    expect(vimContent(type(words, 'wwdw'))).toBe('Incidents : fin\n');
+    expect(vimContent(type(words, 'dw'))).toBe(': A_COMPLETER fin\n');
+    expect(vimContent(type(words, 'wdw'))).toBe('Incidents A_COMPLETER fin\n');
+    expect(vimContent(type(words, 'wwd$'))).toBe('Incidents : \n');
+    expect(vimContent(type(words, 'wwD'))).toBe('Incidents : \n');
+    expect(vimContent(type(words, 'wwdwu'))).toBe('Incidents : A_COMPLETER fin\n');
+  });
+
+  it('remplace un mot (cw) ou la fin de ligne (C) en passant en insertion', () => {
+    const changed = type(words, 'wwcw4<Esc>');
+    expect(vimContent(changed)).toBe('Incidents : 4 fin\n');
+    expect(changed.mode).toBe('normal');
+    expect(vimContent(type(words, 'wwCrien<Esc>'))).toBe('Incidents : rien\n');
+  });
+});
+
 describe('commandes', () => {
   it('écrit le fichier et quitte', () => {
     const written = type(file, 'x:w<CR>');

@@ -195,4 +195,10 @@ describe('tâches de fond', () => {
     expect(result.stdout).toBe('fini\n');
     expect(runLine(base, 'nohup').exitCode).toBe(125);
   });
+
+  it('montre aussi les commandes du tube, comme le grep lui-même', () => {
+    const out = runLine(machine, 'ps aux | grep "sshd"').stdout;
+    expect(out).toMatch(/^hugo +\d+ +0\.0 +0\.1 +6332 +2304 pts\/0 +S\+ .* grep sshd$/m);
+    expect(runLine(machine, 'ps').stdout).toMatch(/ ps$/m);
+  });
 });

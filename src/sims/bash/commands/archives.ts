@@ -26,10 +26,22 @@ interface Entry {
   readonly node: FsNode;
 }
 
-/** Taille compressée estimée (gzip/deflate) : le texte se compresse bien, le binaire presque pas. */
-export function compressedSize(node: FsNode): number {
+/** Extensions de fichiers déjà compressés (images, vidéos, archives, documents bureautiques). */
+const PACKED =
+  /\.(jpe?g|png|gif|webp|mp[34]|mkv|avi|gz|tgz|bz2|xz|zip|7z|rar|pdf|od[stp]|docx|xlsx|pptx|iso|deb|bin|img|qcow2|vmdk|exe|dll|so)$/i;
+
+/**
+ * Taille compressée estimée (gzip/deflate) : le texte se compresse bien (un journal
+ * d'environ 90 %), un fichier déjà compressé presque pas.
+ *
+ * @param node - Fichier.
+ * @param name - Nom du fichier : son extension guide l'estimation d'un fichier décrit par sa seule taille.
+ * @returns La taille compressée en octets.
+ */
+export function compressedSize(node: FsNode, name = ''): number {
   if (node.type !== 'file') return 0;
-  if (node.size !== undefined) return Math.ceil(node.size * 0.98);
+  if (node.size !== undefined)
+    return Math.ceil(node.size * (PACKED.test(name) || name === '' ? 0.98 : 0.11));
   const length = new TextEncoder().encode(node.content).length;
   return length === 0 ? 20 : Math.ceil(length * 0.4) + 24;
 }
@@ -283,7 +295,9 @@ EXEMPLES
       const content = gzip
         ? `${GZIP}${JSON.stringify({ name: basename(archivePath).replace(/\.(tgz|gz)$/, '.tar'), node: { type: 'file', owner: env.user, group: env.user, mode: 0o644, mtime: 0, content: payload, size } })}`
         : payload;
-      const finalSize = gzip ? entries.reduce((s, e) => s + compressedSize(e.node), 0) + 512 : size;
+      const finalSize = gzip
+        ? entries.reduce((s, e) => s + compressedSize(e.node, e.name), 0) + 512
+        : size;
       const written = writeArchive(env, env.machine, archivePath, content, finalSize);
       if (written.error)
         return {
@@ -369,7 +383,7 @@ function gzipOne(
     machine,
     `${path}.gz`,
     `${GZIP}${JSON.stringify({ name: basename(path), node })}`,
-    compressedSize(node),
+    compressedSize(node, path),
   );
   if (!written.machine)
     return { machine, stderr: `gzip: ${operand}.gz: ${written.error ?? ''}\n`, ok: false };
@@ -383,7 +397,7 @@ function gzipOne(
     if (removed.ok) next = removed.value;
   }
   const size = fileSize(node);
-  const ratio = size === 0 ? 0 : (1 - compressedSize(node) / size) * 100;
+  const ratio = size === 0 ? 0 : (1 - compressedSize(node, path) / size) * 100;
   return {
     machine: next,
     stderr: verbose
@@ -583,7 +597,7 @@ DESCRIPTION
         const size = e.node.type === 'file' ? fileSize(e.node) : 0;
         const ratio =
           e.node.type === 'file' && size > 0
-            ? Math.max(0, Math.round((1 - compressedSize(e.node) / size) * 100))
+            ? Math.max(0, Math.round((1 - compressedSize(e.node, e.name) / size) * 100))
             : 0;
         stdout += `  adding: ${e.name} (${ratio > 0 ? `deflated ${ratio}%` : 'stored 0%'})\n`;
       }
@@ -593,7 +607,7 @@ DESCRIPTION
         stderr: `\tzip warning: name not matched: ${files[0] ?? ''}\n\nzip error: Nothing to do! (${name})\n`,
         exitCode: 12,
       };
-    const size = entries.reduce((s, e) => s + compressedSize(e.node) + 100, 22);
+    const size = entries.reduce((s, e) => s + compressedSize(e.node, e.name) + 100, 22);
     const written = writeArchive(
       env,
       env.machine,

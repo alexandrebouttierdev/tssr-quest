@@ -33,23 +33,63 @@ function startColumn(start: number, now: number): string {
 }
 
 /** Processus visibles de la session (comme `ps` sans option : même terminal). */
-function sessionProcesses(machine: Machine, user: string, now: number): Process[] {
+function sessionProcesses(machine: Machine, user: string, now: number, line: string): Process[] {
   const own = machine.processes.filter((p) => p.tty === 'pts/0' && p.user === user);
-  return [
-    ...own,
-    {
-      pid: machine.nextPid,
-      ppid: 1187,
-      user,
-      command: 'ps',
-      cpu: 0,
-      rss: 3_840,
-      vsz: 11_076,
-      tty: 'pts/0',
-      stat: 'R+',
-      start: now,
-    },
-  ];
+  return [...own, ...pipelineProcesses(machine, user, now, line)];
+}
+
+/**
+ * Processus de la ligne en cours : `ps` lui-même et les autres commandes du tube, qui
+ * tournent en même temps. C'est pourquoi `ps aux | grep boucle` affiche aussi la ligne
+ * du `grep`, comme sur un vrai système.
+ *
+ * @param machine - Machine simulée.
+ * @param user - Compte qui lance la ligne.
+ * @param now - Horodatage (ms).
+ * @param line - Ligne de commande complète.
+ * @returns Un processus par commande du tube.
+ */
+function pipelineProcesses(machine: Machine, user: string, now: number, line: string): Process[] {
+  const segments = splitPipeline(line);
+  const commands = segments.length > 0 ? segments : ['ps'];
+  return commands.map((command, index) => ({
+    pid: machine.nextPid + index,
+    ppid: 1187,
+    user,
+    command,
+    cpu: 0,
+    rss: command.startsWith('ps') ? 3_840 : 2_304,
+    vsz: command.startsWith('ps') ? 11_076 : 6_332,
+    tty: 'pts/0',
+    stat: command.startsWith('ps') ? 'R+' : 'S+',
+    start: now,
+  }));
+}
+
+/** Découpe une ligne en commandes d'un tube (hors guillemets), sans les guillemets. */
+function splitPipeline(line: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let quote: string | null = null;
+  for (const char of line) {
+    if (quote) {
+      if (char === quote) quote = null;
+      else current += char;
+    } else if (char === '"' || char === "'") quote = char;
+    else if (char === '|') {
+      parts.push(current);
+      current = '';
+    } else current += char;
+  }
+  parts.push(current);
+  return parts
+    .map((p) =>
+      p
+        .replace(/^\s*sudo\s+/, '')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    )
+    .filter((p) => p.length > 0 && !p.includes('&&') && !p.includes(';'));
 }
 
 /** Commande `ps` : instantané des processus. */
@@ -86,8 +126,8 @@ EXEMPLES
     const full = words.includes('-ef') || (words.includes('-e') && words.includes('-f'));
     let list =
       all || full || words.includes('-e') || words.includes('-A')
-        ? [...machine.processes]
-        : sessionProcesses(machine, env.user, now);
+        ? [...machine.processes, ...pipelineProcesses(machine, env.user, now, env.line)]
+        : sessionProcesses(machine, env.user, now, env.line);
     if (userIndex >= 0) {
       const user = words[userIndex + 1] ?? '';
       if (!machine.users[user])

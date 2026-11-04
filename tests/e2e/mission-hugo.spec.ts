@@ -37,6 +37,22 @@ test('affiche le monde et le HUD de départ', async ({ page }) => {
 
 test("joue la mission d'Hugo de bout en bout", async ({ page }) => {
   await openGame(page);
+  // Le chapitre 4 est supposé fait : Hugo propose alors la panne de l'intranet.
+  await page.evaluate(() => {
+    window.__TSSR_DEBUG__?.completeMissions([
+      'linux.decouverte',
+      'linux.connexion',
+      'linux.aide',
+      'linux.arborescence',
+      'linux.fichiers',
+      'linux.regex',
+      'linux.recherche',
+      'linux.vim',
+      'linux.processus',
+      'linux.archives',
+      'linux.epreuve',
+    ]);
+  });
 
   // Le joueur se place sous Hugo et lui parle avec la touche E.
   await page.evaluate(() =>
@@ -97,11 +113,11 @@ test("joue la mission d'Hugo de bout en bout", async ({ page }) => {
     return {
       xp: s?.progression.xp,
       linux: s?.progression.skills.linux,
-      done: Object.keys(s?.progress.completedMissions ?? {}),
+      done: Object.keys(s?.progress.completedMissions ?? {}).includes('linux-admin.intranet-down'),
     };
   });
   // Deux étapes avec une erreur chacune (rm sans sudo, mauvaise option) : 20 + 20, + 150 de fin.
-  expect(state).toEqual({ xp: 20 + 20 + 150, linux: 12, done: ['linux-admin.intranet-down'] });
+  expect(state).toEqual({ xp: 20 + 20 + 150, linux: 12, done: true });
   await advanceDialogue(page);
   await expect(page.getByText('190 / 300 XP')).toBeVisible();
 });

@@ -26,5 +26,124 @@ nodes:
     - say: Pas de souci, reviens quand tu veux. Le serveur ne va pas se réparer tout seul, par contre !
       mood: inquiet
 
+  # --- Chapitre 4 : utilisation de GNU/Linux ---------------------------------------------
+
+  decouverte-intro:
+    - say: Bienvenue dans l'équipe ! Cette semaine, c'est Linux. Ici, tous les serveurs tournent sous Debian.
+      mood: content
+    - say: Avant de te donner un terminal, trois questions. Pas de piège, promis… enfin, presque.
+    - effects: [{ startStep: libre }]
+
+  decouverte-outro:
+    - say: Parfait. Retiens surtout que Linux, c'est le noyau, et Debian, une distribution autour.
+      mood: content
+    - say: Prochaine étape, le clavier. Reviens me voir quand tu veux.
+
+  connexion-intro:
+    - say: Je t'ai créé un compte « stagiaire » sur deb-formation, la machine virtuelle de la salle de formation.
+    - say: Premier réflexe sur une machine inconnue - savoir qui on est et où on est. Toujours.
+    - effects: [{ startStep: identite }]
+
+  connexion-outro:
+    - say: Tu as vu pts/0 dans who ? C'est ta session SSH. La console de la machine, elle, s'appelle tty1.
+      mood: content
+    - say: Sur les serveurs, tu passeras ta vie en SSH. Pas d'écran, pas de souris.
+
+  aide-intro:
+    - say: Règle d'or du service - avant de me demander, on lit le manuel. RTFM, comme on dit poliment.
+      mood: content
+    - say: Il y a trois façons de trouver de l'aide. Je veux que tu les essaies toutes.
+    - effects: [{ startStep: manuels }]
+
+  aide-outro:
+    - say: Avec man et apropos, tu n'as plus besoin de moi pour la moitié des questions.
+      mood: content
+    - say: Pour l'autre moitié, il y a le café.
+
+  arborescence-intro:
+    - say: J'ai caché des indices dans deb-formation. Le premier est dans ton dossier personnel, mais il ne se voit pas.
+      mood: content
+    - say: Suis la piste. Tu vas visiter les dossiers les plus importants du système.
+    - effects: [{ startStep: chasse }]
+
+  arborescence-outro:
+    - say: TUX-1991, bravo ! Tu sais maintenant où vivent la configuration, les journaux et les fichiers temporaires.
+      mood: content
+
+  fichiers-intro:
+    - say: Regarde ce dossier « bazar »… Rapports, photos du pot de départ, fichiers temporaires, tout en vrac.
+      mood: inquiet
+    - say: Range-moi ça proprement. Et fais un lien vers le dernier rapport, la direction le demande tout le temps.
+    - effects: [{ startStep: rangement }]
+
+  fichiers-outro:
+    - say: Propre. Attention avec rm - sous Linux, il n'y a pas de corbeille. Ce qui est supprimé est perdu.
+      mood: content
+
+  regex-intro:
+    - say: Quelqu'un tente de se connecter en SSH à srv-web01 depuis Internet. J'ai copié le journal d'authentification pour toi.
+      mood: inquiet
+    - say: Fais-le parler - combien d'échecs, et qui insiste.
+    - effects: [{ startStep: enquete }]
+
+  regex-outro:
+    - say: 203.0.113.45 qui tente root en boucle… classique. On en reparlera avec fail2ban, plus tard dans l'année.
+      mood: content
+    - if: { flag: hugo-confiance }
+      say: Et oui, l'échec de 8 h 44, c'est moi. Avant mon premier café, ça ne compte pas.
+    - say: Une ligne dans un journal, c'est une preuve. grep est ton meilleur ami.
+
+  recherche-intro:
+    - say: Julie, de la compta, a « perdu » son budget 2027 sur le partage. Elle jure qu'elle ne l'a pas déplacé.
+    - say: Ils jurent tous ça. Retrouve-le, je te montre deux méthodes très différentes.
+    - effects: [{ startStep: fouille }]
+
+  recherche-outro:
+    - say: Dans « archives-julie/divers »… Elle était sûre de rien avoir touché, hein. Je lui envoie le chemin.
+      mood: content
+
+  vim-intro:
+    - say: Sur un serveur, pas de bloc-notes. Il y a vim, et il y a les gens coincés dans vim depuis des années.
+      mood: content
+    - say: Le message d'accueil de deb-formation a une faute et une ligne en trop. Corrige-le.
+    - effects: [{ startStep: modes }]
+
+  vim-outro:
+    - say: Tu sais sortir de vim. Tu fais déjà mieux qu'une bonne partie d'Internet.
+      mood: content
+
+  processus-intro:
+    - say: deb-formation rame. Quelqu'un a lancé un exercice Python qui tourne en boucle depuis ce matin.
+      mood: inquiet
+    - say: Trouve-le, arrête-le, et profites-en pour apprendre à envoyer les sorties dans des fichiers.
+    - effects: [{ startStep: emballement }]
+
+  processus-outro:
+    - say: Le processeur respire. ps, kill, tubes et redirections - c'est la plomberie de Linux.
+      mood: content
+
+  archives-intro:
+    - say: Je réinstalle deb-formation vendredi. Mets tes projets en carton avant, et compresse ce journal de 120 Mo.
+    - effects: [{ startStep: carton }]
+
+  archives-outro:
+    - say: Et tu as testé l'extraction. Une sauvegarde qu'on n'a jamais restaurée, ce n'est pas une sauvegarde.
+      mood: content
+
+  epreuve-linux-intro:
+    - say: Dernier jour de la semaine, c'est l'épreuve. Mme Garnier attend le rapport mensuel des incidents.
+    - say: Le fichier est égaré quelque part sur le partage, et il manque le nombre d'incidents critiques d'octobre.
+    - say: C'est noté sur 20 - chaque indice et chaque erreur coûtent un point. Tu as toute la semaine dans les doigts.
+      mood: content
+    - effects: [{ startStep: retrouver }]
+
+  epreuve-linux-outro:
+    - say: Rapport retrouvé, complété, archivé. C'est exactement le travail qu'on attend au support.
+      mood: content
+    - say: Badge Linux pour toi. La semaine prochaine, on passe à l'administration, dans la salle serveurs.
+
+  epreuve-linux-abandon:
+    - say: Pas grave, reprends ton souffle. L'épreuve t'attend, et le rapport aussi.
+
   default:
     - say: Si tu as un doute, relis les journaux. Toujours les journaux.

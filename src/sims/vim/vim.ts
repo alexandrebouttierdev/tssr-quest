@@ -134,6 +134,34 @@ function wordMove(state: VimState, forward: boolean): Cursor {
   return row > 0 ? { row: row - 1, col: 0 } : { row, col: 0 };
 }
 
+/**
+ * Longueur du mot sous le curseur, comme les mots de vim : une suite de lettres, chiffres
+ * et `_`, ou une suite d'autres caractères visibles. `dw` emporte les espaces qui suivent,
+ * `cw` non (il agit comme `ce`).
+ *
+ * @param rest - Fin de la ligne à partir du curseur.
+ * @param withSpaces - Inclure les espaces suivants.
+ * @returns Nombre de caractères concernés.
+ */
+function wordLength(rest: string, withSpaces: boolean): number {
+  const spaces = /^\s+/.exec(rest);
+  if (spaces) return spaces[0].length;
+  const word = /^(?:[\p{L}\p{N}_]+|[^\p{L}\p{N}_\s]+)/u.exec(rest)?.[0] ?? rest.slice(0, 1);
+  if (!withSpaces) return word.length;
+  return word.length + (/^\s*/.exec(rest.slice(word.length))?.[0].length ?? 0);
+}
+
+/** Supprime de la colonne du curseur jusqu'à `end` (exclu), et passe en insertion si demandé. */
+function deleteChars(state: VimState, end: number, insert: boolean): VimState {
+  const { row, col } = state.cursor;
+  const line = state.lines[row] ?? '';
+  const lines = state.lines.map((l, i) => (i === row ? l.slice(0, col) + l.slice(end) : l));
+  if (insert) return enterInsert(state, { row, col }, lines);
+  if (end <= col) return state;
+  const saved = snapshot(state);
+  return edit(saved, lines, clamp({ ...saved, lines }, { row, col: Math.min(col, line.length) }));
+}
+
 /** Recherche d'un motif à partir du curseur, avec retour au début. */
 function search(state: VimState, pattern: string): VimState {
   const total = state.lines.length;
@@ -309,6 +337,12 @@ function normalKey(state: VimState, key: string): VimState {
       };
     }
     if (combo === 'yy') return { ...cleared, register: [line], message: null };
+    if (combo === 'dw' || combo === 'd$' || combo === 'cw' || combo === 'c$') {
+      const end = combo.endsWith('$')
+        ? line.length
+        : col + wordLength(line.slice(col), combo === 'dw');
+      return deleteChars(cleared, end, combo.startsWith('c'));
+    }
     if (combo === 'gg') return { ...cleared, cursor: clamp(cleared, { row: 0, col: 0 }) };
     return cleared;
   }
@@ -332,9 +366,13 @@ function normalKey(state: VimState, key: string): VimState {
     case 'b':
       return { ...state, cursor: clamp(state, wordMove(state, key === 'w')) };
     case 'd':
+    case 'c':
     case 'y':
     case 'g':
       return { ...state, pending: key };
+    case 'D':
+    case 'C':
+      return deleteChars(state, line.length, key === 'C');
     case 'i':
       return enterInsert(state, state.cursor);
     case 'I':

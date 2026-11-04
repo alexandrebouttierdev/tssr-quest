@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : conditions de mission `user`, `group`, `net`, `cron`, `at`, `disk` (montage, fstab, taille), `lvm`, `package`, `process` ; schéma des machines du contenu étendu (paquets, disques en plus, réseau en panne/DHCP, voisins)
-- **Prochaine action** : phase 1 — missions des ch. 4-5 (22 missions avec dialogues, fiches, épreuves /20, badges, 3 quêtes secondaires), en commençant par le ch. 4
+- **Dernière tâche terminée** : chapitre 4 complet (11 missions dont l'épreuve notée, dialogues d'Hugo, 9 fiches) ; notation des épreuves sur 20 ; `--help` générique, `dw`/`cw`/`D`/`C` dans vim, `ps | grep` réaliste, compression des journaux
+- **Prochaine action** : phase 1 — missions du chapitre 5 (installer-debian, paquets, boot, comptes, droits, disque, ip-fixe, processus, cron, épreuve serveur web), puis 3 quêtes secondaires
 
 ## Environnement
 
@@ -57,7 +57,7 @@ Il est mis à jour à chaque tâche terminée.
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [x] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0) — avec aussi `group`, `at`, `disk` étendu, `lvm`, `package`, `process`.
 
-**Contenu** : 22 missions ch. 4-5, épreuves, badges, 3 quêtes secondaires — à faire.
+**Contenu** : ch. 4 ✅ (11 missions, épreuve /20, badge Linux, 9 fiches) ; ch. 5 ⏳ (intranet-down) ; 3 quêtes secondaires — à faire. Notation des épreuves ✅.
 **Monde** : cartes DSI, couloir, formation ; PNJ ; Light2D ; portes et transitions ; sons — à faire.
 **Interface** : écran titre ✅ (nuit, pluie, baies qui clignotent ; prénom + pronoms ; Continuer) ; rappel des contrôles en jeu ✅ ; menus, options, sauvegardes, montée de niveau, mobile — à faire.
 **Publication** : GitHub Pages ✅ (`pages.yml`, https://alexandrebouttierdev.github.io/tssr-quest/ — activer *Settings → Pages → Source : GitHub Actions*) ; README illustré ✅ ; PWA, itch.io — à faire.
@@ -131,6 +131,9 @@ Il est mis à jour à chaque tâche terminée.
 | D64 | 2026-11-04 | `PATH` réel : une commande de `/usr/sbin` n'est trouvée que si le `PATH` la contient (utilisateur Debian : non ; `sudo` : `secure_path` ; `su -`/`sudo -i` : PATH de root ; `su` : PATH conservé) | Erreur classique des débutants (`fdisk` introuvable sans sudo) reproduite fidèlement. |
 | D65 | 2026-11-04 | Vérification des configurations Apache et sshd (`sims/shared/config-check.ts`) partagée entre `apache2ctl configtest`, `sshd -t` et le démarrage du service (panne `config-invalid`, aussi déclarable dans une mission) | Une même faute donne le même message partout, comme sur le vrai système. |
 | D66 | 2026-11-04 | `reboot` simulé : seul ce qui est permanent survit (fstab, interfaces auto/allow-hotplug, services activés) ; la session revient à la connexion SSH d'origine ; notes en français entre parenthèses pour ce que le jeu abrège (console, mode urgence) | Vérification « ça tient après redémarrage » possible dans les missions. |
+| D67 | 2026-11-04 | Épreuves notées sur 20 : résultat 12 + autonomie 4 (−1 par indice) + rigueur 4 (−1 par erreur) ; l'XP d'épreuve (200, 300 avec mention ≥ 16) remplace l'XP de fin | Barème lisible par le joueur, sans critère « méthode » flou. |
+| D68 | 2026-11-04 | Chapitre 4 joué sur `deb-formation` (compte `stagiaire`), missions données par Hugo dans la zone formation et chaînées par `requires` ; `intranet-down` demande l'épreuve du ch. 4 | Ordre de la campagne respecté ; l'E2E saute le ch. 4 par `completeMissions`. |
+| D69 | 2026-11-04 | Les dialogues n'accordent jamais en genre le joueur (pas de « prêt·e ») : tournures neutres | Les pronoms choisis ne sont pas encore injectés dans les répliques. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

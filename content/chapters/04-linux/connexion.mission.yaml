@@ -1,0 +1,75 @@
+id: linux.connexion
+chapter: linux
+title: Première connexion
+summary: Hugo t'ouvre une session sur la machine virtuelle de formation. Premier contact avec le shell Bash.
+giver: hugo
+zone: formation
+requires: { missions: [linux.decouverte] }
+rewards:
+  xp: 50
+  skills: { linux: 5 }
+  sheets: [fiche-shell]
+dialogue:
+  intro: hugo#connexion-intro
+  outro: hugo#connexion-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+
+steps:
+  - id: identite
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-shell
+    goal: Fais connaissance avec la machine - qui tu es, où tu es, sur quel système.
+    objectives:
+      - id: whoami
+        label: Afficher ton nom d'utilisateur
+        when: { any: [{ command: { matches: '^whoami$' } }, { command: { matches: '^id\b' } }] }
+      - id: hostname
+        label: Afficher le nom de la machine
+        when: { command: { matches: '^hostname$' } }
+      - id: pwd
+        label: Afficher le dossier courant
+        when: { command: { matches: '^pwd$' } }
+      - id: uname
+        label: Afficher la version du noyau Linux
+        when: { command: { matches: '^uname (-r|-a)' } }
+      - id: who
+        label: Voir qui est connecté, et sur quel terminal
+        when: { command: { matches: '^(who|w)\b' } }
+    hints:
+      - 'Une commande, des options qui commencent par un tiret, des arguments : « ls -l /etc ».'
+      - 'Les commandes utiles : whoami, hostname, pwd, uname, who.'
+      - 'Solution : whoami, hostname, pwd, uname -r, who'
+    solution:
+      - whoami
+      - hostname
+      - pwd
+      - uname -r
+      - who
+
+  - id: ssh
+    type: choice
+    sheet: fiche-shell
+    question: Demain, tu te connecteras à srv-web01 depuis ton poste. Avec quelle commande ?
+    options:
+      - text: ssh stagiaire@srv-web01
+        correct: true
+      - text: telnet srv-web01
+        feedback: Telnet fait circuler le mot de passe en clair sur le réseau. On ne l'utilise plus.
+      - text: cd srv-web01
+        feedback: cd change de dossier sur la machine où tu es déjà.
+      - text: login srv-web01
+        feedback: login ouvre une session locale, sur la console de la machine.
+    explain: SSH chiffre toute la session. Le compte se donne avant le @, la machine après.
+
+recap:
+  - La syntaxe - commande, options (-l, --all), arguments (fichiers, dossiers).
+  - whoami, hostname, pwd, uname -r, who - savoir où l'on est avant d'agir.
+  - SSH pour administrer à distance ; tty1 est la console locale, pts/0 une session distante.

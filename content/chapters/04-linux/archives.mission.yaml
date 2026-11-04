@@ -1,0 +1,87 @@
+id: linux.archives
+chapter: linux
+title: Les cartons
+summary: Avant de réinstaller la machine de formation, Hugo te demande de mettre tes projets en carton et de compresser un journal énorme.
+giver: hugo
+zone: formation
+requires: { missions: [linux.processus] }
+rewards:
+  xp: 60
+  skills: { linux: 6, sauvegarde: 2 }
+  sheets: [fiche-archives]
+dialogue:
+  intro: hugo#archives-intro
+  outro: hugo#archives-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /home/stagiaire/projets: { type: dir, owner: stagiaire }
+      /home/stagiaire/projets/site: { type: dir, owner: stagiaire }
+      /home/stagiaire/projets/site/index.html:
+        { owner: stagiaire, content: "<h1>Intranet de test</h1>\n" }
+      /home/stagiaire/projets/site/style.css:
+        { owner: stagiaire, content: "h1 { color: #2f6fb0; }\n" }
+      /home/stagiaire/projets/notes.txt:
+        { owner: stagiaire, content: "Idées : page des menus de la cantine, annuaire.\n" }
+      /home/stagiaire/journaux: { type: dir, owner: stagiaire }
+      /home/stagiaire/journaux/application.log: { owner: stagiaire, size: 120M }
+
+steps:
+  - id: carton
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-archives
+    goal: Archive et compresse ~/projets, vérifie le contenu de l'archive, compresse le journal, puis teste la restauration dans /tmp/verif.
+    objectives:
+      - id: archive
+        label: Créer ~/projets.tar.gz avec tout le dossier projets
+        when: { file: { path: /home/stagiaire/projets.tar.gz, contains: 'index.html' } }
+      - id: lister
+        label: Lister le contenu de l'archive sans l'extraire
+        when: { command: { matches: '^tar -?[a-zA-Z]*t[a-zA-Z]* .*projets\.tar\.gz' } }
+      - id: journal
+        label: Compresser le journal application.log avec gzip
+        when:
+          all:
+            - { file: { path: /home/stagiaire/journaux/application.log.gz } }
+            - { file: { path: /home/stagiaire/journaux/application.log, exists: false } }
+      - id: restauration
+        label: Extraire l'archive dans /tmp/verif pour vérifier qu'elle est bonne
+        when: { file: { path: /tmp/verif/projets/site/index.html, contains: 'Intranet de test' } }
+    hints:
+      - "tar crée l'archive (c), z la compresse avec gzip, f donne son nom ; t liste, x extrait, -C choisit le dossier."
+      - 'tar czf projets.tar.gz projets ; tar tzf projets.tar.gz ; gzip journaux/application.log ; tar xzf … -C /tmp/verif'
+      - 'Solution : tar czf projets.tar.gz projets, tar tzf projets.tar.gz, gzip journaux/application.log, mkdir /tmp/verif, tar xzf projets.tar.gz -C /tmp/verif'
+    solution:
+      - tar czf projets.tar.gz projets
+      - tar tzf projets.tar.gz
+      - gzip journaux/application.log
+      - ls -lh journaux
+      - mkdir /tmp/verif
+      - tar xzf projets.tar.gz -C /tmp/verif
+
+  - id: difference
+    type: choice
+    sheet: fiche-archives
+    question: Quelle est la différence entre archiver et compresser ?
+    options:
+      - text: Archiver regroupe plusieurs fichiers en un seul (tar) ; compresser réduit la taille (gzip). tar czf fait les deux.
+        correct: true
+      - text: C'est la même chose
+        feedback: Une archive .tar n'est pas plus petite que ses fichiers ; c'est gzip qui gagne de la place.
+      - text: Archiver supprime les fichiers d'origine
+        feedback: tar laisse les originaux en place. C'est gzip qui remplace le fichier par sa version .gz.
+      - text: On ne peut compresser qu'un seul fichier, jamais un dossier
+        feedback: gzip seul ne compresse qu'un fichier, d'où l'usage de tar d'abord.
+    explain: Une sauvegarde qu'on n'a jamais essayé de restaurer n'est pas une sauvegarde - d'où le test d'extraction.
+
+recap:
+  - 'tar czf archive.tar.gz dossier (créer), tar tzf (lister), tar xzf archive.tar.gz -C destination (extraire).'
+  - gzip fichier / gunzip fichier.gz ; zcat pour lire sans décompresser ; zip -r et unzip pour Windows.
+  - Toujours tester la restauration d'une archive.

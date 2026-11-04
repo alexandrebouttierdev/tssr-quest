@@ -7,6 +7,8 @@ export interface TssrDebug {
   startMission(id: string): void;
   /** Pose un drapeau narratif. */
   setFlag(name: string): void;
+  /** Marque des missions comme terminées et débriefées (pour sauter au chapitre voulu). */
+  completeMissions(ids: readonly string[]): void;
   /** Ajoute de l'XP au joueur. */
   setXp(xp: number): void;
   /** Interagit avec un PNJ comme si le joueur appuyait sur E. */
@@ -34,6 +36,21 @@ export function installDebug(services: AppServices, game: () => Phaser.Game | nu
   window.__TSSR_DEBUG__ = {
     startMission: (id) => services.bus.emit({ type: 'mission/start', missionId: id }),
     setFlag: (name) => services.store.getState().setFlag(name),
+    completeMissions: (ids) => {
+      const state = services.store.getState();
+      for (const id of ids) {
+        state.recordMissionCompleted(id, {
+          perfectSteps: 0,
+          totalSteps: 0,
+          errors: 0,
+          hintsUsed: 0,
+          durationMs: 0,
+          xpEarned: 0,
+          completedAt: 0,
+        });
+        state.markDebriefed(id);
+      }
+    },
     setXp: (xp) => services.store.getState().setProgression({ xp }),
     interact: (npcId) => services.bus.emit({ type: 'world/interact', targetId: npcId }),
     teleport: (zoneId, x, y) => {

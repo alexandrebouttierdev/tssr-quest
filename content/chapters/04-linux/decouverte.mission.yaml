@@ -1,0 +1,67 @@
+id: linux.decouverte
+chapter: linux
+title: Pourquoi Linux ?
+summary: Avant de toucher un terminal, Hugo veut savoir si tu sais ce qu'est Linux et pourquoi LabCorp l'utilise.
+giver: hugo
+zone: formation
+rewards:
+  xp: 50
+  skills: { linux: 4 }
+  sheets: [fiche-linux]
+dialogue:
+  intro: hugo#decouverte-intro
+  outro: hugo#decouverte-outro
+
+steps:
+  - id: libre
+    type: choice
+    sheet: fiche-linux
+    question: Qu'est-ce qui fait d'un logiciel un logiciel libre ?
+    options:
+      - text: On peut l'utiliser, étudier son code, le modifier et le redistribuer
+        correct: true
+      - text: Il est gratuit
+        feedback: Gratuit ne veut pas dire libre. Un logiciel gratuit peut avoir un code fermé, et un logiciel libre peut être vendu.
+      - text: Il fonctionne sans licence
+        feedback: Un logiciel libre a bien une licence (GPL, MIT…) ; c'est elle qui garantit les quatre libertés.
+      - text: Il est développé par des bénévoles
+        feedback: Beaucoup de développeurs du noyau Linux sont salariés d'entreprises. Ce qui compte, ce sont les libertés données par la licence.
+    explain: Les quatre libertés du logiciel libre - utiliser, étudier, modifier, redistribuer. Le code source doit donc être accessible.
+
+  - id: distribution
+    type: choice
+    sheet: fiche-linux
+    question: Debian, Ubuntu, Red Hat Enterprise Linux, Fedora… Ce sont…
+    options:
+      - text: Des distributions - le noyau Linux, des logiciels, un installateur et un gestionnaire de paquets
+        correct: true
+      - text: Des versions successives du noyau Linux
+        feedback: Le noyau a ses propres versions (6.1, 6.6…). Les distributions l'assemblent avec des milliers d'autres logiciels.
+      - text: Des interfaces graphiques pour Linux
+        feedback: GNOME ou KDE sont des environnements de bureau. Une distribution peut d'ailleurs s'installer sans aucune interface graphique.
+      - text: Des concurrents de Linux
+        feedback: Elles utilisent toutes le noyau Linux.
+    explain: Linux n'est que le noyau. Une distribution y ajoute les outils GNU, les programmes, la gestion des paquets et sa politique de mises à jour.
+
+  - id: serveurs
+    type: choice
+    multiple: true
+    sheet: fiche-linux
+    question: Pourquoi LabCorp a-t-il choisi Debian pour ses serveurs ? (plusieurs réponses)
+    options:
+      - text: Une version stable suivie plusieurs années, avec des mises à jour de sécurité
+        correct: true
+      - text: Pas de coût de licence, même sur des dizaines de serveurs
+        correct: true
+      - text: Une installation légère, sans interface graphique, pilotable à distance en SSH
+        correct: true
+      - text: Debian ne peut pas avoir de failles de sécurité
+        feedback: Tout logiciel a des failles. La différence, c'est qu'elles sont publiées et corrigées vite - encore faut-il installer les mises à jour.
+      - text: Les commandes Linux fonctionnent aussi sous Windows sans rien installer
+        feedback: Non, ce sont deux systèmes différents.
+    explain: Stabilité, sécurité suivie, coût et sobriété - c'est pour ça que la plupart des serveurs web du monde tournent sous Linux.
+
+recap:
+  - Linux est un noyau ; une distribution (Debian, Ubuntu, RHEL…) l'assemble avec des logiciels.
+  - Libre veut dire utiliser, étudier, modifier, redistribuer - pas forcément gratuit.
+  - Debian stable - choix courant en entreprise pour les serveurs.

@@ -1,0 +1,119 @@
+id: linux.processus
+chapter: linux
+title: Tuyauterie
+summary: La machine de formation rame. Trouve le processus qui s'emballe, arrête-le, et découvre les redirections et les tubes.
+giver: hugo
+zone: formation
+requires: { missions: [linux.vim] }
+rewards:
+  xp: 60
+  skills: { linux: 6 }
+  sheets: [fiche-processus]
+dialogue:
+  intro: hugo#processus-intro
+  outro: hugo#processus-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    processes:
+      - {
+          user: stagiaire,
+          command: python3 /home/stagiaire/exercices/boucle.py,
+          cpu: 99.3,
+          rss: 18432,
+        }
+    files:
+      /home/stagiaire/exercices: { type: dir, owner: stagiaire }
+      /home/stagiaire/exercices/boucle.py:
+        owner: stagiaire
+        content: |
+          # Exercice raté : la condition de sortie ne devient jamais vraie.
+          i = 0
+          while i >= 0:
+              i += 1
+
+steps:
+  - id: emballement
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-processus
+    goal: Repère le processus qui consomme tout le processeur et arrête-le.
+    objectives:
+      - id: lister
+        label: Lister les processus (ps aux ou top)
+        when:
+          {
+            any:
+              [
+                { command: { matches: '^ps( .*)? (aux|-ef|-e)' } },
+                { command: { matches: '^top\b' } },
+              ],
+          }
+      - id: filtrer
+        label: Filtrer la liste avec un tube vers grep
+        when: { command: { matches: '^grep( -\S+)* (boucle|python)' } }
+      - id: arreter
+        label: Arrêter le processus boucle.py
+        when: { process: { matches: 'boucle\.py', running: false } }
+    hints:
+      - "ps aux liste tous les processus avec leur PID et leur %CPU ; kill PID envoie le signal d'arrêt."
+      - 'ps aux | grep boucle donne le PID (2e colonne), puis kill suivi de ce numéro.'
+      - 'Solution : ps aux | grep boucle, puis kill 1500'
+    solution:
+      - ps aux | grep boucle
+      - kill 1500
+      - ps aux | grep boucle
+
+  - id: redirections
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-processus
+    goal: Envoie des sorties dans des fichiers plutôt qu'à l'écran.
+    objectives:
+      - id: sortie
+        label: Enregistrer la liste des processus dans ~/processus.txt (>)
+        when: { file: { path: /home/stagiaire/processus.txt, contains: 'PID' } }
+      - id: ajout
+        label: Ajouter la date à la fin de ce fichier sans l'écraser (>>)
+        when:
+          all:
+            - { file: { path: /home/stagiaire/processus.txt, contains: 'PID' } }
+            - { file: { path: /home/stagiaire/processus.txt, matches: '2026' } }
+      - id: erreurs
+        label: Envoyer le message d'erreur de « ls /root » dans ~/erreurs.txt (2>)
+        when: { file: { path: /home/stagiaire/erreurs.txt, contains: 'Permission non accordée' } }
+    hints:
+      - "> écrit la sortie dans un fichier (en l'écrasant), >> ajoute à la fin, 2> redirige les erreurs."
+      - 'ps aux > processus.txt ; date >> processus.txt ; ls /root 2> erreurs.txt'
+      - 'Solution : ps aux > processus.txt, date >> processus.txt, ls /root 2> erreurs.txt, cat erreurs.txt'
+    solution:
+      - ps aux > processus.txt
+      - date >> processus.txt
+      - ls /root 2> erreurs.txt
+      - cat erreurs.txt
+
+  - id: signaux
+    type: choice
+    sheet: fiche-processus
+    question: Un processus ignore « kill PID ». Que fais-tu ?
+    options:
+      - text: kill -9 PID, qui ne peut pas être ignoré - en dernier recours, car le programme ne peut rien enregistrer
+        correct: true
+      - text: Redémarrer le serveur
+        feedback: Couper le service pour tout le monde à cause d'un seul processus ? Il y a mieux.
+      - text: rm sur le programme
+        feedback: Supprimer le fichier n'arrête pas le processus déjà lancé.
+      - text: Attendre qu'il s'arrête tout seul
+        feedback: Une boucle infinie ne s'arrête jamais toute seule.
+    explain: kill envoie SIGTERM (15), une demande polie ; kill -9 envoie SIGKILL, que le noyau applique sans discuter.
+
+recap:
+  - ps aux, top - PID, %CPU, %MEM ; kill PID (SIGTERM), kill -9 PID (SIGKILL) en dernier recours.
+  - '> écrase, >> ajoute, 2> redirige les erreurs, < lit un fichier en entrée.'
+  - Le tube | branche la sortie d'une commande sur l'entrée de la suivante - ps aux | grep apache.

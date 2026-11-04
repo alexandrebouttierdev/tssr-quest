@@ -1,0 +1,104 @@
+id: linux.vim
+chapter: linux
+title: Survivre à vim
+summary: Sur un serveur, pas de bloc-notes - c'est vim. Hugo veut que tu corriges le message d'accueil sans rester coincé.
+giver: hugo
+zone: formation
+requires: { missions: [linux.recherche] }
+rewards:
+  xp: 60
+  skills: { linux: 6 }
+  sheets: [fiche-vim]
+dialogue:
+  intro: hugo#vim-intro
+  outro: hugo#vim-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /home/stagiaire/bienvenue.txt:
+        owner: stagiaire
+        content: |
+          Bienvenu sur deb-formation
+          Machine de formation du service informatique de LabCorp.
+          LIGNE A SUPPRIMER
+
+steps:
+  - id: modes
+    type: choice
+    sheet: fiche-vim
+    question: Tu viens d'ouvrir un fichier dans vim et tu tapes du texte. Rien ne s'écrit, l'écran fait n'importe quoi. Pourquoi ?
+    options:
+      - text: vim démarre en mode normal, où les touches sont des commandes ; il faut i pour passer en insertion
+        correct: true
+      - text: Le fichier est en lecture seule
+        feedback: Possible, mais vim te le dirait seulement à l'enregistrement. Ici, c'est le mode normal.
+      - text: Le clavier est en QWERTY
+        feedback: Non, les touches que tu tapes sont interprétées comme des commandes.
+      - text: vim ne sait pas écrire en français
+        feedback: vim gère très bien les accents.
+    explain: Mode normal (commandes) → i, a ou o pour insérer → Échap pour revenir → :w enregistrer, :q quitter, :wq les deux, :q! quitter sans enregistrer.
+
+  - id: edition
+    type: editor
+    machine: deb-formation
+    file: /home/stagiaire/bienvenue.txt
+    sheet: fiche-vim
+    goal: 'Corrige « Bienvenu » en « Bienvenue », supprime la dernière ligne, ajoute « Contact : Hugo, poste 2042 » à la fin, puis enregistre.'
+    objectives:
+      - id: faute
+        label: Corriger « Bienvenu » en « Bienvenue »
+        when:
+          {
+            file: { path: /home/stagiaire/bienvenue.txt, matches: '^Bienvenue sur deb-formation$' },
+          }
+      - id: suppression
+        label: Supprimer la ligne « LIGNE A SUPPRIMER »
+        when:
+          all:
+            - { file: { path: /home/stagiaire/bienvenue.txt, contains: 'Machine de formation' } }
+            - {
+                not:
+                  { file: { path: /home/stagiaire/bienvenue.txt, contains: 'LIGNE A SUPPRIMER' } },
+              }
+      - id: ajout
+        label: Ajouter la ligne de contact à la fin et enregistrer
+        when:
+          {
+            file:
+              { path: /home/stagiaire/bienvenue.txt, matches: 'Contact : Hugo, poste 2042\n?$' },
+          }
+    hints:
+      - "Les modifications ne comptent qu'une fois enregistrées : Échap puis :w."
+      - 'G va à la dernière ligne, dd la supprime, o ouvre une ligne en dessous ; /mot cherche un mot.'
+      - 'Solution : /u sur puis Entrée, a, tape e, Échap, G, dd, o, tape la ligne de contact, Échap, :wq puis Entrée'
+    solution:
+      - '/u sur<CR>'
+      - 'ae<Esc>'
+      - 'Gdd'
+      - 'oContact : Hugo, poste 2042<Esc>'
+      - ':wq<CR>'
+
+  - id: sans-enregistrer
+    type: choice
+    sheet: fiche-vim
+    question: Tu as tout cassé dans un fichier de configuration et tu veux sortir sans rien enregistrer. Que tapes-tu ?
+    options:
+      - text: 'Échap puis :q!'
+        correct: true
+      - text: ':wq'
+        feedback: Ça enregistrerait tes erreurs dans le fichier !
+      - text: ':q'
+        feedback: vim refuse de quitter un fichier modifié et rappelle qu'il faut ajouter ! pour passer outre (erreur E37).
+      - text: Ctrl+C
+        feedback: En mode normal, Ctrl+C ne quitte pas vim ; il rappelle seulement comment le faire.
+    explain: Le ! force la sortie en abandonnant les modifications. Réflexe à garder - copier un fichier de configuration (.bak) avant de l'éditer.
+
+recap:
+  - 'Modes : normal (commandes), insertion (i, a, o), commande (:). Échap pour revenir au mode normal.'
+  - ':w enregistrer, :q quitter, :wq les deux, :q! abandonner.'
+  - 'dd supprime une ligne, yy la copie, p la colle, u annule, /mot cherche, G va à la fin.'

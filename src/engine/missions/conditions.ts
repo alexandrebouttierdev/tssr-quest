@@ -10,7 +10,7 @@ import type {
 import { parseCrontab, readCrontab } from '@sims/shared/cron';
 import { diskUsagePercent } from '@sims/shared/disks';
 import { maskToPrefix, nameservers, readInterfaces, type IfaceStanza } from '@sims/shared/network';
-import { normalizePath } from '@sims/shared/path';
+import { dirname, normalizePath } from '@sims/shared/path';
 import { parseSize } from '@sims/shared/size';
 import {
   canonicalPath,
@@ -263,6 +263,15 @@ export function evaluateCondition(condition: Condition, world: ConditionWorld): 
   if (spec.mode !== undefined && (node.mode & 0o7777) !== parseInt(spec.mode, 8)) return false;
   if (spec.owner !== undefined && node.owner !== spec.owner) return false;
   if (spec.group !== undefined && node.group !== spec.group) return false;
+  if (spec.linkTo !== undefined) {
+    if (node.type !== 'symlink') return false;
+    const resolved = normalizePath(
+      node.target.startsWith('/')
+        ? node.target
+        : `${dirname(normalizePath(spec.path))}/${node.target}`,
+    );
+    if (node.target !== spec.linkTo && resolved !== normalizePath(spec.linkTo)) return false;
+  }
   if (spec.contains !== undefined || spec.matches !== undefined) {
     if (node.type !== 'file') return false;
     if (spec.contains !== undefined && !node.content.includes(spec.contains)) return false;

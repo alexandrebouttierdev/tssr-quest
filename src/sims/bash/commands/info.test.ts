@@ -258,4 +258,20 @@ describe('date, uname, id, groups, who, nano', () => {
     expect(nano.exitCode).toBe(127);
     expect(nano.stderr).toContain('utilise vim');
   });
+
+  describe('--help', () => {
+    it('affiche l’utilisation et les options tirées du manuel', () => {
+      const out = runLine(machine, 'ls --help');
+      expect(out.exitCode).toBe(0);
+      expect(out.stdout).toMatch(/^Utilisation : ls \[OPTION\]\.\.\. \[FICHIER\]\.\.\.\n/);
+      expect(out.stdout).toContain('  -a     afficher aussi les fichiers cachés');
+      expect(out.stdout.endsWith('Page de manuel complète : man ls\n')).toBe(true);
+      expect(runLine(machine, 'grep -c x --help').stdout).toMatch(/^Utilisation : grep/);
+    });
+
+    it('laisse echo afficher le texte et respecte la fin des options', () => {
+      expect(runLine(machine, 'echo --help').stdout).toBe('--help\n');
+      expect(runLine(machine, 'grep -- --help /etc/hostname').exitCode).toBe(1);
+    });
+  });
 });

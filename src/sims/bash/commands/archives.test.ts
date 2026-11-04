@@ -124,6 +124,13 @@ describe('gzip, gunzip, zcat', () => {
     expect(runLine(machine, 'gzip -kv rapport/chiffres.csv').stderr).toContain('created');
   });
 
+  it('compresse fortement un journal décrit par sa seule taille', () => {
+    const logs = debianServer({ files: { '/home/hugo/app.log': { size: '100M' } } });
+    const out = runLine(logs, 'gzip -v app.log');
+    expect(out.stderr).toBe('app.log:\t 89.0% -- replaced with app.log.gz\n');
+    expect(runLine(out.state, 'ls -lh app.log.gz').stdout).toContain(' 11M ');
+  });
+
   it('signale les erreurs', () => {
     expect(runLine(machine, 'gzip absent').stderr).toBe(
       'gzip: absent: Aucun fichier ou dossier de ce type\n',

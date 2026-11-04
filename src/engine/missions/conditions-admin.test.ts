@@ -165,6 +165,26 @@ describe('conditions : disques et LVM', () => {
   });
 });
 
+describe('conditions : liens symboliques', () => {
+  it('vérifie la cible d’un lien, relative ou absolue', () => {
+    const linked = after([
+      'mkdir docs',
+      'touch docs/rapport.txt',
+      'ln -s docs/rapport.txt dernier',
+    ]);
+    expect(
+      check(linked, { file: { path: '/home/hugo/dernier', linkTo: 'docs/rapport.txt' } }),
+    ).toBe(true);
+    expect(
+      check(linked, {
+        file: { path: '/home/hugo/dernier', linkTo: '/home/hugo/docs/rapport.txt' },
+      }),
+    ).toBe(true);
+    expect(check(linked, { file: { path: '/home/hugo/docs', linkTo: '/tmp' } })).toBe(false);
+    expect(check(linked, { file: { path: '/home/hugo/dernier', linkTo: '/tmp' } })).toBe(false);
+  });
+});
+
 describe('conditions : paquets et processus', () => {
   it('vérifie un paquet installé ou retiré', () => {
     expect(check(base, { package: { name: 'curl' } })).toBe(true);

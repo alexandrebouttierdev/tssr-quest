@@ -154,6 +154,8 @@ export interface FileCondition {
     readonly mode?: string | undefined;
     readonly owner?: string | undefined;
     readonly group?: string | undefined;
+    /** Le chemin est un lien symbolique vers cette cible (absolue ou relative au lien). */
+    readonly linkTo?: string | undefined;
     readonly machine?: string | undefined;
   };
 }
@@ -333,6 +335,7 @@ export const conditionSchema: z.ZodType<Condition> = z.lazy(() =>
           .optional(),
         owner: z.string().optional(),
         group: z.string().optional(),
+        linkTo: z.string().min(1).optional(),
         machine: machineRef,
       }),
     }),

@@ -1,0 +1,78 @@
+id: linux.aide
+chapter: linux
+title: RTFM
+summary: « Lis le manuel ! » Hugo veut que tu saches trouver l'aide toi-même avant de lui poser la question.
+giver: hugo
+zone: formation
+requires: { missions: [linux.connexion] }
+rewards:
+  xp: 50
+  skills: { linux: 5, support: 1 }
+  sheets: [fiche-aide]
+dialogue:
+  intro: hugo#aide-intro
+  outro: hugo#aide-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+
+steps:
+  - id: manuels
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-aide
+    goal: Consulte l'aide de plusieurs façons - le manuel, l'aide courte, la recherche par mot-clé.
+    objectives:
+      - id: man
+        label: Ouvrir la page de manuel de ls
+        when: { command: { matches: '^man (1 )?ls$' } }
+      - id: help
+        label: Afficher l'aide courte d'une commande avec --help
+        when: { command: { matches: '\s--help\b' } }
+      - id: apropos
+        label: Chercher une commande par mot-clé avec apropos
+        when: { command: { matches: '^(apropos|man -k) ' } }
+      - id: whatis
+        label: Afficher le résumé d'une commande avec whatis
+        when: { command: { matches: '^whatis ' } }
+    hints:
+      - 'man ouvre le manuel complet, --help le résumé des options, apropos cherche un mot dans les descriptions.'
+      - 'Essaie : man ls, cp --help, apropos copie, whatis rm'
+      - 'Solution : man ls, ls --help, apropos copie, whatis cp'
+    solution:
+      - man ls
+      - ls --help
+      - apropos copie
+      - whatis cp
+
+  - id: option-cachee
+    type: input
+    sheet: fiche-aide
+    question: D'après le manuel, quelle option de ls affiche aussi les fichiers cachés ?
+    answers: ['-a', '-A', '--all', 'ls -a', 'ls -A']
+    normalize: [trim]
+    explain: Sous Linux, un fichier caché est simplement un fichier dont le nom commence par un point (.bashrc).
+
+  - id: quitter
+    type: choice
+    question: Tu es dans une page de manuel. Comment en sortir ?
+    options:
+      - text: Appuyer sur q
+        correct: true
+      - text: Taper exit
+        feedback: exit ferme le shell, pas le manuel. Dans le pager, la touche q quitte.
+      - text: Ctrl+Z
+        feedback: Ctrl+Z suspend le programme en arrière-plan sans le fermer.
+      - text: Échap
+        feedback: Échap ne fait rien dans le pager du manuel.
+    explain: man affiche la page avec le pager less - flèches ou espace pour défiler, / pour chercher, q pour quitter.
+
+recap:
+  - man COMMANDE - le manuel complet ; q pour quitter, / pour chercher.
+  - COMMANDE --help - l'aide courte, directement dans le terminal.
+  - apropos MOT (ou man -k) - trouver la commande quand on ne connaît pas son nom ; whatis - son résumé.

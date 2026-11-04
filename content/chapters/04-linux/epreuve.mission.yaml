@@ -1,0 +1,156 @@
+id: linux.epreuve
+chapter: linux
+title: 'Épreuve : le rapport perdu'
+summary: La direction attend le rapport mensuel des incidents. Le fichier est égaré et il manque un chiffre. Épreuve notée sur 20.
+giver: hugo
+zone: formation
+requires: { missions: [linux.archives] }
+ticket: { number: 2050, priority: haute, requester: hugo, service: direction }
+rewards:
+  skills: { linux: 10, support: 3 }
+  reputation: { direction: 4 }
+  sheets: []
+dialogue:
+  intro: hugo#epreuve-linux-intro
+  outro: hugo#epreuve-linux-outro
+  abandon: hugo#epreuve-linux-abandon
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /srv/partage: { type: dir }
+      /srv/partage/dsi: { type: dir }
+      /srv/partage/dsi/modeles: { type: dir }
+      /srv/partage/dsi/modeles/modele-rapport.txt: { content: "Rapport des incidents - MOIS\n" }
+      /srv/partage/dsi/divers: { type: dir }
+      /srv/partage/dsi/divers/a-trier: { type: dir }
+      /srv/partage/dsi/divers/a-trier/rapport-incidents-octobre.txt:
+        content: |
+          Rapport des incidents - octobre 2026
+          Service informatique de LabCorp
+
+          Tickets ouverts : 9
+          Incidents critiques : A_COMPLETER
+          Délai moyen de résolution : 6 h 40
+      /var/log/labcorp: { type: dir }
+      /var/log/labcorp/tickets.log:
+        content: |
+          2026-09-28 16:40 #1802 CRITIQUE Coupure réseau de l'agence de Rennes
+          2026-09-30 10:05 #1809 NORMALE Imprimante du 1er étage bloquée
+          2026-10-01 08:52 #1815 HAUTE Lenteurs sur l'ERP
+          2026-10-03 09:12 #1821 CRITIQUE Serveur de messagerie injoignable
+          2026-10-06 14:31 #1830 BASSE Demande de second écran
+          2026-10-09 11:20 #1838 NORMALE Mot de passe expiré
+          2026-10-12 07:58 #1846 CRITIQUE Sauvegarde de nuit en échec
+          2026-10-15 15:03 #1853 HAUTE VPN des commerciaux instable
+          2026-10-19 09:47 #1861 NORMALE Création de compte stagiaire
+          2026-10-22 18:10 #1870 CRITIQUE Disque plein sur srv-web01
+          2026-10-27 13:25 #1882 BASSE Changement de souris
+          2026-10-30 08:15 #1889 CRITIQUE Panne de climatisation en salle serveurs
+          2026-11-02 10:02 #1895 CRITIQUE Intranet inaccessible
+          2026-11-03 08:40 #1901 NORMALE Accès au partage compta
+
+steps:
+  - id: retrouver
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    goal: Retrouve rapport-incidents-octobre.txt quelque part dans /srv/partage et copie-le dans ton dossier personnel sous le nom rapport.txt.
+    objectives:
+      - id: copie
+        label: Copier le rapport dans ~/rapport.txt
+        when:
+          {
+            file:
+              {
+                path: /home/stagiaire/rapport.txt,
+                contains: 'Rapport des incidents - octobre 2026',
+              },
+          }
+    hints:
+      - Le nom du fichier est connu, pas son dossier - find sait chercher par nom.
+      - 'find /srv/partage -name "rapport*" puis cp CHEMIN ~/rapport.txt'
+      - 'Solution : find /srv/partage -name "rapport-incidents-octobre.txt" puis cp /srv/partage/dsi/divers/a-trier/rapport-incidents-octobre.txt ~/rapport.txt'
+    solution:
+      - find /srv/partage -name "rapport-incidents-octobre.txt"
+      - cp /srv/partage/dsi/divers/a-trier/rapport-incidents-octobre.txt ~/rapport.txt
+
+  - id: compter
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    goal: Dans /var/log/labcorp/tickets.log, compte les incidents CRITIQUE du mois d'octobre 2026, et seulement d'octobre.
+    objectives:
+      - id: filtre
+        label: Filtrer le journal sur octobre 2026 et sur CRITIQUE (grep, tube)
+        when:
+          all:
+            - { command: { matches: '^grep( -\S+)* \^?2026-10' } }
+            - { command: { matches: '^grep( -\S+)* CRITIQUE' } }
+    hints:
+      - Deux critères - le mois et la priorité. Un tube permet d'enchaîner deux grep.
+      - 'grep "^2026-10" … | grep CRITIQUE, et -c ou wc -l pour compter.'
+      - 'Solution : grep "^2026-10" /var/log/labcorp/tickets.log | grep -c CRITIQUE'
+    solution:
+      - grep "^2026-10" /var/log/labcorp/tickets.log | grep -c CRITIQUE
+
+  - id: chiffre
+    type: input
+    question: Combien d'incidents critiques en octobre 2026 ?
+    answers: ['4']
+    normalize: [trim]
+    explain: Le journal contient aussi des incidents critiques de septembre et de novembre - il fallait les écarter.
+
+  - id: completer
+    type: editor
+    machine: deb-formation
+    file: /home/stagiaire/rapport.txt
+    goal: Remplace A_COMPLETER par le nombre d'incidents critiques d'octobre, puis enregistre.
+    objectives:
+      - id: valeur
+        label: Écrire le nombre d'incidents critiques dans le rapport
+        when:
+          all:
+            - { file: { path: /home/stagiaire/rapport.txt, matches: '^Incidents critiques : 4$' } }
+            - { file: { path: /home/stagiaire/rapport.txt, matches: '^Tickets ouverts : 9$' } }
+    hints:
+      - Cherche le mot à remplacer avec /, supprime-le, insère le chiffre, enregistre.
+      - '/A_COMPLETER puis Entrée place le curseur sur le mot ; cw le remplace (ou dw puis i) ; Échap, :wq'
+      - 'Solution : /A_COMPLETER, Entrée, cw, 4, Échap, :wq, Entrée'
+    solution:
+      - '/A_COMPLETER<CR>'
+      - 'cw4<Esc>'
+      - ':wq<CR>'
+
+  - id: envoyer
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    goal: Prépare l'envoi - une archive ~/envoi/rapport-octobre.tar.gz qui contient rapport.txt.
+    objectives:
+      - id: archive
+        label: Créer ~/envoi/rapport-octobre.tar.gz avec le rapport
+        when:
+          {
+            file:
+              {
+                path: /home/stagiaire/envoi/rapport-octobre.tar.gz,
+                contains: 'Incidents critiques : 4',
+              },
+          }
+    hints:
+      - Il faut d'abord créer le dossier envoi.
+      - 'mkdir ~/envoi puis tar czf ~/envoi/rapport-octobre.tar.gz rapport.txt'
+      - 'Solution : mkdir ~/envoi, tar czf ~/envoi/rapport-octobre.tar.gz rapport.txt'
+    solution:
+      - mkdir ~/envoi
+      - tar czf ~/envoi/rapport-octobre.tar.gz rapport.txt
+      - tar tzf ~/envoi/rapport-octobre.tar.gz
+
+recap:
+  - find pour retrouver, grep et les tubes pour extraire, vim pour corriger, tar pour livrer.
+  - Vérifier le résultat (tar tzf) avant de l'envoyer.

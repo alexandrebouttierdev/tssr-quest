@@ -1,0 +1,114 @@
+id: linux.fichiers
+chapter: linux
+title: Le grand rangement
+summary: Le dossier « bazar » mérite son nom. Range-le avec mkdir, mv, cp, rm et un lien symbolique.
+giver: hugo
+zone: formation
+requires: { missions: [linux.arborescence] }
+rewards:
+  xp: 60
+  skills: { linux: 6 }
+  sheets: [fiche-fichiers]
+dialogue:
+  intro: hugo#fichiers-intro
+  outro: hugo#fichiers-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /home/stagiaire/bazar: { type: dir, owner: stagiaire }
+      /home/stagiaire/bazar/rapport-septembre.txt:
+        { owner: stagiaire, content: "Rapport d'activité - septembre 2026\n" }
+      /home/stagiaire/bazar/rapport-octobre.txt:
+        { owner: stagiaire, content: "Rapport d'activité - octobre 2026\n" }
+      /home/stagiaire/bazar/photo-pot-depart.jpg: { owner: stagiaire, size: 2.4M }
+      /home/stagiaire/bazar/photo-salle-serveurs.jpg: { owner: stagiaire, size: 3.1M }
+      /home/stagiaire/bazar/vieux.tmp: { owner: stagiaire, size: 12K }
+      /home/stagiaire/bazar/brouillon.tmp: { owner: stagiaire, size: 4K }
+      /home/stagiaire/bazar/notes-reunion.txt:
+        {
+          owner: stagiaire,
+          content: "Réunion DSI du lundi : point sauvegardes, renouvellement des PC.\n",
+        }
+
+steps:
+  - id: rangement
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-fichiers
+    goal: Crée ~/rangement/rapports et ~/rangement/photos, puis range le contenu de ~/bazar.
+    objectives:
+      - id: rapports
+        label: Déplacer les deux rapports dans ~/rangement/rapports
+        when:
+          all:
+            - { file: { path: /home/stagiaire/rangement/rapports/rapport-septembre.txt } }
+            - { file: { path: /home/stagiaire/rangement/rapports/rapport-octobre.txt } }
+            - { file: { path: /home/stagiaire/bazar/rapport-septembre.txt, exists: false } }
+            - { file: { path: /home/stagiaire/bazar/rapport-octobre.txt, exists: false } }
+      - id: photos
+        label: Déplacer les photos (.jpg) dans ~/rangement/photos
+        when:
+          all:
+            - { file: { path: /home/stagiaire/rangement/photos/photo-pot-depart.jpg } }
+            - { file: { path: /home/stagiaire/rangement/photos/photo-salle-serveurs.jpg } }
+            - { file: { path: /home/stagiaire/bazar/photo-pot-depart.jpg, exists: false } }
+            - { file: { path: /home/stagiaire/bazar/photo-salle-serveurs.jpg, exists: false } }
+      - id: temporaires
+        label: Supprimer les fichiers .tmp
+        when:
+          all:
+            - { file: { path: /home/stagiaire/bazar/vieux.tmp, exists: false } }
+            - { file: { path: /home/stagiaire/bazar/brouillon.tmp, exists: false } }
+      - id: copie
+        label: Copier les notes de réunion dans ~/rangement, en gardant l'original
+        when:
+          all:
+            - {
+                file:
+                  { path: /home/stagiaire/rangement/notes-reunion.txt, contains: 'Réunion DSI' },
+              }
+            - { file: { path: /home/stagiaire/bazar/notes-reunion.txt } }
+      - id: lien
+        label: Créer le lien symbolique ~/dernier-rapport vers le rapport d'octobre
+        when:
+          file:
+            path: /home/stagiaire/dernier-rapport
+            linkTo: /home/stagiaire/rangement/rapports/rapport-octobre.txt
+    hints:
+      - "mkdir -p crée un dossier et ses parents ; les jokers (*.jpg) désignent plusieurs fichiers d'un coup."
+      - 'mkdir -p ~/rangement/rapports, mv bazar/*.jpg …, cp pour copier, ln -s CIBLE NOM_DU_LIEN.'
+      - 'Solution : mkdir -p rangement/rapports rangement/photos ; mv bazar/rapport-*.txt rangement/rapports ; mv bazar/*.jpg rangement/photos ; rm bazar/*.tmp ; cp bazar/notes-reunion.txt rangement/ ; ln -s rangement/rapports/rapport-octobre.txt dernier-rapport'
+    solution:
+      - mkdir -p rangement/rapports rangement/photos
+      - mv bazar/rapport-*.txt rangement/rapports/
+      - mv bazar/*.jpg rangement/photos/
+      - rm bazar/*.tmp
+      - cp bazar/notes-reunion.txt rangement/
+      - ln -s rangement/rapports/rapport-octobre.txt dernier-rapport
+      - ls -l
+
+  - id: chemins
+    type: choice
+    sheet: fiche-fichiers
+    question: Tu es dans /home/stagiaire/rangement. Lequel de ces chemins désigne le rapport d'octobre ?
+    options:
+      - text: rapports/rapport-octobre.txt
+        correct: true
+      - text: /rapports/rapport-octobre.txt
+        feedback: Un chemin qui commence par / part de la racine du disque, pas du dossier courant.
+      - text: ../rapports/rapport-octobre.txt
+        feedback: .. remonte d'un niveau, dans /home/stagiaire, où il n'y a pas de dossier rapports.
+      - text: ~/rapports/rapport-octobre.txt
+        feedback: ~ désigne ton dossier personnel, /home/stagiaire ; il manque rangement.
+    explain: Un chemin absolu commence par / ; un chemin relatif part du dossier courant. Le chemin absolu ici - /home/stagiaire/rangement/rapports/rapport-octobre.txt.
+
+recap:
+  - mkdir -p, cp (-r pour un dossier), mv (déplacer ou renommer), rm (sans corbeille !).
+  - "Jokers : * (n'importe quoi), ? (un caractère), [abc] (un parmi)."
+  - ln -s CIBLE LIEN crée un raccourci ; chemin absolu (/…) ou relatif (., .., ~).

@@ -531,5 +531,55 @@ function execute(
       );
     },
   };
+  if (wantsHelp(command, args)) return { stdout: helpText(command), exitCode: 0 };
   return command.run(args, env);
+}
+
+/** Commandes qui gèrent elles-mêmes `--help` (ou l'affichent comme du texte, comme `echo`). */
+const OWN_HELP = new Set(['echo', 'printf', 'aide', 'man', 'sudo']);
+
+/** Vrai si `--help` est demandé (avant un éventuel `--` de fin d'options). */
+function wantsHelp(command: BashCommand, args: readonly string[]): boolean {
+  if (OWN_HELP.has(command.name)) return false;
+  const end = args.indexOf('--');
+  return (end === -1 ? args : args.slice(0, end)).includes('--help');
+}
+
+/**
+ * Aide courte d'une commande (`ls --help`), tirée de sa page de manuel : la ligne
+ * d'utilisation puis la description des options.
+ *
+ * @param command - Commande.
+ * @returns Le texte affiché.
+ */
+export function helpText(command: BashCommand): string {
+  const sections = new Map<string, string[]>();
+  let current = '';
+  for (const line of command.manual.split('\n')) {
+    if (/^[A-ZÉÈ][A-ZÉÈ ]+$/.test(line)) {
+      current = line;
+      sections.set(current, []);
+    } else sections.get(current)?.push(line);
+  }
+  const strip = (lines: readonly string[]) => {
+    const text = lines.map((l) => l.replace(/^ {7}/, '  ').trimEnd());
+    while (text[0] === '') text.shift();
+    while (text.at(-1) === '') text.pop();
+    return text;
+  };
+  const synopsis = strip(sections.get('SYNOPSIS') ?? [])
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const usage = synopsis.length > 0 ? synopsis : [command.name];
+  const description = strip(sections.get('DESCRIPTION') ?? []);
+  const examples = strip(sections.get('EXEMPLES') ?? []);
+  return `${[
+    `Utilisation : ${usage[0] ?? command.name}`,
+    ...usage.slice(1).map((l) => `         ou : ${l}`),
+    command.summary.charAt(0).toUpperCase() + command.summary.slice(1) + '.',
+    ...(description.length > 0 ? ['', ...description] : []),
+    ...(examples.length > 0 ? ['', 'Exemples :', ...examples] : []),
+    '',
+    `Page de manuel complète : man ${command.name}`,
+  ].join('\n')}\n`;
 }

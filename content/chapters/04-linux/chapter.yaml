@@ -1,0 +1,20 @@
+id: linux
+number: 4
+title: Utilisation de GNU/Linux
+eniModule: "Utilisation d'une distribution GNU/Linux"
+period: { from: '2026-11-02', to: '2026-11-06' }
+zones: [formation]
+mentor: hugo
+missions:
+  - linux.decouverte
+  - linux.connexion
+  - linux.aide
+  - linux.arborescence
+  - linux.fichiers
+  - linux.regex
+  - linux.recherche
+  - linux.vim
+  - linux.processus
+  - linux.archives
+exam: linux.epreuve
+badge: { id: badge-linux, name: Badge Linux }

@@ -202,3 +202,7 @@ jobs:
 - À chaque jalon, une session de test avec 3 à 5 joueurs (apprenants de la promo) : observation, chronométrage, questionnaire court.
 - Retours collectés dans des issues GitHub étiquetées `retour-joueur`.
 - Un formateur ou un pair relit le contenu pédagogique de chaque chapitre avant publication (étiquette `relu-pedagogie`).
+
+## Relire une mission
+
+`npx tsx scripts/show-solution.ts <id>` rejoue la solution de référence d'une mission et affiche la transcription des terminaux, le contenu des fichiers édités et les objectifs cochés : c'est l'outil de relecture des sorties simulées avant de valider un contenu.

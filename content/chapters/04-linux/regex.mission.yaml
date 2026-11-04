@@ -1,0 +1,96 @@
+id: linux.regex
+chapter: linux
+title: Le détective des logs
+summary: Quelqu'un frappe à la porte SSH de srv-web01. Hugo a copié le journal d'authentification ; à toi de le faire parler avec grep.
+giver: hugo
+zone: formation
+requires: { missions: [linux.fichiers] }
+rewards:
+  xp: 60
+  skills: { linux: 6, securite: 2 }
+  sheets: [fiche-grep]
+dialogue:
+  intro: hugo#regex-intro
+  outro: hugo#regex-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /home/stagiaire/journaux: { type: dir, owner: stagiaire }
+      /home/stagiaire/journaux/auth.log:
+        owner: stagiaire
+        content: |
+          Nov  3 07:58:12 srv-web01 sshd[2101]: Accepted password for hugo from 192.168.10.23 port 51022 ssh2
+          Nov  3 08:02:41 srv-web01 sshd[2140]: Failed password for root from 203.0.113.45 port 40122 ssh2
+          Nov  3 08:02:44 srv-web01 sshd[2140]: Failed password for root from 203.0.113.45 port 40122 ssh2
+          Nov  3 08:02:47 srv-web01 sshd[2140]: Failed password for root from 203.0.113.45 port 40122 ssh2
+          Nov  3 08:02:49 srv-web01 sshd[2140]: Connection closed by authenticating user root 203.0.113.45 port 40122 [preauth]
+          Nov  3 08:15:03 srv-web01 sshd[2188]: Accepted publickey for julie from 192.168.10.31 port 50110 ssh2: ED25519 SHA256:q3Vt0b7Hk2
+          Nov  3 08:31:20 srv-web01 sshd[2215]: Invalid user admin from 198.51.100.7 port 33918
+          Nov  3 08:31:22 srv-web01 sshd[2215]: Failed password for invalid user admin from 198.51.100.7 port 33918 ssh2
+          Nov  3 08:31:25 srv-web01 sshd[2215]: Failed password for invalid user admin from 198.51.100.7 port 33918 ssh2
+          Nov  3 08:44:57 srv-web01 sshd[2260]: Failed password for hugo from 192.168.10.23 port 51388 ssh2
+          Nov  3 08:45:02 srv-web01 sshd[2260]: Accepted password for hugo from 192.168.10.23 port 51388 ssh2
+          Nov  3 09:10:31 srv-web01 sshd[2307]: Failed password for root from 203.0.113.45 port 41870 ssh2
+          Nov  3 09:10:34 srv-web01 sshd[2307]: Failed password for root from 203.0.113.45 port 41870 ssh2
+          Nov  3 09:10:36 srv-web01 sshd[2307]: Failed password for root from 203.0.113.45 port 41870 ssh2
+          Nov  3 09:10:38 srv-web01 sshd[2307]: Connection closed by authenticating user root 203.0.113.45 port 41870 [preauth]
+          Nov  3 09:22:10 srv-web01 sshd[2331]: Invalid user test from 198.51.100.7 port 34502
+          Nov  3 09:22:12 srv-web01 sshd[2331]: Failed password for invalid user test from 198.51.100.7 port 34502 ssh2
+          Nov  3 09:40:05 srv-web01 sshd[2364]: Accepted password for karim from 192.168.20.14 port 49001 ssh2
+
+steps:
+  - id: enquete
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-grep
+    goal: Analyse ~/journaux/auth.log - échecs de connexion, comptes visés, adresses qui insistent.
+    objectives:
+      - id: echecs
+        label: Afficher les lignes « Failed password »
+        when: { command: { matches: '^grep( -\S+)* Failed password' } }
+      - id: compter
+        label: Compter ces lignes (grep -c, ou wc -l derrière un tube)
+        when:
+          any:
+            - { command: { matches: '^grep( -\S+)* -\w*c\w*\b' } }
+            - { command: { matches: '^wc -l$' } }
+      - id: etendue
+        label: Chercher plusieurs comptes d'un coup avec une expression étendue (grep -E ou egrep)
+        when:
+          any:
+            - { command: { matches: '^egrep .*\|' } }
+            - { command: { matches: '^grep( -\S+)* -\w*E\w*( -\S+)* .*\|' } }
+    hints:
+      - 'grep MOTIF FICHIER affiche les lignes qui contiennent le motif ; mets les guillemets si le motif a des espaces.'
+      - 'grep -c compte ; grep -E "julie|karim" cherche l''un ou l''autre ; grep -o n''affiche que la partie trouvée.'
+      - 'Solution : grep "Failed password" journaux/auth.log, grep -c "Failed password" journaux/auth.log, grep -E "julie|karim" journaux/auth.log'
+    solution:
+      - grep "Failed password" journaux/auth.log
+      - grep -c "Failed password" journaux/auth.log
+      - grep -E "julie|karim" journaux/auth.log
+      - grep "Failed password" journaux/auth.log | grep -oE "[0-9]+(\.[0-9]+){3}" | sort | uniq -c | sort -rn
+
+  - id: nombre
+    type: input
+    question: Combien de lignes « Failed password » contient le journal ?
+    answers: ['10']
+    normalize: [trim]
+    explain: grep -c "Failed password" compte les lignes. Une seule vient du réseau interne - Hugo qui s'est trompé de mot de passe.
+
+  - id: attaquant
+    type: input
+    question: Quelle adresse IP externe cumule le plus d'échecs ?
+    answers: ['203.0.113.45']
+    normalize: [ip]
+    explain: 'Six échecs sur root depuis 203.0.113.45. La recette : grep -oE pour extraire les adresses, puis sort | uniq -c | sort -rn pour les compter.'
+
+recap:
+  - grep MOTIF FICHIER ; -i ignore la casse, -c compte, -v inverse, -n numérote, -o extrait.
+  - 'Expressions : ^ début, $ fin, . un caractère, * répétition, [0-9] un chiffre.'
+  - grep -E (ou egrep) pour l'alternative a|b, + et les groupes ( ).

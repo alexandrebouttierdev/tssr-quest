@@ -1,0 +1,104 @@
+id: linux.arborescence
+chapter: linux
+title: Chasse au trésor
+summary: Hugo a caché des indices dans l'arborescence de la machine de formation. Suis-les jusqu'au trésor.
+giver: hugo
+zone: formation
+requires: { missions: [linux.aide] }
+rewards:
+  xp: 50
+  skills: { linux: 6 }
+  sheets: [fiche-arborescence]
+dialogue:
+  intro: hugo#arborescence-intro
+  outro: hugo#arborescence-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    files:
+      /home/stagiaire/.indice-1:
+        owner: stagiaire
+        content: |
+          Bravo, tu as trouvé un fichier caché : son nom commence par un point.
+          Indice suivant : les fichiers de configuration du système sont rangés dans /etc.
+          Cherche le fichier labcorp-indice.conf.
+      /etc/labcorp-indice.conf:
+        content: |
+          # Indice 2
+          # Les journaux du système et des services s'écrivent dans /var/log.
+          # Le prochain indice t'attend dans le dossier /var/log/labcorp.
+      /var/log/labcorp: { type: dir }
+      /var/log/labcorp/indice-3.log:
+        content: |
+          Indice 3 : les fichiers temporaires vont dans /tmp, qui est vidé au redémarrage.
+          Le trésor s'y trouve, dans tresor.txt.
+      /tmp/tresor.txt:
+        content: |
+          Trésor trouvé ! Le code à donner à Hugo : TUX-1991
+          (1991 : l'année où Linus Torvalds a publié la première version de Linux.)
+
+steps:
+  - id: chasse
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-arborescence
+    goal: Le premier indice est caché dans ton dossier personnel. Suis la piste jusqu'au trésor.
+    objectives:
+      - id: caches
+        label: Lister les fichiers cachés de ton dossier personnel
+        when: { command: { matches: '^ls( .*)? -[a-zA-Z]*[aA]' } }
+      - id: indice1
+        label: Lire le premier indice
+        when: { command: { matches: '^(cat|less|more|head|tail) .*\.indice-1' } }
+      - id: indice2
+        label: Lire l'indice rangé dans /etc
+        when: { command: { matches: '^(cat|less|more|head|tail) .*labcorp-indice\.conf' } }
+      - id: indice3
+        label: Lire l'indice rangé dans /var/log
+        when: { command: { matches: '^(cat|less|more|head|tail) .*indice-3\.log' } }
+      - id: tresor
+        label: Lire le trésor
+        when: { command: { matches: '^(cat|less|more|head|tail) .*tresor\.txt' } }
+    hints:
+      - "Un fichier caché commence par un point : ls ne le montre qu'avec l'option -a."
+      - 'ls -a pour voir, cat pour lire, cd pour te déplacer (cd /etc, cd ~ pour revenir).'
+      - 'Solution : ls -a, cat .indice-1, cat /etc/labcorp-indice.conf, ls /var/log/labcorp, cat /var/log/labcorp/indice-3.log, cat /tmp/tresor.txt'
+    solution:
+      - ls -a
+      - cat .indice-1
+      - cat /etc/labcorp-indice.conf
+      - ls /var/log/labcorp
+      - cat /var/log/labcorp/indice-3.log
+      - cat /tmp/tresor.txt
+
+  - id: code
+    type: input
+    question: Quel est le code écrit dans le trésor ?
+    answers: ['tux-1991']
+    normalize: [trim, lower]
+    explain: Tu as traversé /home, /etc, /var/log et /tmp - les dossiers que tu ouvriras le plus souvent.
+
+  - id: programmes
+    type: choice
+    sheet: fiche-arborescence
+    question: Dans quel dossier se trouvent les programmes installés par le gestionnaire de paquets (ls, cp, tar…) ?
+    options:
+      - text: /usr/bin
+        correct: true
+      - text: /home
+        feedback: /home contient les dossiers personnels des utilisateurs.
+      - text: /var
+        feedback: /var contient les données qui varient - journaux, files d'attente, sites web.
+      - text: /etc
+        feedback: /etc contient la configuration, pas les programmes.
+    explain: /usr/bin pour les programmes, /usr/sbin pour ceux de l'administrateur, /usr/local pour ce qu'on installe soi-même.
+
+recap:
+  - '/etc : configuration ; /var/log : journaux ; /home : dossiers personnels ; /tmp : temporaire.'
+  - '/usr/bin : programmes ; /root : dossier de root ; /dev : périphériques.'
+  - Un fichier caché commence par un point ; ls -a les montre.

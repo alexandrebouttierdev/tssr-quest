@@ -1,0 +1,95 @@
+id: linux.recherche
+chapter: linux
+title: Où est passé le fichier ?
+summary: Julie, de la compta, a « perdu » son budget prévisionnel quelque part sur le partage. Retrouve-le.
+giver: hugo
+zone: formation
+requires: { missions: [linux.regex] }
+ticket: { number: 2031, priority: normale, requester: hugo, service: comptabilite }
+rewards:
+  xp: 60
+  skills: { linux: 6, support: 2 }
+  reputation: { comptabilite: 3 }
+  sheets: [fiche-recherche]
+dialogue:
+  intro: hugo#recherche-intro
+  outro: hugo#recherche-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+    sudoers: [stagiaire]
+    files:
+      /srv/partage: { type: dir }
+      /srv/partage/compta: { type: dir }
+      /srv/partage/compta/2025: { type: dir }
+      /srv/partage/compta/2025/bilan-2025.ods: { size: 180K }
+      /srv/partage/compta/2026: { type: dir }
+      /srv/partage/compta/2026/factures: { type: dir }
+      /srv/partage/compta/2026/factures/facture-0412.pdf: { size: 96K }
+      /srv/partage/compta/2026/factures/facture-0413.pdf: { size: 102K }
+      /srv/partage/compta/2026/archives-julie: { type: dir }
+      /srv/partage/compta/2026/archives-julie/divers: { type: dir }
+      /srv/partage/compta/2026/archives-julie/divers/budget-2027.ods: { size: 240K }
+      /srv/partage/commercial: { type: dir }
+      /srv/partage/commercial/budget-salon-2027.ods: { size: 60K }
+
+steps:
+  - id: fouille
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    sheet: fiche-recherche
+    goal: Trouve le fichier budget-2027.ods dans /srv/partage, puis découvre où sont installés les programmes.
+    objectives:
+      - id: find
+        label: Chercher le fichier par son nom avec find
+        when: { command: { matches: '^find .*-i?name' } }
+      - id: locate
+        label: Mettre à jour la base de locate, puis chercher avec locate
+        when:
+          all:
+            - { command: { matches: '^sudo updatedb$' } }
+            - { command: { matches: '^locate ' } }
+      - id: which
+        label: Trouver l'emplacement de la commande tar avec which
+        when: { command: { matches: '^which( -a)? tar$' } }
+    hints:
+      - 'find DOSSIER -name "MOTIF" parcourt le disque ; locate interroge une base mise à jour chaque nuit.'
+      - 'find /srv/partage -name "budget*" ; sudo updatedb puis locate budget-2027 ; which tar'
+      - 'Solution : find /srv/partage -name "budget-2027.ods", sudo updatedb, locate budget-2027, which tar'
+    solution:
+      - find /srv/partage -name "budget-2027.ods"
+      - sudo updatedb
+      - locate budget-2027
+      - which tar
+
+  - id: chemin
+    type: input
+    question: Quel est le chemin complet du budget de Julie ?
+    answers: ['/srv/partage/compta/2026/archives-julie/divers/budget-2027.ods']
+    normalize: [trim]
+    explain: find a parcouru toute l'arborescence. Le fichier du salon commercial a un nom proche, mais ce n'est pas le bon.
+
+  - id: difference
+    type: choice
+    sheet: fiche-recherche
+    question: Julie vient de créer un fichier. locate ne le trouve pas, find si. Pourquoi ?
+    options:
+      - text: locate cherche dans une base mise à jour la nuit (updatedb), find parcourt le disque en direct
+        correct: true
+      - text: locate ne cherche que dans le dossier courant
+        feedback: Non, locate couvre tout le disque, mais d'après sa base.
+      - text: locate ne trouve que les programmes
+        feedback: Ça, c'est which.
+      - text: Le fichier est caché
+        feedback: Ni find ni locate ne s'arrêtent aux fichiers cachés.
+    explain: locate est instantané mais peut être en retard ; find est toujours à jour mais plus lent. which ne cherche que les commandes du PATH.
+
+recap:
+  - find /chemin -name "motif" ; aussi -type f/d, -size +100M, -mtime -7, -user.
+  - locate motif - instantané, d'après la base d'updatedb (sudo updatedb pour la rafraîchir).
+  - which commande - où est le programme lancé ; type commande - primitive du shell ou programme.

@@ -138,6 +138,10 @@ Les pages `man` sont **en français et simplifiées** (exception assumée à la 
 
 ### Points de fidélité importants
 
+- `--help` : toute commande (sauf `echo`) affiche une aide courte tirée de sa page de manuel (ligne d'utilisation, options, exemples).
+- `ps aux | grep x` montre aussi la ligne du `grep` (les commandes d'un tube tournent en même temps).
+- `gzip` : un fichier texte décrit par sa seule taille (journal) se compresse d'environ 89 % ; un fichier déjà compressé (images, archives, PDF, bureautique) presque pas.
+- vim : modes normal, insertion et commande ; `h j k l 0 $ w b gg G`, `i a A I o O`, `x dd dw d$ D cw C yy p P u`, `/motif n`, `:w :q :wq :x :q! :set nu`.
 - `rm` sans droits : `rm: impossible de supprimer 'x': Permission non accordée`.
 - `systemctl restart` sans sudo : `Failed to restart x.service: Interactive authentication required.`
 - `sudo` demande le mot de passe la première fois (saisie masquée) si la mission le prévoit (phase 1).

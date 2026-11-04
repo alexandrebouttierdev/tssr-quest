@@ -158,7 +158,7 @@ Les objectifs se vérifient sur l'**état** des simulateurs, ce qui accepte tout
 | Condition | Exemple | Sens |
 | --- | --- | --- |
 | `command` | `{ matches: "systemctl status apache2" }` | Une commande correspondant à l'expression a été exécutée avec succès |
-| `file` | `{ path: /etc/fstab, contains: "/dev/vg0/data" }` | Contenu, existence, droits (`mode`, `owner`) |
+| `file` | `{ path: /etc/fstab, contains: "/dev/vg0/data" }` | Contenu (`contains`, `matches`), existence (`exists`), droits (`mode`, `owner`, `group`), lien symbolique (`linkTo`) |
 | `service` | `{ name: apache2, state: active, enabled: true }` | État d'un service |
 | `user` | `{ name: julie.martin, exists: true, groups: [compta], notGroups: [sudo] }` | Compte et appartenances ; aussi `primaryGroup`, `shell`, `home`, `locked`, `hasPassword`, `mustChangePassword` |
 | `group` | `{ name: compta, members: [julie.martin] }` | Groupe local et membres (`exists: false` pour un groupe supprimé) |
