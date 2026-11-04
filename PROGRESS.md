@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : planification (crontab -l/-e/-r, fichier, `crontab -` ; at, atq, atrm) + sous-shells `( … )` + Ctrl+D dans le terminal
-- **Prochaine action** : phase 1 — commandes du ch. 5 restantes : disques (lsblk, blkid, fdisk, mkfs.ext4, mount, umount, fstab, LVM, resize2fs), service, reboot/shutdown, apache2ctl/sshd -t ; puis conditions user/net/cron ; puis les missions des ch. 4-5
+- **Dernière tâche terminée** : disques et LVM (lsblk, blkid, fdisk interactif, mkfs.ext4, mount/umount/fstab, pvcreate, vgcreate, vgextend, lvcreate, lvextend, resize2fs, pvs/vgs/lvs) sur un modèle de stockage (`sims/shared/storage.ts`)
+- **Prochaine action** : phase 1 — dernières commandes du ch. 5 : service, reboot/shutdown, apache2ctl configtest, sshd -t (et panne « configuration invalide ») ; puis conditions user/net/cron/disk-mount ; puis les missions des ch. 4-5 (22 missions, épreuves, badges)
 
 ## Environnement
 
@@ -53,7 +53,7 @@ Il est mis à jour à chaque tâche terminée.
 ## Phase 1 — Tranche Linux (suivi)
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at) ✅
+- [ ] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at), disques et LVM ✅
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
 
@@ -125,6 +125,9 @@ Il est mis à jour à chaque tâche terminée.
 | D58 | 2026-11-03 | Tables cron dans /var/spool/cron/crontabs/<compte> (en-tête « DO NOT EDIT », mode 600, groupe crontab) ; `crontab -e` = vim sur /tmp/crontab.XXXXXX/crontab puis installation à la fermeture via `EditorHook` / `afterEdit` du simulateur ; pas de question « retry » (les modifications restent dans le fichier temporaire) | Fidèle à Debian (cron 3.0pl1) ; le terminal n'a pas d'éditeur au choix (select-editor) : vim d'office. |
 | D59 | 2026-11-03 | `at` dans un paquet non installé par défaut (comme sur Debian) ; invite « at> » terminée par Ctrl+D (nouvelle touche du terminal, affichée `<EOT>`) | Pédagogie (installer l'outil) et fidélité. |
 | D60 | 2026-11-03 | Sous-shells `( … )` dans le simulateur Bash (tube et redirections en sortie ; la session est rétablie) | Recette classique `(crontab -l; echo …) | crontab -`. |
+| D61 | 2026-11-04 | Stockage modélisé à part des montages : disques MBR (secteurs de 512 o), signatures (ext4, swap, LVM2_member), LVM (extents de 4 Mio) dans `machine.storage` ; `machine.disks` reste la vue de `df`. Installation guidée Debian reproduite (sda1 racine, sda2 étendue, sda5 swap) ; disques vierges ajoutés par `extraDisks` | Missions « nouveau disque » et LVM rejouables et fidèles. |
+| D62 | 2026-11-04 | Sorties d'util-linux, e2fsprogs et lvm2 en anglais (leurs traductions sont dans des paquets non installés par défaut sur Debian), erreurs système en français, tailles lsblk/LVM à virgule | Fidélité à une Debian 12 en fr_FR. |
+| D63 | 2026-11-04 | `fdisk` interactif par questions en attente (n, t, d, p, v, o, l, m, w, q) ; les commandes expertes (a, g, x…) répondent « non disponible dans cette simulation » | Couvre le programme TSSR sans simuler les tables GPT. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

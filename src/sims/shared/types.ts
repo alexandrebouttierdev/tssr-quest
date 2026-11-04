@@ -5,6 +5,7 @@
  * le sauvegarder, le comparer et le rejouer dans les tests.
  */
 import type { Rng } from '@core/random/rng';
+import type { Storage } from './storage';
 
 /** Contexte fourni à chaque exécution de commande. */
 export interface SimContext {
@@ -314,6 +315,8 @@ export interface Machine {
   readonly crontabs: Readonly<Record<string, readonly CronEntry[]>>;
   /** Travaux `at` en attente. */
   readonly atJobs?: readonly AtJob[];
+  /** Disques, partitions, signatures et LVM (ce que voient lsblk, fdisk, LVM). */
+  readonly storage?: Storage;
   readonly session: Session;
   /** Historique des commandes exécutées (lu par les conditions `command`). */
   readonly history: readonly CommandRecord[];

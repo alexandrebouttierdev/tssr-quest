@@ -2,6 +2,8 @@ import { syncAccountFiles } from '@sims/shared/factories';
 import { addAtJob } from '@sims/shared/cron';
 import { applyPlan, decodePlan } from '@sims/shared/packages';
 import { formatAtDate } from '@sims/shared/time-format';
+import { answerFdisk, decodeFdisk, encodeFdisk, fdiskPrompt } from './fdisk';
+import { createPv, makeExt4 } from './storage-ops';
 import type { Machine, PendingPrompt, SimContext, UserAccount } from '@sims/shared/types';
 
 /** Résultat du traitement d'une réponse. */
@@ -185,6 +187,49 @@ const HANDLERS: Readonly<Record<string, PendingHandler>> = {
       ...prompt,
       data: { ...prompt.data, commands: `${prompt.data['commands'] ?? ''}${answer}\n` },
     });
+  },
+  fdisk: (machine, answer, prompt) => {
+    const state = decodeFdisk(prompt.data['state'] ?? '');
+    if (!state) return done(machine, '');
+    const result = answerFdisk(machine, state, answer);
+    const next = result.machine ?? machine;
+    if (!result.next) return done(next, result.text);
+    return ask(
+      next,
+      {
+        kind: 'fdisk',
+        prompt: fdiskPrompt(result.next, next),
+        secret: false,
+        data: { state: encodeFdisk(result.next) },
+      },
+      result.text,
+    );
+  },
+  'mkfs-confirm': (machine, answer, prompt) => {
+    if (!/^y/i.test(answer.trim())) return done(machine, '', '', 1);
+    const made = makeExt4(
+      machine,
+      prompt.data['device'] ?? '',
+      prompt.data['label'] || null,
+      Number(prompt.data['counter'] ?? 0),
+    );
+    return done(made.machine, made.text);
+  },
+  'pvcreate-wipe': (machine, answer, prompt) => {
+    const device = prompt.data['device'] ?? '';
+    if (!/^y/i.test(answer.trim())) {
+      return done(
+        machine,
+        '',
+        `  Aborted wiping of ${prompt.data['type'] ?? ''}.\n  1 existing signature left on the device.\n  Aborting pvcreate on ${device}.\n`,
+        5,
+      );
+    }
+    const created = createPv(machine, device);
+    return done(
+      created.machine,
+      `  Wiping ${prompt.data['type'] ?? ''} signature on ${device}.\n${created.text}`,
+    );
   },
   su: (machine, answer, prompt) => {
     const target = prompt.data['user'] ?? 'root';

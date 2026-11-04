@@ -66,6 +66,23 @@ import { apt, aptGet, dpkg } from './apt';
 import { ifdown, ifup, ip, ping, ss } from './network';
 import { free, nice, renice, uptime } from './system';
 import { at, atq, atrm, crontab } from './cron';
+import {
+  blkid,
+  fdisk,
+  lsblk,
+  lvcreate,
+  lvextend,
+  lvs,
+  mkfsExt4,
+  mount,
+  pvcreate,
+  pvs,
+  resize2fs,
+  umount,
+  vgcreate,
+  vgextend,
+  vgs,
+} from './disks';
 
 /** Toutes les commandes du simulateur Bash, indexées par nom. */
 export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromEntries(
@@ -88,6 +105,21 @@ export const BASH_COMMANDS: Readonly<Record<string, BashCommand>> = Object.fromE
     atq,
     atrm,
     crontab,
+    blkid,
+    fdisk,
+    lsblk,
+    lvcreate,
+    lvextend,
+    lvs,
+    mkfsExt4,
+    mount,
+    pvcreate,
+    pvs,
+    resize2fs,
+    umount,
+    vgcreate,
+    vgextend,
+    vgs,
     chage,
     chgrp,
     chmod,

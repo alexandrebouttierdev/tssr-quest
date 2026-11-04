@@ -20,6 +20,7 @@ import { diskForPath } from './disks';
 import { fileSize } from './node-size';
 import { dirname, isInside, normalizePath } from './path';
 import { PACKAGE_CATALOG } from './package-catalog';
+import { initialStorage } from './storage';
 import { seedPackageFiles } from './packages';
 import { SERVICE_CATALOG } from './service-catalog';
 import { failureLogLines, serviceProcesses, startLogLines } from './services';
@@ -114,6 +115,8 @@ export interface DebianServerOptions {
   readonly services?: Readonly<Record<string, ServiceSpec | null>>;
   /** État des paquets : installés en plus, mises à jour publiées, dpkg interrompu. */
   readonly packages?: PackagesSpec;
+  /** Disques supplémentaires, vierges (`{ name: sdb, size: 10G }`). */
+  readonly extraDisks?: readonly { readonly name: string; readonly size: string | number }[];
   readonly network?: {
     readonly address?: string;
     readonly prefix?: number;
@@ -878,6 +881,12 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
       })),
     ].filter((n, i, all) => all.findIndex((m) => m.address === n.address) === i),
     disks,
+    storage: initialStorage(
+      hostname,
+      realDisks,
+      (options.extraDisks ?? []).map((d) => ({ name: d.name, size: parseSize(d.size) })),
+      (device) => deviceUuid(hostname, device),
+    ),
     logs,
     crontabs: {},
     session: {
