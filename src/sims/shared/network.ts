@@ -288,3 +288,49 @@ export function linkLocalOf(mac: string): string {
   const words = [((a ^ 2) << 8) | b, (c << 8) | 0xff, 0xfe00 | d, (e << 8) | f];
   return `fe80::${words.map((w) => w.toString(16)).join(':')}`;
 }
+
+// --- /etc/network/interfaces ----------------------------------------------------------
+
+/** Déclaration d'une interface dans /etc/network/interfaces. */
+export interface IfaceStanza {
+  readonly name: string;
+  readonly method: string;
+  readonly options: Readonly<Record<string, string>>;
+}
+
+/**
+ * Lit /etc/network/interfaces : déclarations `iface`, interfaces `auto` (levées par
+ * `ifup -a`) et `allow-hotplug` (levées au démarrage quand la carte est détectée).
+ */
+export function readInterfaces(machine: Machine): {
+  stanzas: IfaceStanza[];
+  auto: string[];
+  hotplug: string[];
+} {
+  const node = machine.fs['/etc/network/interfaces'];
+  const stanzas: IfaceStanza[] = [];
+  const auto: string[] = [];
+  const hotplug: string[] = [];
+  if (node?.type !== 'file') return { stanzas, auto, hotplug };
+  let current: { name: string; method: string; options: Record<string, string> } | null = null;
+  for (const raw of node.content.split('\n')) {
+    const line = raw.replace(/#.*/, '').trim();
+    if (!line) continue;
+    const [keyword = '', ...rest] = line.split(/\s+/);
+    if (keyword === 'iface') {
+      current = { name: rest[0] ?? '', method: rest[2] ?? '', options: {} };
+      stanzas.push(current);
+    } else if (keyword === 'auto') {
+      auto.push(...rest);
+      current = null;
+    } else if (keyword === 'allow-hotplug') {
+      hotplug.push(...rest);
+      current = null;
+    } else if (keyword === 'source') {
+      current = null;
+    } else if (current) {
+      current.options[keyword] = rest.join(' ');
+    }
+  }
+  return { stanzas, auto, hotplug };
+}

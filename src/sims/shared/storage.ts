@@ -6,6 +6,7 @@
  * Unités : secteurs de 512 octets, extents LVM de 4 Mio, blocs ext4 de 4 Kio.
  */
 import { seedFromString } from '@core/random/rng';
+import { normalizePath } from './path';
 import type { Disk, Machine } from './types';
 
 /** Taille d'un secteur. */
@@ -193,6 +194,67 @@ export function vgExtents(machine: Machine, vg: VolumeGroup): { total: number; f
 /** Groupe de volumes d'un volume physique. */
 export function vgOfPv(machine: Machine, pv: string): VolumeGroup | undefined {
   return storageOf(machine).vgs.find((vg) => vg.pvs.includes(pv));
+}
+
+/**
+ * Résout une désignation de périphérique : chemin, `UUID=…`, `LABEL=…` (comme `mount`
+ * et `/etc/fstab`).
+ *
+ * @param machine - Machine simulée.
+ * @param spec - Désignation.
+ * @returns Le chemin canonique, ou `null`.
+ */
+export function resolveSpec(machine: Machine, spec: string): string | null {
+  const match = /^(UUID|LABEL)=["']?([^"']+)["']?$/.exec(spec);
+  if (match) {
+    const key = match[1] === 'UUID' ? 'uuid' : 'label';
+    const found = Object.entries(storageOf(machine).signatures).find(
+      ([, sig]) => sig[key] === match[2],
+    );
+    return found?.[0] ?? null;
+  }
+  const device = findDevice(machine, spec);
+  return device ? device.path : null;
+}
+
+/** Ligne de /etc/fstab. */
+export interface FstabEntry {
+  readonly spec: string;
+  readonly dir: string;
+  readonly type: string;
+  readonly options: string;
+  /** Numéro de ligne (à partir de 1). */
+  readonly line: number;
+}
+
+/**
+ * Lit /etc/fstab ; signale les lignes illisibles comme `mount -a`.
+ *
+ * @param machine - Machine simulée.
+ * @returns Les entrées et les messages d'erreur.
+ */
+export function readFstab(machine: Machine): { entries: FstabEntry[]; errors: string } {
+  const node = machine.fs['/etc/fstab'];
+  const entries: FstabEntry[] = [];
+  let errors = '';
+  if (node?.type !== 'file') return { entries, errors };
+  node.content.split('\n').forEach((raw, index) => {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) return;
+    const [spec, dir, type, options = 'defaults'] = line.split(/\s+/);
+    if (!spec || !dir || !type) {
+      errors += `mount: /etc/fstab: parse error at line ${index + 1} -- ignored\n`;
+      return;
+    }
+    entries.push({
+      spec,
+      dir: dir === 'none' ? dir : normalizePath(dir),
+      type,
+      options,
+      line: index + 1,
+    });
+  });
+  return { entries, errors };
 }
 
 /** Montage d'un périphérique, s'il est monté. */

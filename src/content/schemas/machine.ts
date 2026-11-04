@@ -78,8 +78,44 @@ export const machineSpecSchema = z.strictObject({
       prefix: z.number().int().min(0).max(32).optional(),
       gateway: z.string().optional(),
       dns: z.array(z.string()).optional(),
+      iface: z.string().min(1).optional(),
+      /** Interface désactivée au démarrage (panne « plus de réseau »). */
+      down: z.boolean().optional(),
+      dhcp: z.boolean().optional(),
+      /** Pas de route par défaut (configuration incomplète). */
+      noGateway: z.boolean().optional(),
+      /** Autres hôtes du réseau local qui répondent au ping. */
+      neighbors: z
+        .array(
+          z.strictObject({
+            address: z.string().regex(/^(?:\d{1,3}\.){3}\d{1,3}$/),
+            name: z.string().min(1).optional(),
+          }),
+        )
+        .optional(),
     })
     .optional(),
+  /** Paquets installés en plus, mises à jour publiées, dpkg interrompu. */
+  packages: z
+    .strictObject({
+      install: z.array(z.string().min(1)).optional(),
+      updates: z
+        .record(
+          z.string().min(1),
+          z.strictObject({
+            version: z.string().min(1),
+            suite: z.enum(['bookworm', 'bookworm-updates', 'bookworm-security']).optional(),
+          }),
+        )
+        .optional(),
+      halfConfigured: z.array(z.string().min(1)).optional(),
+    })
+    .optional(),
+  /** Disques vierges ajoutés à la machine (`{ name: sdb, size: 10G }`). */
+  extraDisks: z
+    .array(z.strictObject({ name: z.string().regex(/^sd[b-z]$/), size: sizeSchema }))
+    .optional(),
+  rootPassword: z.string().min(1).optional(),
 });
 
 /** Machine d'une mission. */

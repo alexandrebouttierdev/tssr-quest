@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : administration (ch. 5) : `apache2ctl`/`apachectl` (configtest), `a2ensite`/`a2dissite`, `sshd -t`, `service`, `reboot`/`shutdown`/`poweroff` (redémarrage simulé), panne « configuration invalide », `PATH` réel (`/usr/sbin` hors du PATH utilisateur)
-- **Prochaine action** : phase 1 — conditions de mission `user`, `net`, `cron`, `disk-mount` + options de machine du contenu (paquets, disques en plus, réseau) ; puis les missions des ch. 4-5 (22 missions, épreuves, badges)
+- **Dernière tâche terminée** : conditions de mission `user`, `group`, `net`, `cron`, `at`, `disk` (montage, fstab, taille), `lvm`, `package`, `process` ; schéma des machines du contenu étendu (paquets, disques en plus, réseau en panne/DHCP, voisins)
+- **Prochaine action** : phase 1 — missions des ch. 4-5 (22 missions avec dialogues, fiches, épreuves /20, badges, 3 quêtes secondaires), en commençant par le ch. 4
 
 ## Environnement
 
@@ -55,7 +55,7 @@ Il est mis à jour à chaque tâche terminée.
 **Simulateurs**
 - [x] Toutes les commandes Bash des chapitres 4 et 5 — ch. 4 ✅ (fichiers, filtres, sed, recherche, info, processus et `&`, archives) ; ch. 5 ⏳ — comptes, droits, paquets (apt, dpkg), réseau (ip, ping, ss, ifup/ifdown), mémoire et priorités (free, uptime, nice, renice), planification (crontab, at), disques et LVM, administration (service, reboot, shutdown, apache2ctl, a2ensite, sshd -t) ✅ — **toutes les commandes du ch. 5 sont faites**
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
-- [ ] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0).
+- [x] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0) — avec aussi `group`, `at`, `disk` étendu, `lvm`, `package`, `process`.
 
 **Contenu** : 22 missions ch. 4-5, épreuves, badges, 3 quêtes secondaires — à faire.
 **Monde** : cartes DSI, couloir, formation ; PNJ ; Light2D ; portes et transitions ; sons — à faire.

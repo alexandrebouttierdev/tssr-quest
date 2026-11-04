@@ -69,6 +69,9 @@ machines:                        # machines simulées utilisées par la mission
         content: |
           - Apache sur srv-web01
           - Toujours lire le statut avant de redémarrer
+    # Facultatif : packages { install, updates, halfConfigured }, extraDisks [{ name: sdb, size: 10G }],
+    # network { address, prefix, gateway, dns, iface, down, dhcp, noGateway, neighbors },
+    # processes [{ user, command, cpu, rss }], rootPassword, services.*.failure: config-invalid
 
 steps:
   - id: diagnostic
@@ -157,9 +160,15 @@ Les objectifs se vérifient sur l'**état** des simulateurs, ce qui accepte tout
 | `command` | `{ matches: "systemctl status apache2" }` | Une commande correspondant à l'expression a été exécutée avec succès |
 | `file` | `{ path: /etc/fstab, contains: "/dev/vg0/data" }` | Contenu, existence, droits (`mode`, `owner`) |
 | `service` | `{ name: apache2, state: active, enabled: true }` | État d'un service |
-| `user` | `{ name: julie.martin, exists: true, groups: [compta] }` | Compte et appartenances |
-| `disk` | `{ mount: /var, usageBelow: 80 }` | Occupation, montage |
-| `net` | `{ machine: pc1, ip: 192.168.10.12/24, gateway: 192.168.10.254 }` | Configuration réseau |
+| `user` | `{ name: julie.martin, exists: true, groups: [compta], notGroups: [sudo] }` | Compte et appartenances ; aussi `primaryGroup`, `shell`, `home`, `locked`, `hasPassword`, `mustChangePassword` |
+| `group` | `{ name: compta, members: [julie.martin] }` | Groupe local et membres (`exists: false` pour un groupe supprimé) |
+| `disk` | `{ mount: /var, usageBelow: 80 }` · `{ mount: /srv/partage, device: /dev/vg_data/lv_partage, fstype: ext4, minSize: 5G, persistent: true }` | Occupation, montage (`mounted: false` : rien de monté), périphérique, taille, déclaration dans `/etc/fstab` |
+| `lvm` | `{ vg: vg_data, pvs: [/dev/sdb1], lv: lv_partage, minSize: 5G }` | Groupe de volumes, volumes physiques, volume logique (marge de 2 % sur les tailles) |
+| `net` | `{ machine: pc1, ip: 192.168.10.12/24, gateway: 192.168.10.254, persistent: true }` | Configuration réseau en cours (`iface`, `up`, `dns`) ; `persistent` : écrite dans `/etc/network/interfaces` (survit au redémarrage) |
+| `cron` | `{ user: root, matches: "sauvegarde\\.sh", schedule: "30 2 * * 1-5" }` | Tâche dans la table du compte, ou dans `/etc/crontab` / `/etc/cron.d` avec ce compte |
+| `at` | `{ matches: "systemctl restart apache2", user: hugo }` | Travail en attente dans la file d'`at` |
+| `package` | `{ name: apache2, installed: true, upToDate: true }` | Paquet installé, retiré, à jour |
+| `process` | `{ matches: "calcul\\.py", running: false }` · `{ matches: …, niceAtLeast: 10 }` | Processus arrêté, en cours, ralenti par `renice` |
 | `ping` | `{ from: pc1, to: srv-dc01, expect: success }` | Test de joignabilité calculé par le moteur réseau |
 | `ios` | `{ device: sw1, configHas: "switchport mode trunk", on: Gi0/1 }` | Ligne de configuration présente |
 | `ad` | `{ object: "CN=Julie Martin,OU=Comptabilite", effectiveRight: { share: Compta, right: modify } }` | Annuaire et droits effectifs |

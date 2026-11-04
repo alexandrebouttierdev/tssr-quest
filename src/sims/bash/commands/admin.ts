@@ -5,8 +5,10 @@ import { startService } from '@sims/shared/services';
 import { formatSystemdTimestamp } from '@sims/shared/time-format';
 import type { Disk, Machine, Session } from '@sims/shared/types';
 import type { BashCommand, CommandEnv, CommandOutcome } from '../command';
-import { mountDevice, readFstab, resolveSpec } from './disks';
-import { bringUp, readInterfaces } from './network';
+import { readFstab, resolveSpec } from '@sims/shared/storage';
+import { mountDevice } from './disks';
+import { readInterfaces } from '@sims/shared/network';
+import { bringUp } from './network';
 
 // --- Apache -----------------------------------------------------------------------------
 
