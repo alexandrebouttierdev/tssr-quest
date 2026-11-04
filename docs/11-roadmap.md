@@ -59,14 +59,14 @@ Objectif : une démo qui donne envie, assez riche pour être partagée sur Linke
 - [ ] Portes et transitions pixelisées, sons d'ambiance.
 
 **Simulateurs**
-- [ ] Toutes les commandes Bash des chapitres 4 et 5 (voir `03-simulateurs.md`).
-- [ ] `sims/vim` et le composant `<VimEditor>`.
-- [ ] Conditions `user`, `net`, `cron`, contenu de fichier.
+- [x] Toutes les commandes Bash des chapitres 4 et 5 (voir `03-simulateurs.md`).
+- [x] `sims/vim` et le composant `<VimEditor>`.
+- [x] Conditions `user`, `net`, `cron`, contenu de fichier.
 
 **Contenu**
-- [ ] Les 22 missions des chapitres 4 et 5, dialogues, fiches « À retenir ».
-- [ ] Épreuves notées et badges.
-- [ ] 3 quêtes secondaires (dont `sq.vim-exit` et `sq.formateur`).
+- [x] Les 22 missions des chapitres 4 et 5, dialogues, fiches « À retenir ».
+- [x] Épreuves notées et badges.
+- [x] 3 quêtes secondaires (dont `sq.vim-exit` et `sq.formateur`).
 
 **Interface**
 - [ ] Écran titre animé, création du personnage.

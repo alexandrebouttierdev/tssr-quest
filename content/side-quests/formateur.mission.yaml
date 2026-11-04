@@ -1,0 +1,75 @@
+id: sq.formateur
+chapter: sq
+title: Les défis du formateur
+summary: M. Kerboul, le formateur de la promo, passe voir ses apprentis. Il a trois défis sur le module Linux de la semaine.
+giver: formateur
+zone: formation
+requires: { missions: [linux.archives] }
+rewards:
+  xp: 60
+  skills: { linux: 4 }
+dialogue:
+  intro: formateur#defis-intro
+  outro: formateur#defis-outro
+
+machines:
+  deb-formation:
+    base: debian-server
+    hostname: deb-formation
+    session: { user: stagiaire }
+    users: [stagiaire]
+
+steps:
+  - id: shells
+    type: terminal
+    sim: bash
+    machine: deb-formation
+    goal: 'Défi 1 : en une seule commande, compte les comptes de /etc/passwd dont le shell est /bin/bash.'
+    objectives:
+      - id: compter
+        label: Compter les lignes de /etc/passwd qui finissent par /bin/bash
+        when:
+          any:
+            - { command: { matches: '^grep( -\S+)* -\w*c\w*( -\S+)* .*bash\$?\s.*/etc/passwd' } }
+            - { command: { matches: '^wc -l$' } }
+    hints:
+      - Le shell est le dernier champ de chaque ligne ; $ ancre la fin de ligne.
+      - 'grep -c MOTIF FICHIER compte les lignes.'
+      - 'Solution : grep -c "/bin/bash$" /etc/passwd'
+    solution:
+      - grep -c "/bin/bash$" /etc/passwd
+
+  - id: resultat
+    type: input
+    question: Combien de comptes utilisent /bin/bash ?
+    answers: ['2']
+    normalize: [trim]
+    explain: root et stagiaire. Les comptes système (www-data, daemon…) ont /usr/sbin/nologin - ils ne peuvent pas ouvrir de session.
+
+  - id: pipeline
+    type: ordering
+    question: "Défi 2 : remets dans l'ordre la commande qui affiche les 3 plus gros dossiers de /var."
+    items:
+      - sudo du -sh /var/*
+      - '| sort -rh'
+      - '| head -3'
+    explain: du mesure, sort -rh trie les tailles lisibles du plus grand au plus petit, head garde les premières lignes.
+
+  - id: droits
+    type: choice
+    question: 'Défi 3 : -rwxr-x--- 1 root adm script.sh. Qui peut lancer ce script ?'
+    options:
+      - text: root et les membres du groupe adm
+        correct: true
+      - text: Tout le monde
+        feedback: Les « autres » n'ont aucun droit (---).
+      - text: root seulement
+        feedback: Le groupe adm a r-x, donc il peut le lire et l'exécuter.
+      - text: Personne, il manque le droit w
+        feedback: Pour exécuter, il faut x, pas w.
+    explain: Propriétaire rwx, groupe r-x, autres --- - soit 750.
+
+recap:
+  - grep -c "motif$" fichier compte les lignes qui finissent par le motif.
+  - du -sh * | sort -rh | head - les plus gros dossiers.
+  - Lire des droits - propriétaire, groupe, autres ; r=4, w=2, x=1.

@@ -5,6 +5,7 @@ import {
   dialogueFileSchema,
   itemSchema,
   missionSchema,
+  SIDE_QUEST_CHAPTER,
   npcSchema,
   sheetSchema,
   zoneSchema,
@@ -101,7 +102,19 @@ export function compileContent(files: Readonly<Record<string, string>>): Compile
     if (/^chapters\/[^/]+\/chapter\.yaml$/.test(file)) {
       collect(file, readYaml(file, text, errors), chapterSchema, bundle.chapters, errors);
     } else if (/^chapters\/[^/]+\/[^/]+\.mission\.yaml$/.test(file)) {
+      const before = bundle.missions.length;
       collect(file, readYaml(file, text, errors), missionSchema, bundle.missions, errors);
+      if (bundle.missions[before]?.chapter === SIDE_QUEST_CHAPTER)
+        errors.push({ file, message: 'une quête secondaire se range dans side-quests/' });
+    } else if (/^side-quests\/[^/]+\.mission\.yaml$/.test(file)) {
+      const before = bundle.missions.length;
+      collect(file, readYaml(file, text, errors), missionSchema, bundle.missions, errors);
+      const added = bundle.missions[before];
+      if (added && added.chapter !== SIDE_QUEST_CHAPTER)
+        errors.push({
+          file,
+          message: `une quête secondaire a pour chapitre « ${SIDE_QUEST_CHAPTER} »`,
+        });
     } else if (/^dialogues\/[^/]+\.dialogue\.yaml$/.test(file)) {
       const before = bundle.dialogues.length;
       collect(file, readYaml(file, text, errors), dialogueFileSchema, bundle.dialogues, errors);

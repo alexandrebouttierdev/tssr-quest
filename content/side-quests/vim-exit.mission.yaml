@@ -1,0 +1,67 @@
+id: sq.vim-exit
+chapter: sq
+title: Je suis coincée dans vim
+summary: Élodie, l'administratrice Windows, a ouvert un fichier dans vim il y a vingt minutes. Elle n'en est jamais ressortie.
+giver: elodie
+zone: salle-serveurs
+requires: { missions: [linux.vim] }
+rewards:
+  xp: 40
+  skills: { linux: 2, support: 2 }
+dialogue:
+  intro: elodie#vim-exit-intro
+  outro: elodie#vim-exit-outro
+
+machines:
+  srv-supervision:
+    base: debian-server
+    hostname: srv-supervision
+    session: { user: elodie }
+    users: [elodie]
+    files:
+      /home/elodie/procedure-sauvegarde.txt:
+        owner: elodie
+        content: |
+          Procédure de sauvegarde de srv-supervision
+          Étape 1 : vérifier l'espace libre sur /srv/sauvegardes
+          Étape 2 : lancer la sauvegarde
+          Étape 3 : contrôler le journal
+
+steps:
+  - id: conseil
+    type: choice
+    question: Élodie a tout essayé - Échap, Ctrl+C, « exit », « quit »… Que lui dis-tu ?
+    options:
+      - text: Échap pour revenir au mode normal, puis :wq et Entrée pour enregistrer et quitter
+        correct: true
+      - text: Fermer la fenêtre du terminal
+        feedback: Ça marche… mais la modification est perdue, et vim laisse un fichier .swp qui posera une question à la prochaine ouverture.
+      - text: Redémarrer le serveur
+        feedback: Élodie te regarde fixement. Non.
+      - text: Taper exit plus fort
+        feedback: En mode insertion, « exit » s'écrit simplement dans le fichier. Ce qui explique les cinq « exit » au milieu de sa procédure.
+    explain: 'Dans vim, on quitte depuis le mode normal : Échap, puis :wq (enregistrer et quitter) ou :q! (abandonner).'
+
+  - id: finir
+    type: editor
+    machine: srv-supervision
+    file: /home/elodie/procedure-sauvegarde.txt
+    goal: 'Montre à Élodie - ajoute « Étape 4 : tester la restauration » à la fin de la procédure, enregistre et quitte.'
+    objectives:
+      - id: etape4
+        label: Ajouter l'étape 4 et enregistrer
+        when:
+          file:
+            path: /home/elodie/procedure-sauvegarde.txt
+            matches: '^Étape 3 : contrôler le journal\nÉtape 4 : tester la restauration$'
+    hints:
+      - G va à la dernière ligne, o en ouvre une nouvelle en dessous.
+      - 'Puis Échap, :wq et Entrée.'
+      - 'Solution : G, o, tape la ligne, Échap, :wq, Entrée'
+    solution:
+      - 'GoÉtape 4 : tester la restauration<Esc>'
+      - ':wq<CR>'
+
+recap:
+  - 'Échap ramène toujours au mode normal ; :wq enregistre et quitte, :q! abandonne.'
+  - vimtutor (paquet vim) est un excellent cours de trente minutes ; nano est aussi installé sur Debian.

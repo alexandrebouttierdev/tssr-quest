@@ -151,6 +151,10 @@ Dans la `solution` d'une étape `terminal`, une ligne `vim: <touches>` désigne 
 
 Chaque étape accepte aussi : `id`, `hints[]` (3 niveaux), `sheet` (fiche liée), `timeLimit` (secondes, rare), `xp` (surcharge des 20 par défaut).
 
+## Quêtes secondaires
+
+Une quête secondaire a le format d'une mission, rangée dans `content/side-quests/<slug>.mission.yaml`, avec `chapter: sq` et un identifiant `sq.<slug>`. Elle n'appartient à aucun chapitre (ni badge ni épreuve), ne change pas le chapitre en cours, et rapporte de 30 à 80 XP de fin (`rewards.xp`). Son PNJ la propose quand ses prérequis (`requires`) sont remplis ; les missions principales passent avant, car leurs fichiers sont lus en premier. Une quête secondaire rangée ailleurs, ou une mission de `side-quests/` avec un autre chapitre, est refusée à la compilation.
+
 ## Conditions de réussite
 
 Les objectifs se vérifient sur l'**état** des simulateurs, ce qui accepte toutes les façons correctes de faire.

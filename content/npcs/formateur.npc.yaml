@@ -1,0 +1,8 @@
+id: formateur
+name: M. Kerboul
+role: Formateur ENI
+zone: formation
+palette: { hair: '#9a9a9a', skin: '#c99272', outfit: '#5a4fa0' }
+portrait: { hair: rase, beard: true, glasses: true }
+voicePitch: 0.95
+description: Formateur de la promo TSSR, en visite chez LabCorp. Il adore lancer des défis sur le module de la semaine.

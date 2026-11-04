@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 9,
- "nextobjectid": 87,
+ "nextobjectid": 89,
  "properties": [
   {
    "name": "zoneId",
@@ -3949,6 +3949,54 @@
     },
     {
      "id": 82,
+     "name": "elodie",
+     "type": "npc",
+     "x": 568,
+     "y": 136,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "npcId",
+       "type": "string",
+       "value": "elodie"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 83,
+     "name": "formateur",
+     "type": "npc",
+     "x": 472,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "point": true,
+     "properties": [
+      {
+       "name": "npcId",
+       "type": "string",
+       "value": "formateur"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      }
+     ]
+    },
+    {
+     "id": 84,
      "name": "porte-couloir",
      "type": "door",
      "x": 216,
@@ -3989,7 +4037,7 @@
    "draworder": "topdown",
    "objects": [
     {
-     "id": 83,
+     "id": 85,
      "name": "clim",
      "type": "zone",
      "x": 16,
@@ -4012,7 +4060,7 @@
      ]
     },
     {
-     "id": 84,
+     "id": 86,
      "name": "salle-serveurs",
      "type": "ambiance",
      "x": 0,
@@ -4030,7 +4078,7 @@
      ]
     },
     {
-     "id": 85,
+     "id": 87,
      "name": "supervision",
      "type": "ambiance",
      "x": 432,
@@ -4048,7 +4096,7 @@
      ]
     },
     {
-     "id": 86,
+     "id": 88,
      "name": "pause",
      "type": "ambiance",
      "x": 432,

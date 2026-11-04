@@ -4,7 +4,7 @@ import { createRng, type Rng } from '@core/random/rng';
 import type { GameStoreApi } from '@core/store/create-store';
 import type { DialogueView } from '@core/store/ui.slice';
 import type { ContentIndex } from '@content/loader';
-import type { DialogueEffect, Mission } from '@content/schemas';
+import { SIDE_QUEST_CHAPTER, type DialogueEffect, type Mission } from '@content/schemas';
 import {
   advanceDialogue,
   chooseDialogue,
@@ -138,7 +138,8 @@ export function createGameEngine(options: GameEngineOptions): GameEngine {
   const beginMission = (target: Mission, stepId: string | null) => {
     mission = target;
     run = startMission(target, ctx(), stepId ?? undefined);
-    store.getState().setCurrentChapter(target.chapter);
+    // Une quête secondaire ne change pas le chapitre en cours.
+    if (target.chapter !== SIDE_QUEST_CHAPTER) store.getState().setCurrentChapter(target.chapter);
     publishRun();
   };
 

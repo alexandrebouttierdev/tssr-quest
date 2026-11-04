@@ -1,4 +1,5 @@
 import type { ContentError } from './compile';
+import { SIDE_QUEST_CHAPTER } from './schemas';
 import type { Condition, ContentBundle, DialogueEffect, DialogueLine, Mission } from './schemas';
 
 /**
@@ -181,11 +182,16 @@ export function validateBundle(bundle: ContentBundle): ContentError[] {
   }
   for (const mission of bundle.missions) {
     const file = `missions/${mission.id}`;
+    // Les quêtes secondaires n'appartiennent à aucun chapitre.
+    const side = mission.chapter === SIDE_QUEST_CHAPTER;
     const chapter = chapters.get(mission.chapter);
-    check(file, chapter !== undefined, `chapitre inconnu : ${mission.chapter}`);
+    check(file, side || chapter !== undefined, `chapitre inconnu : ${mission.chapter}`);
     check(
       file,
-      chapter === undefined || chapter.missions.includes(mission.id) || chapter.exam === mission.id,
+      side ||
+        chapter === undefined ||
+        chapter.missions.includes(mission.id) ||
+        chapter.exam === mission.id,
       `mission absente de la liste du chapitre ${mission.chapter}`,
     );
     check(file, npcs.has(mission.giver), `PNJ inconnu : ${mission.giver}`);

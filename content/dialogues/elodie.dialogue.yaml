@@ -1,0 +1,26 @@
+npc: elodie
+nodes:
+  vim-exit-intro:
+    - say: "{prenom} ! Tu tombes bien. J'ai ouvert un fichier dans vim il y a vingt minutes."
+      mood: inquiet
+    - say: Je n'arrive plus à en sortir. J'ai tapé exit, quit, j'ai appuyé sur toutes les touches. Il y a maintenant des « exit » partout dans ma procédure.
+    - say: Sous Windows, il y a une croix en haut à droite. C'est tout ce que je demande. Une croix.
+    - effects: [{ startStep: conseil }]
+
+  vim-exit-outro:
+    - say: Échap, deux-points, wq. Je l'écris sur un post-it… non, dans ma documentation. Promis.
+      mood: content
+    - say: Merci ! Si un jour tu bloques sur une stratégie de groupe, tu sais où me trouver.
+
+  inventaire-intro:
+    - say: Je mets à jour la documentation du parc. Il me manque la fiche de srv-web01.
+    - say: Système, noyau, adresse, mémoire, disque. Tu peux me relever tout ça ? Moi, devant un terminal Linux, je perds mes moyens.
+    - effects: [{ startStep: releve }]
+
+  inventaire-outro:
+    - say: Debian 12, 192.168.10.20… Parfait, la fiche est complète.
+      mood: content
+    - say: Une documentation à jour, c'est la moitié du dépannage de demain.
+
+  default:
+    - say: La documentation, c'est comme les sauvegardes - on ne la trouve jamais assez à jour le jour où on en a besoin.

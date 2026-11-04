@@ -1,0 +1,15 @@
+npc: formateur
+nodes:
+  defis-intro:
+    - say: 'Bonjour {prenom} ! Je fais le tour des entreprises de la promo. Alors, cette semaine Linux ?'
+      mood: content
+    - say: J'ai trois petits défis sur le module. Rien de noté, c'est pour le plaisir… et pour les révisions.
+    - effects: [{ startStep: shells }]
+
+  defis-outro:
+    - say: Trois sur trois. Je note ça dans un coin de ma tête pour l'épreuve de fin de module.
+      mood: content
+    - say: Et rappelle-toi - en cas de doute, man. Toujours man.
+
+  default:
+    - say: Je repasse au début de chaque module. Révise bien, les épreuves arrivent vite.

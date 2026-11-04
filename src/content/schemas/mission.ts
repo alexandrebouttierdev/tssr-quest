@@ -11,6 +11,9 @@ import {
 import { machineSpecSchema } from './machine';
 import { stepSchema } from './steps';
 
+/** Pseudo-chapitre des quêtes secondaires (`sq.vim-exit`), rangées dans content/side-quests/. */
+export const SIDE_QUEST_CHAPTER = 'sq';
+
 /** Mission (docs/04, « Mission »). */
 export const missionSchema = z
   .strictObject({

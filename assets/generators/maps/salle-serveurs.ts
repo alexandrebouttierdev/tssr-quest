@@ -358,6 +358,10 @@ const lights = [
 const entities = [
   point('depart', 'spawn', DOOR_X, 2, [prop('id', 'depart')]),
   point('hugo', 'npc', 32, 11, [prop('npcId', 'hugo'), prop('facing', 'down')]),
+  // Élodie, administratrice Windows, à son poste de la supervision.
+  point('elodie', 'npc', 35, 8, [prop('npcId', 'elodie'), prop('facing', 'up')]),
+  // M. Kerboul, le formateur ENI, en visite au coin pause (en attendant la salle de formation).
+  point('formateur', 'npc', 29, 18, [prop('npcId', 'formateur'), prop('facing', 'down')]),
   point('porte-couloir', 'door', DOOR_X, 1, [
     prop('to', 'dsi'),
     prop('spawn', 'depart'),

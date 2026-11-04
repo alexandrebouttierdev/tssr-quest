@@ -48,6 +48,8 @@ Les déplacements entre sites se font par un menu de transport (train TER Nantes
 | `karim` | Karim | Commercial, agence de Rennes | `agence-rennes` | 2, 8, 17 | Toujours pressé, toujours en déplacement |
 | `nadia` | Nadia | Ressources humaines | `openspace` | 3, 9 | Annonce les arrivées et départs (comptes à créer) |
 
+*Phase 1 : Élodie travaille au poste de la supervision (salle serveurs) ; M. Kerboul est placé au coin pause de la salle serveurs « en visite » tant que la carte de la salle de formation n'existe pas.*
+
 Plus une vingtaine de figurants (utilisateurs) avec des routines : ils marchent entre leur poste, la machine à café et la salle de réunion selon l'heure.
 
 ## Conventions Tiled

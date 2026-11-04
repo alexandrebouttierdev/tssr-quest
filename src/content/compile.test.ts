@@ -67,6 +67,42 @@ describe('compilation du contenu', () => {
   });
 });
 
+describe('quêtes secondaires', () => {
+  /** Mission de test à partir de la mission « suite », avec un autre identifiant et chapitre. */
+  const sideQuest = (id: string, chapter: string) =>
+    VALID_CONTENT_FILES['chapters/05-test/suite.mission.yaml']!.replace(
+      'id: test.suite\nchapter: test',
+      `id: ${id}\nchapter: ${chapter}`,
+    );
+
+  it('compile une quête de side-quests/ hors de tout chapitre', () => {
+    const { bundle, errors } = compileContent({
+      ...VALID_CONTENT_FILES,
+      'side-quests/cafe.mission.yaml': sideQuest('sq.cafe', 'sq'),
+    });
+    expect(errors).toEqual([]);
+    expect(bundle.missions.map((m) => m.id)).toContain('sq.cafe');
+    expect(validateBundle(bundle)).toEqual([]);
+  });
+
+  it('refuse une quête secondaire mal rangée ou un mauvais chapitre', () => {
+    const misplaced = compileContent({
+      ...VALID_CONTENT_FILES,
+      'chapters/05-test/cafe.mission.yaml': sideQuest('sq.cafe', 'sq'),
+    });
+    expect(misplaced.errors.map((e) => e.message)).toContain(
+      'une quête secondaire se range dans side-quests/',
+    );
+    const wrong = compileContent({
+      ...VALID_CONTENT_FILES,
+      'side-quests/cafe.mission.yaml': sideQuest('test.cafe', 'test'),
+    });
+    expect(wrong.errors.map((e) => e.message)).toContain(
+      'une quête secondaire a pour chapitre « sq »',
+    );
+  });
+});
+
 describe('validation des références', () => {
   /** Compile le contenu valide avec un fichier remplacé. */
   const withFile = (path: string, text: string) =>

@@ -1,0 +1,73 @@
+id: sq.inventaire
+chapter: sq
+title: La fiche serveur d'Élodie
+summary: Élodie tient la documentation du parc à jour. Il manque la fiche de srv-web01 - aide-la à relever ses caractéristiques.
+giver: elodie
+zone: salle-serveurs
+requires: { missions: [sq.vim-exit, linux-admin.ip-fixe] }
+rewards:
+  xp: 50
+  skills: { linux: 3, support: 2 }
+dialogue:
+  intro: elodie#inventaire-intro
+  outro: elodie#inventaire-outro
+
+machines:
+  srv-web01:
+    base: debian-server
+    hostname: srv-web01
+    session: { user: stagiaire }
+    users: [stagiaire]
+    services:
+      apache2: { state: active }
+
+steps:
+  - id: releve
+    type: terminal
+    sim: bash
+    machine: srv-web01
+    goal: Relève la version de Debian, le noyau, l'adresse IP, la mémoire et la taille du disque système.
+    objectives:
+      - id: os
+        label: Version du système (/etc/os-release)
+        when: { command: { matches: '^(cat|less|more|head) /etc/(os-release|debian_version)$' } }
+      - id: noyau
+        label: Version du noyau
+        when: { command: { matches: '^uname (-r|-a)$' } }
+      - id: ip
+        label: Adresse IP
+        when: { command: { matches: '^(ip (-4 )?(a|addr)|hostname -I)' } }
+      - id: memoire
+        label: Mémoire totale
+        when: { command: { matches: '^free\b' } }
+      - id: disque
+        label: Taille du disque système
+        when: { command: { matches: '^(df|lsblk)\b' } }
+    hints:
+      - Chaque information a sa commande - aucune ne demande sudo.
+      - 'cat /etc/os-release, uname -r, ip a, free -h, df -h'
+      - 'Solution : cat /etc/os-release, uname -r, ip a, free -h, df -h /'
+    solution:
+      - cat /etc/os-release
+      - uname -r
+      - ip -4 a
+      - free -h
+      - df -h /
+
+  - id: version
+    type: input
+    question: Quelle version de Debian tourne sur srv-web01 ? (le numéro)
+    answers: ['12', 'debian 12', '12 (bookworm)', 'bookworm']
+    normalize: [trim, lower]
+    explain: VERSION_ID="12" dans /etc/os-release - Debian 12, nom de code bookworm.
+
+  - id: adresse
+    type: input
+    question: Quelle est son adresse IPv4 (sans le masque) ?
+    answers: ['192.168.10.20']
+    normalize: [ip]
+    explain: inet 192.168.10.20/24 dans ip a - le /24 est le masque.
+
+recap:
+  - 'Fiche serveur : cat /etc/os-release, uname -r, ip a, free -h, df -h, lsblk.'
+  - Une documentation à jour fait gagner des heures le jour de la panne.
