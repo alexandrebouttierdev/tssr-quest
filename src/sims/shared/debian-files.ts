@@ -13,6 +13,10 @@ export interface NetworkFileParams {
   readonly gateway: string;
   readonly dnsServers: readonly string[];
   readonly iface: string;
+  /** Adresse obtenue par DHCP (`iface … inet dhcp`). */
+  readonly dhcp?: boolean;
+  /** Pas de ligne `gateway` (configuration incomplète). */
+  readonly noGateway?: boolean;
 }
 
 /** Contenu de /etc/os-release pour Debian 12. */
@@ -162,9 +166,12 @@ iface lo inet loopback
 
 # The primary network interface
 allow-hotplug ${params.iface}
-iface ${params.iface} inet static
-	address ${params.address}/${params.prefix}
-	gateway ${params.gateway}
+${
+  params.dhcp
+    ? `iface ${params.iface} inet dhcp`
+    : `iface ${params.iface} inet static
+	address ${params.address}/${params.prefix}${params.noGateway ? '' : `\n	gateway ${params.gateway}`}`
+}
 `;
 }
 

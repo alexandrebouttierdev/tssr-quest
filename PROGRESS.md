@@ -6,8 +6,8 @@ Il est mis à jour à chaque tâche terminée.
 ## État actuel
 
 - **Phase en cours** : 1 — Tranche Linux (`v0.2.0`) — phase 0 terminée et taguée `v0.1.0`
-- **Dernière tâche terminée** : chapitre 4 complet (11 missions dont l'épreuve notée, dialogues d'Hugo, 9 fiches) ; notation des épreuves sur 20 ; `--help` générique, `dw`/`cw`/`D`/`C` dans vim, `ps | grep` réaliste, compression des journaux
-- **Prochaine action** : phase 1 — missions du chapitre 5 (installer-debian, paquets, boot, comptes, droits, disque, ip-fixe, processus, cron, épreuve serveur web), puis 3 quêtes secondaires
+- **Dernière tâche terminée** : chapitre 5 complet (11 missions dont l'épreuve « serveur intranet », dialogues, 10 fiches, fil rouge de la tâche cron de Gégé) ; simulateur : `systemctl get-default/set-default`, `journalctl -p/-b`, journal des échecs de montage au démarrage, `sudo vim`, saisie des mots de passe masquée, disques déjà formatés
+- **Prochaine action** : phase 1 — 3 quêtes secondaires (`sq.vim-exit`, `sq.formateur`, une troisième) ; puis monde (cartes DSI, couloir, formation, PNJ) et interface (journal, fiches, options)
 
 ## Environnement
 
@@ -57,7 +57,7 @@ Il est mis à jour à chaque tâche terminée.
 - [x] `sims/vim` et le composant `<VimEditor>` (+ étape `editor`, vim dans le terminal).
 - [x] Conditions `user`, `net`, `cron`, contenu de fichier (fichier ✅ depuis la phase 0) — avec aussi `group`, `at`, `disk` étendu, `lvm`, `package`, `process`.
 
-**Contenu** : ch. 4 ✅ (11 missions, épreuve /20, badge Linux, 9 fiches) ; ch. 5 ⏳ (intranet-down) ; 3 quêtes secondaires — à faire. Notation des épreuves ✅.
+**Contenu** : ch. 4 ✅ (11 missions, épreuve /20, badge Linux, 9 fiches) ; ch. 5 ✅ (11 missions, épreuve /20, badge Linux Admin, 10 fiches) ; 3 quêtes secondaires — à faire. Notation des épreuves ✅.
 **Monde** : cartes DSI, couloir, formation ; PNJ ; Light2D ; portes et transitions ; sons — à faire.
 **Interface** : écran titre ✅ (nuit, pluie, baies qui clignotent ; prénom + pronoms ; Continuer) ; rappel des contrôles en jeu ✅ ; menus, options, sauvegardes, montée de niveau, mobile — à faire.
 **Publication** : GitHub Pages ✅ (`pages.yml`, https://alexandrebouttierdev.github.io/tssr-quest/ — activer *Settings → Pages → Source : GitHub Actions*) ; README illustré ✅ ; PWA, itch.io — à faire.
@@ -134,6 +134,9 @@ Il est mis à jour à chaque tâche terminée.
 | D67 | 2026-11-04 | Épreuves notées sur 20 : résultat 12 + autonomie 4 (−1 par indice) + rigueur 4 (−1 par erreur) ; l'XP d'épreuve (200, 300 avec mention ≥ 16) remplace l'XP de fin | Barème lisible par le joueur, sans critère « méthode » flou. |
 | D68 | 2026-11-04 | Chapitre 4 joué sur `deb-formation` (compte `stagiaire`), missions données par Hugo dans la zone formation et chaînées par `requires` ; `intranet-down` demande l'épreuve du ch. 4 | Ordre de la campagne respecté ; l'E2E saute le ch. 4 par `completeMissions`. |
 | D69 | 2026-11-04 | Les dialogues n'accordent jamais en genre le joueur (pas de « prêt·e ») : tournures neutres | Les pronoms choisis ne sont pas encore injectés dans les répliques. |
+| D70 | 2026-11-04 | Chapitre 5 sur srv-web01, srv-fichiers et srv-intranet, compte `stagiaire` (sudoer), domaine `lab.local` (DNS 192.168.10.1) ; ordre de docs/04, `intranet-down` après `cron` | Cohérence avec le domaine AD des chapitres Windows. |
+| D71 | 2026-11-04 | Étape `editor` avec `sudo: true` et `sudo vim` dans le terminal : l'éditeur écrit avec les droits de root | Les fichiers de /etc ne s'éditent pas autrement sur un vrai serveur. |
+| D72 | 2026-11-04 | Les lignes vides sont permises dans une solution de terminal (Entrée = valeur par défaut, fdisk) | Rejouer fidèlement une saisie interactive. |
 | D11 | 2026-11-03 | LICENSE : MIT (code) + CC BY-NC 4.0 (contenu) | Proposition de docs/14, **à confirmer par l'auteur** avant le dépôt public. |
 
 ## Problèmes rencontrés

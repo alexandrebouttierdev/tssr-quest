@@ -241,8 +241,13 @@ describe('reboot', () => {
       `${content}UUID=0000-dead /srv/data ext4 defaults 0 2\n`,
     );
     const out = runLine(typo, 'sudo reboot');
-    expect(out.stdout).toContain('[ TIME ] Timed out waiting for device UUID=0000-dead.');
-    expect(out.stdout).toContain('[DEPEND] Dependency failed for /srv/data.');
+    expect(out.stdout).toContain(
+      '[ TIME ] Timed out waiting for device dev-disk-by\\x2duuid-0000\\x2ddead.device - /dev/disk/by-uuid/0000-dead.',
+    );
+    expect(out.stdout).toContain('[DEPEND] Dependency failed for srv-data.mount - /srv/data.');
+    const errors = runLine(out.state, 'sudo journalctl -b -p err').stdout;
+    expect(errors).toContain('systemd[1]: Dependency failed for srv-data.mount - /srv/data.');
+    expect(errors).not.toContain('Started');
     const tolerant = withFile(
       web,
       '/etc/fstab',

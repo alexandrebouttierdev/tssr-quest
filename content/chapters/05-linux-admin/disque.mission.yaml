@@ -1,0 +1,105 @@
+id: linux-admin.disque
+chapter: linux-admin
+title: Le nouveau disque
+summary: Le partage déborde. Un disque de 20 Go vient d'être ajouté à srv-fichiers - prépare-le avec LVM pour qu'il puisse grandir plus tard.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.droits] }
+ticket: { number: 2064, priority: normale, requester: hugo, service: direction }
+rewards:
+  xp: 100
+  skills: { linux: 10 }
+  sheets: [fiche-disques]
+dialogue:
+  intro: hugo#disque-intro
+  outro: hugo#disque-outro
+
+machines:
+  srv-fichiers:
+    base: debian-server
+    hostname: srv-fichiers
+    session: { user: stagiaire }
+    users: [stagiaire]
+    sudoers: [stagiaire]
+    extraDisks:
+      - { name: sdb, size: 20G }
+
+steps:
+  - id: lvm
+    type: terminal
+    sim: bash
+    machine: srv-fichiers
+    sheet: fiche-disques
+    goal: Crée sur sdb une partition LVM, le groupe de volumes vg_data, un volume lv_partage de 10 Go formaté en ext4, et monte-le sur /srv/partage.
+    objectives:
+      - id: partition
+        label: Partitionner /dev/sdb (une partition de type LVM)
+        when: { lvm: { vg: vg_data, pvs: [/dev/sdb1] } }
+      - id: volume
+        label: Créer le volume logique lv_partage de 10 Go dans vg_data
+        when: { lvm: { vg: vg_data, lv: lv_partage, minSize: 10G } }
+      - id: montage
+        label: Le formater en ext4 et le monter sur /srv/partage
+        when:
+          disk: { mount: /srv/partage, device: /dev/vg_data/lv_partage, fstype: ext4 }
+    hints:
+      - "L'ordre : partition (fdisk), volume physique (pvcreate), groupe (vgcreate), volume logique (lvcreate), système de fichiers (mkfs.ext4), montage (mount)."
+      - 'Dans fdisk - n, p, 1, Entrée deux fois, t, lvm, w. Puis sudo pvcreate /dev/sdb1, sudo vgcreate vg_data /dev/sdb1, sudo lvcreate -L 10G -n lv_partage vg_data.'
+      - 'Solution : sudo fdisk /dev/sdb (n, p, 1, Entrée, Entrée, t, lvm, w) ; pvcreate ; vgcreate ; lvcreate ; sudo mkfs.ext4 /dev/vg_data/lv_partage ; sudo mkdir /srv/partage ; sudo mount /dev/vg_data/lv_partage /srv/partage'
+    solution:
+      - lsblk
+      - sudo fdisk /dev/sdb
+      - n
+      - p
+      - '1'
+      - ''
+      - ''
+      - t
+      - lvm
+      - w
+      - sudo pvcreate /dev/sdb1
+      - sudo vgcreate vg_data /dev/sdb1
+      - sudo lvcreate -L 10G -n lv_partage vg_data
+      - sudo mkfs.ext4 /dev/vg_data/lv_partage
+      - sudo mkdir /srv/partage
+      - sudo mount /dev/vg_data/lv_partage /srv/partage
+      - df -h /srv/partage
+
+  - id: fstab
+    type: editor
+    machine: srv-fichiers
+    file: /etc/fstab
+    sudo: true
+    sheet: fiche-disques
+    goal: 'Ajoute à la fin de /etc/fstab la ligne qui monte le volume au démarrage : /dev/mapper/vg_data-lv_partage /srv/partage ext4 defaults 0 2'
+    objectives:
+      - id: ligne
+        label: Déclarer le volume dans /etc/fstab
+        when: { disk: { mount: /srv/partage, persistent: true } }
+    hints:
+      - G pour aller à la dernière ligne, o pour en ouvrir une nouvelle, Échap puis :wq.
+      - 'Les champs - périphérique, point de montage, type, options, dump, ordre de vérification.'
+      - 'Solution : G, o, tape la ligne, Échap, :wq, Entrée'
+    solution:
+      - 'Go/dev/mapper/vg_data-lv_partage /srv/partage ext4 defaults 0 2<Esc>'
+      - ':wq<CR>'
+
+  - id: agrandir
+    type: choice
+    sheet: fiche-disques
+    question: Dans six mois, lv_partage sera plein. Que permet LVM ?
+    options:
+      - text: L'agrandir à chaud avec lvextend -r, en prenant la place libre du groupe (ou d'un nouveau disque ajouté avec vgextend)
+        correct: true
+      - text: Rien, il faudra tout recopier sur un plus gros disque
+        feedback: C'est justement ce que LVM évite.
+      - text: Le compresser automatiquement
+        feedback: LVM ne compresse pas les données.
+      - text: Supprimer les vieux fichiers tout seul
+        feedback: LVM gère les volumes, pas leur contenu.
+    explain: Avec LVM, disque physique → volume physique → groupe → volume logique. Il reste 10 Go libres dans vg_data - lvextend -r -L +5G /dev/vg_data/lv_partage agrandit le volume et le système de fichiers.
+
+recap:
+  - 'lsblk, fdisk (n, t lvm, w), pvcreate, vgcreate, lvcreate -L 10G -n nom vg, mkfs.ext4, mount.'
+  - /etc/fstab rend le montage permanent ; sudo mount -a le vérifie avant le prochain redémarrage.
+  - lvextend -r agrandit le volume et son système de fichiers ; vgextend ajoute un disque au groupe.

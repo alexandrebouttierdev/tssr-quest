@@ -145,5 +145,116 @@ nodes:
   epreuve-linux-abandon:
     - say: Pas grave, reprends ton souffle. L'épreuve t'attend, et le rapport aussi.
 
+  # --- Chapitre 5 : administration de GNU/Linux -------------------------------------------
+
+  installer-intro:
+    - say: Bienvenue en salle serveurs ! Ici, ça souffle, ça clignote, et c'est là que tout se passe.
+      mood: content
+    - say: On reçoit un serveur neuf la semaine prochaine. Avant que tu l'installes, voyons si tu connais la marche à suivre.
+    - effects: [{ startStep: etapes }]
+
+  installer-outro:
+    - say: Tu sais installer une Debian propre. Pas de bureau, /var à part, SSH. Comme on aime.
+      mood: content
+
+  paquets-intro:
+    - say: Quelqu'un a lancé une mise à jour sur srv-web01 hier soir… et a fermé son portable au milieu.
+      mood: inquiet
+    - say: Résultat, dpkg est bloqué, et des correctifs de sécurité attendent. Remets ça d'aplomb.
+    - effects: [{ startStep: reparer }]
+
+  paquets-outro:
+    - say: Paquets à jour, dpkg débloqué. Tu as lu le message d'erreur au lieu de paniquer - c'est déjà la moitié du métier.
+      mood: content
+
+  boot-intro:
+    - say: Coupure de courant cette nuit - il pleuvait tellement que l'onduleur a rendu l'âme.
+      mood: inquiet
+    - say: srv-web01 a redémarré, mais l'intranet ne répond pas et le disque des archives n'est pas monté. Karim appelle déjà.
+    - say: Répare, et surtout, fais en sorte que ça tienne au prochain redémarrage.
+    - effects: [{ startStep: sequence }]
+
+  boot-outro:
+    - say: /dev/sdc1… Gégé avait écrit le nom du disque au lieu de son UUID. Le jour où on a retiré un disque, tout a glissé.
+      mood: content
+    - say: Et Apache n'avait jamais été activé. Il tournait depuis deux ans parce que personne n'avait redémarré.
+
+  comptes-intro:
+    - say: Deux arrivées ce lundi - Julie à la compta, Paul chez les commerciaux. Il leur faut un compte sur srv-fichiers.
+    - say: Et Gégé est parti il y a trois mois. Son compte est toujours ouvert. Toujours.
+      mood: inquiet
+    - effects: [{ startStep: comptes }]
+
+  comptes-outro:
+    - say: Comptes créés, mots de passe provisoires, et le compte de Gégé verrouillé.
+      mood: content
+    - say: On le supprimera plus tard. D'abord, on regarde ce qu'il a laissé derrière lui.
+
+  droits-intro:
+    - say: Julie a enregistré les salaires sur le partage compta. Le dossier est en 777. N'importe qui peut lire les salaires de tout le monde.
+      mood: inquiet
+    - say: Et Marc ne peut pas modifier les fichiers de Julie. Les droits, c'est le chantier du jour.
+    - effects: [{ startStep: compta }]
+
+  droits-outro:
+    - say: 2770 pour la compta, 1777 pour le dépôt, 640 pour les salaires. Tu parles couramment l'octal.
+      mood: content
+
+  disque-intro:
+    - say: Le partage déborde. J'ai ajouté un disque de 20 Go à srv-fichiers - sdb, tout neuf, tout vide.
+    - say: On passe par LVM. Le jour où il sera plein, on l'agrandira sans rien arrêter.
+    - effects: [{ startStep: lvm }]
+
+  disque-outro:
+    - say: Partitionné, formaté, monté, et déclaré dans fstab. Il survivra au redémarrage, lui.
+      mood: content
+
+  ip-intro:
+    - say: srv-fichiers a été installé en DHCP. Un serveur qui change d'adresse, c'est des partages qui disparaissent.
+      mood: inquiet
+    - say: Donne-lui 192.168.10.30, de façon permanente.
+    - effects: [{ startStep: constat }]
+
+  ip-outro:
+    - say: Adresse fixe, ping qui répond. Pense à mettre à jour la fiche du serveur dans GLPI, plus tard.
+      mood: content
+
+  processus-admin-intro:
+    - say: srv-web01 rame à mort. Karim n'arrive plus à ouvrir l'intranet.
+      mood: inquiet
+    - say: Je vois un export de Paul qui mange toute la mémoire, et la sauvegarde de nuit qui n'a pas fini. Attention, la sauvegarde, on la garde.
+    - effects: [{ startStep: diagnostic }]
+
+  processus-admin-outro:
+    - say: Mémoire libérée, sauvegarde ralentie mais vivante. C'est la bonne réponse - on ne tue pas une sauvegarde.
+      mood: content
+
+  cron-intro:
+    - say: Le pare-feu signale que srv-web01 contacte une adresse inconnue toutes les nuits, vers 3 h.
+      mood: inquiet
+    - say: Quelque chose est planifié. Trouve quoi, et qui l'a mis là.
+    - effects: [{ startStep: enquete }]
+
+  cron-outro:
+    - say: Une tâche de Gégé qui téléchargeait un script et l'exécutait, toutes les nuits, depuis 2024.
+      mood: inquiet
+    - say: Je préviens M. Leroy. Ce n'est peut-être rien… mais c'est la même adresse que celle qui tentait root en SSH.
+    - effects: [{ flag: fil-rouge-cron-gege }]
+
+  epreuve-admin-intro:
+    - say: Dernière ligne droite de l'administration Linux. Mme Garnier veut un nouvel intranet sur srv-intranet.
+    - say: Debian toute neuve. Tu installes, tu configures, tu sécurises les droits, tu planifies la sauvegarde. Tu es aux commandes.
+      mood: content
+    - say: Noté sur 20, comme d'habitude - chaque indice et chaque erreur coûtent un point.
+    - effects: [{ startStep: installer }]
+
+  epreuve-admin-outro:
+    - say: http://intranet.lab.local répond. Mme Garnier est ravie, et moi aussi.
+      mood: content
+    - say: Badge Linux Admin pour toi. Tu peux garder le badge de la salle serveurs, tu l'as mérité.
+
+  epreuve-admin-abandon:
+    - say: Pas de souci. srv-intranet t'attend, il n'est pas pressé - Mme Garnier un peu plus.
+
   default:
     - say: Si tu as un doute, relis les journaux. Toujours les journaux.

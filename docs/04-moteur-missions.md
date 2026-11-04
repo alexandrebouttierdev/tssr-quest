@@ -137,7 +137,7 @@ variants:                        # révision : une variante tirée au hasard rem
 | `ordering` | `question`, `items[]` (ordre correct) | Ordre exact |
 | `matching` | `question`, `pairs[]` | Toutes les paires associées |
 | `terminal` | `sim` (`bash`, `cmd`, `powershell`, `ios`), `machine` ou `device`, `goal`, `objectives[]` | Tous les objectifs vrais |
-| `editor` | `machine`, `file`, `goal`, `objectives[]`, `solution` (touches : texte tel quel, `<Esc>`, `<CR>`, `<BS>`) | Contenu du fichier valide (conditions) |
+| `editor` | `machine`, `file`, `sudo` (éditer en root), `goal`, `objectives[]`, `solution` (touches : texte tel quel, `<Esc>`, `<CR>`, `<BS>`) | Contenu du fichier valide (conditions) |
 | `diagram` | `topology` (départ), `palette` (équipements disponibles), `objectives[]` | Conditions sur la topologie et tests de paquets |
 | `patch-panel` | `ports`, `expected` | Câblage attendu |
 | `directory` | `domain` (état de départ), `objectives[]` | Conditions sur l'annuaire |

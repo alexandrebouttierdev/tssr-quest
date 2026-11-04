@@ -1,0 +1,66 @@
+id: linux-admin.installer-debian
+chapter: linux-admin
+title: Installer Debian
+summary: LabCorp reçoit un nouveau serveur. Avant de le livrer, Hugo vérifie que tu connais les étapes d'une installation Debian.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux.epreuve] }
+rewards:
+  xp: 50
+  skills: { linux: 5 }
+  sheets: [fiche-installation]
+dialogue:
+  intro: hugo#installer-intro
+  outro: hugo#installer-outro
+
+steps:
+  - id: etapes
+    type: ordering
+    sheet: fiche-installation
+    question: Remets dans l'ordre les étapes de l'installateur Debian.
+    items:
+      - Choisir la langue, le pays et la disposition du clavier
+      - Configurer le réseau - nom de la machine et domaine
+      - Définir le mot de passe de root et créer le premier utilisateur
+      - Partitionner les disques
+      - Installer le système de base
+      - Choisir les logiciels à installer (tasksel)
+      - Installer le programme de démarrage GRUB
+      - Redémarrer sur le système installé
+    explain: L'installateur suit toujours cet ordre. Le partitionnement vient avant l'installation, GRUB à la toute fin.
+
+  - id: partitions
+    type: choice
+    sheet: fiche-installation
+    question: Pour un serveur web, quel partitionnement Hugo préfère-t-il ?
+    options:
+      - text: Une partition / , une partition /var séparée et un swap
+        correct: true
+      - text: Tout dans une seule partition /
+        feedback: Possible, mais si les journaux remplissent /var, tout le système se bloque.
+      - text: Une partition /home de la taille du disque
+        feedback: Sur un serveur, personne ne stocke ses documents dans /home ; ce sont les données des services qui grossissent.
+      - text: Pas de partition, Debian s'installe directement sur le disque
+        feedback: Il faut au moins une partition avec un système de fichiers.
+    explain: Séparer /var protège le système quand un journal ou une base de données grossit trop. C'est ce qui a sauvé srv-web01 le jour où /var était plein.
+
+  - id: logiciels
+    type: choice
+    multiple: true
+    sheet: fiche-installation
+    question: Dans tasksel, que coches-tu pour un serveur ? (plusieurs réponses)
+    options:
+      - text: serveur SSH
+        correct: true
+      - text: utilitaires usuels du système
+        correct: true
+      - text: environnement de bureau Debian
+        feedback: Un serveur s'administre à distance ; un bureau consomme de la mémoire et ajoute des failles possibles.
+      - text: GNOME
+        feedback: C'est un environnement de bureau. Pas sur un serveur.
+    explain: Le minimum - SSH pour l'administrer et les utilitaires de base. Le reste s'installe ensuite avec apt, au besoin.
+
+recap:
+  - 'Ordre : langue, réseau, comptes, partitions, système de base, logiciels, GRUB, redémarrage.'
+  - Un serveur - /var séparé, swap, pas d'interface graphique, serveur SSH.
+  - Noter le mot de passe root dans le coffre-fort de mots de passe, jamais sur un post-it.

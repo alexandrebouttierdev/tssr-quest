@@ -32,6 +32,8 @@ export interface DebianFixtureOptions {
   readonly extraDisks?: DebianServerOptions['extraDisks'];
   /** Processus supplémentaires. */
   readonly processes?: DebianServerOptions['processes'];
+  /** Configuration réseau de départ. */
+  readonly network?: DebianServerOptions['network'];
 }
 
 /**
@@ -58,6 +60,7 @@ export function debianServer(options: DebianFixtureOptions): Machine {
     ...(options.packages ? { packages: options.packages } : {}),
     ...(options.extraDisks ? { extraDisks: options.extraDisks } : {}),
     ...(options.processes ? { processes: options.processes } : {}),
+    ...(options.network ? { network: options.network } : {}),
   };
   return createDebianServer(full);
 }

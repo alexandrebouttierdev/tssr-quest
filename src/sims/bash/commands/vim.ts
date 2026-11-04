@@ -43,7 +43,7 @@ function editorCommand(name: 'vim' | 'vi'): BashCommand {
       const found = statPath(env.machine, path, env.user);
       if (found.ok && found.value.node.type === 'dir')
         return { stderr: `"${operand}" est un répertoire\n`, exitCode: 1 };
-      return { exitCode: 0, effects: [{ type: 'open-editor', path }] };
+      return { exitCode: 0, effects: [{ type: 'open-editor', path, user: env.user }] };
     },
   };
 }

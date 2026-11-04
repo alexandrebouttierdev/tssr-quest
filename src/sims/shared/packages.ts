@@ -540,7 +540,8 @@ export function planNeedsConfirmation(plan: AptPlan): boolean {
 function wrapList(names: readonly string[], marker = ''): string {
   const lines: string[] = [];
   let current = ' ';
-  for (const name of names) {
+  // apt présente les noms par ordre alphabétique.
+  for (const name of [...names].sort()) {
     const word = ` ${name}${marker}`;
     if (current.length + word.length > 79 && current.trim()) {
       lines.push(current);

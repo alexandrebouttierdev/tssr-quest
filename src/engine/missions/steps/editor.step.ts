@@ -17,14 +17,22 @@ function machineOf(step: EditorStep, run: Pick<MissionRun, 'machines'>): Machine
   return machine;
 }
 
+/** Compte qui édite : root pour une étape `sudo`, sinon celui de la session. */
+function editorUser(step: EditorStep, machine: Machine): string {
+  return step.sudo ? 'root' : machine.session.user;
+}
+
 /** Étape « éditeur » : modifier un fichier dans vim ; les objectifs portent sur son contenu. */
 export const editorStep: StepHandler<EditorStep> = {
-  init: (step, run) => ({ type: 'editor', editor: openEditor(machineOf(step, run), step.file) }),
+  init: (step, run) => {
+    const machine = machineOf(step, run);
+    return { type: 'editor', editor: openEditor(machine, step.file, editorUser(step, machine)) };
+  },
   view(step, run) {
     const editor =
       run.step.data.type === 'editor'
         ? run.step.data.editor
-        : openEditor(machineOf(step, run), step.file);
+        : openEditor(machineOf(step, run), step.file, editorUser(step, machineOf(step, run)));
     return { type: 'editor', id: step.id, goal: step.goal, editor: editorView(editor) };
   },
   objectives(step, run) {
@@ -40,9 +48,10 @@ export const editorStep: StepHandler<EditorStep> = {
     if (!key.success || run.step.data.type !== 'editor')
       return { data: run.step.data, verdict: null, feedback: run.step.feedback };
     const machine = machineOf(step, run);
-    const result = editorKey(machine, run.step.data.editor, key.data.key, ctx.now.getTime());
+    const user = editorUser(step, machine);
+    const result = editorKey(machine, run.step.data.editor, key.data.key, ctx.now.getTime(), user);
     // Quitter vim le rouvre aussitôt : l'étape se joue entièrement dans l'éditeur.
-    const editor = result.editor ?? openEditor(result.machine, step.file);
+    const editor = result.editor ?? openEditor(result.machine, step.file, user);
     return {
       data: { type: 'editor', editor },
       machines: { ...run.machines, [step.machine]: result.machine },

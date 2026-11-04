@@ -89,13 +89,16 @@ export const terminalStep: StepHandler<TerminalStep> = {
     };
   },
   view(step, run) {
+    const machine = machineOf(step, run);
     return {
       type: 'terminal',
       id: step.id,
       goal: step.goal,
       sim: step.sim,
       machine: step.machine,
-      prompt: bashSimulator.prompt(machineOf(step, run)),
+      prompt: bashSimulator.prompt(machine),
+      // Mot de passe demandé (passwd, sudo, su) : le champ masque la saisie.
+      ...(machine.session.pending?.secret ? { secret: true } : {}),
       lines: run.step.data.type === 'terminal' ? run.step.data.lines : [],
       ...(run.step.data.type === 'terminal' && run.step.data.editor
         ? { editor: editorView(run.step.data.editor) }
@@ -116,11 +119,14 @@ export const terminalStep: StepHandler<TerminalStep> = {
     if (openEditorState) {
       const key = keySchema.safeParse(payload);
       if (!key.success) return { data: run.step.data, verdict: null, feedback: run.step.feedback };
+      const editorUser =
+        run.step.data.type === 'terminal' ? (run.step.data.editorUser ?? undefined) : undefined;
       const result = editorKey(
         machineOf(step, run),
         openEditorState,
         key.data.key,
         ctx.now.getTime(),
+        editorUser,
       );
       const hook = run.step.data.type === 'terminal' ? (run.step.data.editorHook ?? null) : null;
       // Éditeur fermé après `crontab -e` : crontab vérifie et installe la table.
@@ -141,7 +147,13 @@ export const terminalStep: StepHandler<TerminalStep> = {
         };
       }
       return {
-        data: { type: 'terminal', lines: previous, editor: result.editor, editorHook: hook },
+        data: {
+          type: 'terminal',
+          lines: previous,
+          editor: result.editor,
+          editorHook: hook,
+          editorUser: editorUser ?? null,
+        },
         machines: { ...run.machines, [step.machine]: result.machine },
         verdict: null,
         feedback: run.step.feedback,
@@ -150,11 +162,11 @@ export const terminalStep: StepHandler<TerminalStep> = {
     const parsed = payloadSchema.safeParse(payload);
     if (!parsed.success) return { data: run.step.data, verdict: null, feedback: run.step.feedback };
     const machine = machineOf(step, run);
-    const echo: TerminalLine = {
-      kind: 'input',
-      // Ctrl+D s'affiche « <EOT> », comme dans la console.
-      text: `${bashSimulator.prompt(machine)} ${parsed.data.line === '\u0004' ? '<EOT>' : parsed.data.line}`,
-    };
+    // Un mot de passe n'est jamais réaffiché ; Ctrl+D s'affiche « <EOT> », comme dans la console.
+    const typed = machine.session.pending?.secret
+      ? ''
+      : ` ${parsed.data.line === '\u0004' ? '<EOT>' : parsed.data.line}`;
+    const echo: TerminalLine = { kind: 'input', text: `${bashSimulator.prompt(machine)}${typed}` };
     // Une ligne vide ne fait rien… sauf répondre à une question en attente (Entrée = défaut).
     if (parsed.data.line.trim() === '' && !machine.session.pending) {
       return {
@@ -169,8 +181,11 @@ export const terminalStep: StepHandler<TerminalStep> = {
     if (result.effects?.some((e) => e.type === 'clear')) lines = [];
     const kept = result.effects?.some((e) => e.type === 'exit') ?? false;
     const editPath = result.effects?.find((e) => e.type === 'open-editor');
+    const editorUser = editPath?.type === 'open-editor' ? (editPath.user ?? null) : null;
     const editor =
-      editPath?.type === 'open-editor' ? openEditor(result.state, editPath.path) : null;
+      editPath?.type === 'open-editor'
+        ? openEditor(result.state, editPath.path, editorUser ?? undefined)
+        : null;
     const editorHook = editPath?.type === 'open-editor' ? (editPath.onClose ?? null) : null;
     // Erreur comptée : une action qui modifie l'état (pas une lecture) a échoué.
     const failedAction =
@@ -178,7 +193,7 @@ export const terminalStep: StepHandler<TerminalStep> = {
       result.state.history.at(-1)?.ok === false &&
       signature(parsed.data.line) !== null;
     return {
-      data: { type: 'terminal', lines: lines.slice(-MAX_LINES), editor, editorHook },
+      data: { type: 'terminal', lines: lines.slice(-MAX_LINES), editor, editorHook, editorUser },
       machines: { ...run.machines, [step.machine]: result.state },
       verdict: failedAction ? false : null,
       feedback: kept ? { kind: 'info', code: 'session-kept-open' } : null,

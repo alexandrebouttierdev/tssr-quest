@@ -1,0 +1,95 @@
+id: linux-admin.droits
+chapter: linux-admin
+title: Qui a le droit ?
+summary: Sur srv-fichiers, le dossier de la compta est ouvert à tous et les fichiers créés par l'un sont illisibles par les autres. Mets de l'ordre dans les droits.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.comptes] }
+ticket: { number: 2061, priority: haute, requester: hugo, service: comptabilite }
+rewards:
+  xp: 80
+  skills: { linux: 8, securite: 4 }
+  reputation: { comptabilite: 4 }
+  sheets: [fiche-droits]
+dialogue:
+  intro: hugo#droits-intro
+  outro: hugo#droits-outro
+
+machines:
+  srv-fichiers:
+    base: debian-server
+    hostname: srv-fichiers
+    session: { user: stagiaire }
+    users: [stagiaire, julie.martin, marc.petit, paul.durand]
+    sudoers: [stagiaire]
+    groups: { compta: [julie.martin, marc.petit], commercial: [paul.durand] }
+    files:
+      /srv/partage: { type: dir, mode: '0755' }
+      /srv/partage/compta: { type: dir, owner: root, group: root, mode: '0777' }
+      /srv/partage/compta/salaires-2026.ods:
+        { owner: julie.martin, group: julie.martin, mode: '0666', size: 84K }
+      /srv/partage/compta/notes-de-frais.ods:
+        { owner: marc.petit, group: marc.petit, mode: '0644', size: 52K }
+      /srv/partage/depot: { type: dir, owner: root, group: root, mode: '0777' }
+
+steps:
+  - id: compta
+    type: terminal
+    sim: bash
+    machine: srv-fichiers
+    sheet: fiche-droits
+    goal: Réserve /srv/partage/compta au groupe compta, fais en sorte que les nouveaux fichiers appartiennent au groupe, protège les salaires, et empêche chacun d'effacer les fichiers des autres dans /srv/partage/depot.
+    objectives:
+      - id: groupe
+        label: Le dossier compta appartient au groupe compta, sans accès pour les autres (rwxrws---)
+        when: { file: { path: /srv/partage/compta, group: compta, mode: '2770' } }
+      - id: fichiers
+        label: Les fichiers existants appartiennent au groupe compta
+        when:
+          all:
+            - { file: { path: /srv/partage/compta/salaires-2026.ods, group: compta } }
+            - { file: { path: /srv/partage/compta/notes-de-frais.ods, group: compta } }
+      - id: salaires
+        label: Les salaires - lecture et écriture pour Julie, lecture pour le groupe, rien pour les autres
+        when: { file: { path: /srv/partage/compta/salaires-2026.ods, mode: '0640' } }
+      - id: sticky
+        label: Dépôt - tout le monde dépose, chacun ne peut effacer que ses fichiers (sticky bit)
+        when: { file: { path: /srv/partage/depot, mode: '1777' } }
+    hints:
+      - "chgrp (ou chown :groupe) change le groupe ; le bit setgid (2) d'un dossier transmet son groupe aux nouveaux fichiers ; le sticky bit (1) protège les fichiers des autres."
+      - 'sudo chgrp -R compta /srv/partage/compta ; sudo chmod 2770 … ; sudo chmod 640 …/salaires-2026.ods ; sudo chmod 1777 /srv/partage/depot'
+      - 'Solution : sudo chgrp -R compta /srv/partage/compta, sudo chmod 2770 /srv/partage/compta, sudo chmod 640 /srv/partage/compta/salaires-2026.ods, sudo chmod 1777 /srv/partage/depot'
+    solution:
+      - ls -l /srv/partage /srv/partage/compta
+      - sudo chgrp -R compta /srv/partage/compta
+      - sudo chmod 2770 /srv/partage/compta
+      - sudo chmod 640 /srv/partage/compta/salaires-2026.ods
+      - sudo chmod 1777 /srv/partage/depot
+      - ls -ld /srv/partage/compta /srv/partage/depot
+
+  - id: lecture
+    type: input
+    question: 'Que vaut en octal le droit rw-r----- ?'
+    answers: ['640', '0640']
+    normalize: [trim]
+    explain: r=4, w=2, x=1 - propriétaire rw- = 6, groupe r-- = 4, autres --- = 0.
+
+  - id: umask
+    type: choice
+    sheet: fiche-droits
+    question: Avec un umask de 027, quels droits a un nouveau fichier ?
+    options:
+      - text: rw-r----- (640)
+        correct: true
+      - text: rwxr-x--- (750)
+        feedback: C'est le cas d'un dossier. Un fichier part de 666, pas de 777.
+      - text: rw-rw-rw- (666)
+        feedback: Le umask retire des droits ; ici, il en retire au groupe et aux autres.
+      - text: '--------- (000)'
+        feedback: Le umask ne retire que les droits indiqués.
+    explain: Un fichier part de 666, un dossier de 777 ; le umask retire ses bits - 666 moins 027 donne 640.
+
+recap:
+  - 'chmod 640 f / chmod g+w,o-r f ; chown julie:compta f ; chgrp -R compta dossier.'
+  - "Bits spéciaux : setgid sur un dossier (2xxx) - les fichiers héritent du groupe ; sticky bit (1xxx) - chacun n'efface que ses fichiers (comme /tmp)."
+  - umask retire des droits à la création - 022 par défaut, 027 pour un serveur plus fermé.

@@ -1,0 +1,120 @@
+id: linux-admin.boot
+chapter: linux-admin
+title: Le serveur ne boote plus
+summary: Coupure de courant cette nuit. srv-web01 a redémarré, mais sans l'intranet ni le disque des archives. Remets-le d'aplomb pour de bon.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.paquets] }
+ticket: { number: 2055, priority: critique, requester: karim, service: commercial }
+rewards:
+  xp: 80
+  skills: { linux: 8, support: 2 }
+  reputation: { commercial: 4 }
+  sheets: [fiche-demarrage]
+dialogue:
+  intro: hugo#boot-intro
+  outro: hugo#boot-outro
+
+machines:
+  srv-web01:
+    base: debian-server
+    hostname: srv-web01
+    session: { user: stagiaire }
+    users: [stagiaire]
+    sudoers: [stagiaire]
+    groups: { adm: [stagiaire] }
+    services:
+      # Démarré à la main un jour, jamais activé : il ne repart pas au démarrage.
+      apache2: { state: inactive, enabled: false }
+    extraDisks:
+      - { name: sdb, size: 50G, format: ext4, fsLabel: archives }
+    files:
+      /srv/archives: { type: dir }
+      /etc/fstab:
+        content: |
+          # /etc/fstab: static file system information.
+          #
+          # Use 'blkid' to print the universally unique identifier for a
+          # device; this may be used with UUID= as a more robust way to name devices
+          # that works even if disks are added and removed. See fstab(5).
+          #
+          # systemd generates mount units based on this file, see systemd.mount(5).
+          # Please run 'systemctl daemon-reload' after making changes here.
+          #
+          # <file system> <mount point>   <type>  <options>       <dump>  <pass>
+          # / was on /dev/sda1 during installation
+          UUID=c97e756a-ca7e-46fd-a77e-7244c87e73d7 /               ext4    errors=remount-ro 0       1
+          # swap was on /dev/sda5 during installation
+          UUID=bf5418a5-be54-4712-ad54-157fbc5413ec none            swap    sw              0       0
+          /dev/sr0        /media/cdrom0   udf,iso9660 user,noauto     0       0
+          # Disque des archives (ajouté par Gégé)
+          /dev/sdc1       /srv/archives   ext4    defaults,nofail 0       2
+
+steps:
+  - id: sequence
+    type: ordering
+    sheet: fiche-demarrage
+    question: Remets dans l'ordre le démarrage d'un serveur Linux.
+    items:
+      - Le BIOS ou l'UEFI teste le matériel et choisit le disque de démarrage
+      - GRUB affiche son menu et charge le noyau Linux
+      - Le noyau détecte le matériel et monte la racine /
+      - systemd démarre (PID 1)
+      - systemd atteint la cible multi-user.target et lance les services activés
+    explain: Une panne au démarrage se situe toujours dans une de ces étapes. Ici, tout a démarré jusqu'à systemd - le problème est dans les services et les montages.
+
+  - id: reparer
+    type: terminal
+    sim: bash
+    machine: srv-web01
+    sheet: fiche-demarrage
+    goal: Trouve pourquoi Apache et /srv/archives ne sont pas revenus, corrige-le pour que ça tienne au prochain redémarrage, puis vérifie en redémarrant.
+    objectives:
+      - id: apache
+        label: Apache tourne et démarre automatiquement
+        when: { service: { name: apache2, state: active, enabled: true } }
+      - id: fstab
+        label: Désigner le disque des archives par son UUID ou son étiquette dans /etc/fstab
+        when: { file: { path: /etc/fstab, matches: '^(UUID|LABEL)=\S+\s+/srv/archives\s' } }
+      - id: archives
+        label: /srv/archives est monté
+        when: { disk: { mount: /srv/archives, persistent: true } }
+      - id: verification
+        label: Redémarrer le serveur pour vérifier
+        when: { command: { matches: '^(sudo )?(reboot|shutdown -r now|systemctl reboot)$' } }
+    hints:
+      - systemctl status apache2 dit si le service est activé ; lsblk, blkid et /etc/fstab racontent l'histoire du disque.
+      - "sudo systemctl enable --now apache2 ; le disque s'appelle maintenant sdb1 - dans fstab, préfère LABEL= ou UUID= aux noms /dev/sdX qui changent."
+      - "Solution : sudo systemctl enable --now apache2 ; sudo sed -i 's|^/dev/sdc1|LABEL=archives|' /etc/fstab ; sudo mount -a ; sudo reboot"
+    solution:
+      - systemctl status apache2
+      - lsblk -f
+      - cat /etc/fstab
+      - sudo systemctl enable --now apache2
+      - sudo blkid /dev/sdb1
+      - sudo sed -i 's|^/dev/sdc1|LABEL=archives|' /etc/fstab
+      - sudo mount -a
+      - df -h /srv/archives
+      - sudo reboot
+      - sudo journalctl -b -p err
+
+  - id: cible
+    type: choice
+    sheet: fiche-demarrage
+    question: systemctl get-default répond graphical.target sur un serveur sans bureau. Que faire ?
+    options:
+      - text: sudo systemctl set-default multi-user.target, la cible des serveurs sans interface graphique
+        correct: true
+      - text: Réinstaller le serveur
+        feedback: Beaucoup trop radical pour un simple réglage de cible.
+      - text: Rien n'est possible sans l'accès à GRUB
+        feedback: La cible par défaut se change avec systemctl, depuis le système démarré.
+      - text: Supprimer /etc/systemd
+        feedback: Le serveur ne démarrerait plus du tout.
+    explain: Les cibles remplacent les anciens niveaux d'exécution - multi-user.target (serveur), graphical.target (bureau), rescue.target (maintenance).
+
+recap:
+  - BIOS/UEFI → GRUB → noyau → systemd → cible → services.
+  - 'systemctl enable : démarrer au boot ; start : maintenant ; enable --now : les deux.'
+  - Dans /etc/fstab, UUID= ou LABEL= plutôt que /dev/sdX ; nofail pour un disque non vital ; sudo mount -a pour tester.
+  - journalctl -b -p err - les erreurs du dernier démarrage.

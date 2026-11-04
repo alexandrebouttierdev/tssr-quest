@@ -1,0 +1,199 @@
+id: linux-admin.epreuve-serveur-web
+chapter: linux-admin
+title: 'Épreuve : le serveur intranet'
+summary: Mme Garnier veut un nouvel intranet sur srv-intranet, une Debian toute neuve. Installe et configure le serveur web de A à Z. Épreuve notée sur 20.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.intranet-down] }
+ticket: { number: 2080, priority: haute, requester: hugo, service: direction }
+rewards:
+  skills: { linux: 12, securite: 3, sauvegarde: 3 }
+  reputation: { direction: 5 }
+  sheets: [fiche-apache]
+dialogue:
+  intro: hugo#epreuve-admin-intro
+  outro: hugo#epreuve-admin-outro
+  abandon: hugo#epreuve-admin-abandon
+
+machines:
+  srv-intranet:
+    base: debian-server
+    hostname: srv-intranet
+    session: { user: stagiaire }
+    users: [stagiaire, julie.martin]
+    sudoers: [stagiaire]
+    network: { address: 192.168.10.40 }
+
+steps:
+  - id: installer
+    type: terminal
+    sim: bash
+    machine: srv-intranet
+    goal: Installe le serveur web Apache.
+    objectives:
+      - id: apache
+        label: Apache est installé et tourne
+        when:
+          all:
+            - { package: { name: apache2 } }
+            - { service: { name: apache2, state: active, enabled: true } }
+    hints:
+      - Le paquet porte le nom du serveur.
+      - 'sudo apt update puis sudo apt install apache2'
+      - 'Solution : sudo apt update, sudo apt install apache2, O'
+    solution:
+      - sudo apt update
+      - sudo apt install apache2
+      - O
+      - systemctl status apache2
+
+  - id: contenu
+    type: terminal
+    sim: bash
+    machine: srv-intranet
+    goal: 'Crée /var/www/intranet avec une page index.html qui contient « Intranet LabCorp ». Le groupe webmasters (dont julie.martin) doit pouvoir y écrire, et les nouveaux fichiers doivent lui appartenir.'
+    objectives:
+      - id: groupe
+        label: Groupe webmasters avec julie.martin
+        when: { group: { name: webmasters, members: [julie.martin] } }
+      - id: dossier
+        label: /var/www/intranet appartient au groupe webmasters, en 2775
+        when: { file: { path: /var/www/intranet, group: webmasters, mode: '2775' } }
+      - id: page
+        label: index.html contient « Intranet LabCorp »
+        when: { file: { path: /var/www/intranet/index.html, contains: 'Intranet LabCorp' } }
+    hints:
+      - Un groupe, un dossier, des droits avec le bit setgid, puis la page - écrite avec tee, car une redirection ne passe pas par sudo.
+      - 'sudo groupadd webmasters ; sudo usermod -aG webmasters julie.martin ; sudo mkdir … ; sudo chgrp webmasters … ; sudo chmod 2775 … ; echo … | sudo tee …/index.html'
+      - 'Solution : groupadd, usermod -aG, mkdir /var/www/intranet, chgrp webmasters, chmod 2775, echo "<h1>Intranet LabCorp</h1>" | sudo tee /var/www/intranet/index.html'
+    solution:
+      - sudo groupadd webmasters
+      - sudo usermod -aG webmasters julie.martin
+      - sudo mkdir /var/www/intranet
+      - sudo chgrp webmasters /var/www/intranet
+      - sudo chmod 2775 /var/www/intranet
+      - echo "<h1>Intranet LabCorp</h1>" | sudo tee /var/www/intranet/index.html
+      - ls -la /var/www/intranet
+
+  - id: site
+    type: editor
+    machine: srv-intranet
+    file: /etc/apache2/sites-available/intranet.conf
+    sudo: true
+    goal: 'Écris le site Apache : un VirtualHost sur le port 80, ServerName intranet.lab.local, DocumentRoot /var/www/intranet.'
+    objectives:
+      - id: virtualhost
+        label: Un bloc <VirtualHost *:80> fermé
+        when:
+          all:
+            - {
+                file:
+                  {
+                    path: /etc/apache2/sites-available/intranet.conf,
+                    matches: '^<VirtualHost \*:80>$',
+                  },
+              }
+            - {
+                file:
+                  { path: /etc/apache2/sites-available/intranet.conf, matches: '^</VirtualHost>$' },
+              }
+      - id: nom
+        label: ServerName intranet.lab.local
+        when:
+          {
+            file:
+              {
+                path: /etc/apache2/sites-available/intranet.conf,
+                matches: '^\s*ServerName intranet\.lab\.local$',
+              },
+          }
+      - id: racine
+        label: DocumentRoot /var/www/intranet
+        when:
+          {
+            file:
+              {
+                path: /etc/apache2/sites-available/intranet.conf,
+                matches: '^\s*DocumentRoot /var/www/intranet/?$',
+              },
+          }
+    hints:
+      - Inspire-toi de /etc/apache2/sites-available/000-default.conf.
+      - 'i pour insérer, quatre lignes, Échap, :wq'
+      - 'Solution : <VirtualHost *:80>, ServerName intranet.lab.local, DocumentRoot /var/www/intranet, </VirtualHost>'
+    solution:
+      - "i<VirtualHost *:80><CR>\tServerName intranet.lab.local<CR>\tDocumentRoot /var/www/intranet<CR></VirtualHost><Esc>"
+      - ':wq<CR>'
+
+  - id: activer
+    type: terminal
+    sim: bash
+    machine: srv-intranet
+    goal: Active le site intranet, désactive le site par défaut, vérifie la configuration et recharge Apache.
+    objectives:
+      - id: actif
+        label: Le site intranet est activé
+        when:
+          {
+            file:
+              {
+                path: /etc/apache2/sites-enabled/intranet.conf,
+                linkTo: /etc/apache2/sites-available/intranet.conf,
+              },
+          }
+      - id: defaut
+        label: Le site par défaut est désactivé
+        when: { file: { path: /etc/apache2/sites-enabled/000-default.conf, exists: false } }
+      - id: test
+        label: Vérifier la syntaxe avant de recharger
+        when: { command: { matches: '^(sudo )?(apache2ctl|apachectl) (configtest|-t)$' } }
+      - id: recharge
+        label: Recharger Apache
+        when:
+          all:
+            - {
+                command:
+                  {
+                    matches: '^(sudo )?(systemctl (reload|restart) apache2|apache2ctl graceful|service apache2 (reload|restart))$',
+                  },
+              }
+            - { service: { name: apache2, state: active } }
+    hints:
+      - a2ensite et a2dissite créent et retirent les liens de sites-enabled.
+      - 'sudo a2ensite intranet ; sudo a2dissite 000-default ; sudo apache2ctl configtest ; sudo systemctl reload apache2'
+      - 'Solution : sudo a2ensite intranet, sudo a2dissite 000-default, sudo apache2ctl configtest, sudo systemctl reload apache2'
+    solution:
+      - sudo a2ensite intranet
+      - sudo a2dissite 000-default
+      - sudo apache2ctl configtest
+      - sudo systemctl reload apache2
+
+  - id: sauvegarde
+    type: terminal
+    sim: bash
+    machine: srv-intranet
+    goal: Planifie dans la table de root une sauvegarde de /var/www/intranet chaque nuit à 1 h (archive tar.gz dans /srv/sauvegardes).
+    objectives:
+      - id: cron
+        label: Sauvegarde nocturne de /var/www/intranet à 1 h
+        when:
+          {
+            cron:
+              {
+                user: root,
+                matches: 'tar -?c\w*f /srv/sauvegardes/\S+ /var/www/intranet',
+                schedule: '0 1 * * *',
+              },
+          }
+    hints:
+      - Crée le dossier de destination, puis une ligne de crontab.
+      - 'sudo mkdir /srv/sauvegardes ; sudo crontab -e : 0 1 * * * tar czf /srv/sauvegardes/intranet.tar.gz /var/www/intranet'
+      - 'Solution : sudo mkdir /srv/sauvegardes ; echo "0 1 * * * tar czf /srv/sauvegardes/intranet.tar.gz /var/www/intranet" | sudo crontab -'
+    solution:
+      - sudo mkdir /srv/sauvegardes
+      - echo "0 1 * * * tar czf /srv/sauvegardes/intranet.tar.gz /var/www/intranet" | sudo crontab -
+      - sudo crontab -l
+
+recap:
+  - apt install, groupes et droits (setgid), site Apache dans sites-available, a2ensite, configtest, reload.
+  - Une sauvegarde planifiée dès la mise en service.

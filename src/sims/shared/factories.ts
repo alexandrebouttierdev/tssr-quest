@@ -21,7 +21,7 @@ import { fileSize } from './node-size';
 import { dirname, isInside, normalizePath } from './path';
 import { checkServiceConfig } from './config-check';
 import { PACKAGE_CATALOG } from './package-catalog';
-import { initialStorage } from './storage';
+import { initialStorage, stableUuid } from './storage';
 import { seedPackageFiles } from './packages';
 import { SERVICE_CATALOG } from './service-catalog';
 import { failureLogLines, serviceProcesses, startLogLines } from './services';
@@ -117,7 +117,13 @@ export interface DebianServerOptions {
   /** État des paquets : installés en plus, mises à jour publiées, dpkg interrompu. */
   readonly packages?: PackagesSpec;
   /** Disques supplémentaires, vierges (`{ name: sdb, size: 10G }`). */
-  readonly extraDisks?: readonly { readonly name: string; readonly size: string | number }[];
+  readonly extraDisks?: readonly {
+    readonly name: string;
+    readonly size: string | number;
+    /** `ext4` : disque déjà partitionné (sdX1) et formaté, mais pas monté. */
+    readonly format?: 'ext4';
+    readonly fsLabel?: string;
+  }[];
   readonly network?: {
     readonly address?: string;
     readonly prefix?: number;
@@ -486,7 +492,17 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
   const prefix = options.network?.prefix ?? 24;
   const gateway = options.network?.gateway ?? '192.168.10.254';
   const dnsServers = options.network?.dns ?? ['192.168.10.1'];
-  const net: NetworkFileParams = { hostname, domain, address, prefix, gateway, dnsServers, iface };
+  const net: NetworkFileParams = {
+    hostname,
+    domain,
+    address,
+    prefix,
+    gateway,
+    dnsServers,
+    iface,
+    ...(options.network?.dhcp ? { dhcp: true } : {}),
+    ...(options.network?.noGateway ? { noGateway: true } : {}),
+  };
 
   const etc = (path: string, content: string, mode = 0o644, group = 'root') => {
     fs[path] = file('root', group, mode, t, content);
@@ -669,6 +685,10 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
         d.mount === '/' ? 'errors=remount-ro' : 'defaults         '
       } 0       ${d.mount === '/' ? 1 : 2}`,
     ]),
+    // L'installation guidée ajoute le swap (sda5) et le lecteur de CD.
+    '# swap was on /dev/sda5 during installation',
+    `UUID=${stableUuid(`${hostname}:swap`)} none            swap    sw              0       0`,
+    '/dev/sr0        /media/cdrom0   udf,iso9660 user,noauto     0       0',
   ].join('\n');
   if (!options.files?.['/etc/fstab'])
     fs['/etc/fstab'] = file('root', 'root', 0o644, t, `${fstab}\n`);
@@ -890,7 +910,7 @@ export function createDebianServer(options: DebianServerOptions = {}): Machine {
     storage: initialStorage(
       hostname,
       realDisks,
-      (options.extraDisks ?? []).map((d) => ({ name: d.name, size: parseSize(d.size) })),
+      (options.extraDisks ?? []).map((d) => ({ ...d, size: parseSize(d.size) })),
       (device) => deviceUuid(hostname, device),
     ),
     logs,

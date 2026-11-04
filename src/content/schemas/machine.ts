@@ -113,7 +113,18 @@ export const machineSpecSchema = z.strictObject({
     .optional(),
   /** Disques vierges ajoutés à la machine (`{ name: sdb, size: 10G }`). */
   extraDisks: z
-    .array(z.strictObject({ name: z.string().regex(/^sd[b-z]$/), size: sizeSchema }))
+    .array(
+      z.strictObject({
+        name: z.string().regex(/^sd[b-z]$/),
+        size: sizeSchema,
+        /** Disque déjà partitionné (sdX1) et formaté, non monté. */
+        format: z.literal('ext4').optional(),
+        fsLabel: z
+          .string()
+          .regex(/^[\w-]{1,16}$/)
+          .optional(),
+      }),
+    )
     .optional(),
   rootPassword: z.string().min(1).optional(),
 });

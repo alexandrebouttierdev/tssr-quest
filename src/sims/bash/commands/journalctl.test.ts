@@ -72,3 +72,16 @@ describe('commande journalctl', () => {
     );
   });
 });
+
+describe('filtres de priorité et de démarrage', () => {
+  it('ne garde que les erreurs avec -p err (ou 3)', () => {
+    const out = runLine(machine, 'journalctl -p err').stdout;
+    expect(out).toContain('Failed to start apache2.service');
+    expect(out).not.toContain('No space left on device');
+    expect(runLine(machine, 'journalctl -p 3 -b').stdout).toBe(out);
+    expect(runLine(machine, 'journalctl --priority=info').stdout).toContain('No space left');
+    expect(runLine(machine, 'journalctl -p grave').stderr).toBe(
+      'Failed to parse priority value: grave\n',
+    );
+  });
+});

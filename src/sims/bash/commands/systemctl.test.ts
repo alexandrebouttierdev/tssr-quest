@@ -188,3 +188,26 @@ describe('systemctl enable, disable et requêtes', () => {
     expect(runLine(machine, 'systemctl danse').stderr).toBe('Unknown command verb danse.\n');
   });
 });
+
+describe('cibles de démarrage', () => {
+  it('affiche et change la cible par défaut', () => {
+    expect(runLine(broken, 'systemctl get-default').stdout).toBe('graphical.target\n');
+    const set = runLine(broken, 'sudo systemctl set-default multi-user.target');
+    expect(set.stdout).toBe(
+      'Created symlink /etc/systemd/system/default.target → /lib/systemd/system/multi-user.target.\n',
+    );
+    expect(runLine(set.state, 'systemctl get-default').stdout).toBe('multi-user.target\n');
+    expect(runLine(set.state, 'sudo systemctl set-default graphical').stdout).toMatch(
+      /^Removed "\/etc\/systemd\/system\/default\.target"\.\nCreated symlink .*graphical\.target\.\n$/,
+    );
+  });
+
+  it('refuse une cible inconnue ou un compte ordinaire', () => {
+    expect(runLine(broken, 'sudo systemctl set-default bureau.target').stderr).toBe(
+      'Failed to set default target: Unit file bureau.target does not exist.\n',
+    );
+    expect(runLine(broken, 'systemctl set-default multi-user.target').stderr).toBe(
+      'Failed to set default target: Access denied\n',
+    );
+  });
+});

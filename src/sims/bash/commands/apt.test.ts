@@ -325,4 +325,13 @@ describe('dpkg', () => {
     expect(runLine(outdated, 'dpkg').stderr).toContain('dpkg: erreur: il faut indiquer une action');
     expect(runLine(outdated, 'dpkg --zz').stderr).toContain('option inconnue --zz');
   });
+
+  describe('présentation des listes de paquets', () => {
+    it('trie les noms par ordre alphabétique, comme apt', () => {
+      const out = runLine(debianServer({}), 'sudo apt install apache2').stdout;
+      expect(out).toContain(
+        'Les paquets supplémentaires suivants seront installés :\n  apache2-bin apache2-data apache2-utils libapr1 libaprutil1\n',
+      );
+    });
+  });
 });

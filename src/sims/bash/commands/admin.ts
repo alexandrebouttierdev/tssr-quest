@@ -294,9 +294,31 @@ export function rebootMachine(env: CommandEnv): { machine: Machine; notes: strin
       continue;
     }
     const result = mountDevice({ ...env, machine }, machine, entry.spec, entry.dir);
-    if (result.machine) machine = result.machine;
-    else if (!options.includes('nofail'))
-      notes += `[ TIME ] Timed out waiting for device ${entry.spec}.\n[DEPEND] Dependency failed for ${entry.dir}.\n`;
+    if (result.machine) {
+      machine = result.machine;
+      continue;
+    }
+    // Échec : systemd l'écrit dans le journal (priorité err) et sur la console.
+    const mountUnit = `${systemdEscape(entry.dir)}.mount - ${entry.dir}`;
+    const messages =
+      device === null
+        ? [
+            `Timed out waiting for device ${systemdEscape(devicePath(entry.spec))}.device - ${devicePath(entry.spec)}.`,
+            `Dependency failed for ${mountUnit}.`,
+          ]
+        : [`Failed to mount ${mountUnit}.`];
+    machine = appendLogs(
+      machine,
+      'systemd',
+      messages.map((message) => ({ time: now, ident: 'systemd', pid: 1, message })),
+    );
+    if (!options.includes('nofail'))
+      notes += messages
+        .map(
+          (m) =>
+            `${m.startsWith('Timed') ? '[ TIME ]' : m.startsWith('Dependency') ? '[DEPEND]' : '[FAILED]'} ${m}\n`,
+        )
+        .join('');
   }
 
   // Services : seuls ceux qui sont activés (systemctl enable) repartent.
@@ -304,6 +326,35 @@ export function rebootMachine(env: CommandEnv): { machine: Machine; notes: strin
     if (s.enabled) machine = startService(machine, s.name, now).machine;
   }
   return { machine: bootLines(machine, now), notes };
+}
+
+/** Chemin du périphérique attendu par une ligne de fstab (`UUID=…` → /dev/disk/by-uuid/…). */
+function devicePath(spec: string): string {
+  const match = /^(UUID|LABEL)=["']?([^"']+)["']?$/.exec(spec);
+  if (!match) return spec;
+  return `/dev/disk/by-${match[1] === 'UUID' ? 'uuid' : 'label'}/${match[2] ?? ''}`;
+}
+
+/**
+ * Nom d'unité systemd d'un chemin (`systemd-escape --path`) : `/srv/partage` →
+ * `srv-partage`, les tirets du nom devenant `\x2d`.
+ *
+ * @param path - Chemin absolu.
+ * @returns Le nom échappé.
+ */
+export function systemdEscape(path: string): string {
+  const trimmed = path.replace(/^\/+|\/+$/g, '');
+  if (trimmed === '') return '-';
+  return trimmed
+    .split('/')
+    .map((part) =>
+      [...part]
+        .map((c) =>
+          /[A-Za-z0-9:_.]/.test(c) ? c : `\\x${c.charCodeAt(0).toString(16).padStart(2, '0')}`,
+        )
+        .join(''),
+    )
+    .join('-');
 }
 
 /** PID de la connexion SSH du joueur (sshd [priv], sshd pts/0, -bash), recréée au retour. */

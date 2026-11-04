@@ -18,6 +18,8 @@ export type StepData =
       readonly editor?: VimState | null;
       /** Action à mener quand l'éditeur se fermera (`crontab -e`). */
       readonly editorHook?: EditorHook | null;
+      /** Compte qui édite le fichier ouvert (root après `sudo vim`). */
+      readonly editorUser?: string | null;
     }
   | { readonly type: 'editor'; readonly editor: VimState }
   | { readonly type: 'choice' }

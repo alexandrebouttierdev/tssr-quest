@@ -1,0 +1,87 @@
+id: linux-admin.paquets
+chapter: linux-admin
+title: Mises à jour en retard
+summary: Une mise à jour de srv-web01 a été coupée en plein milieu, et des correctifs de sécurité attendent. Remets les paquets d'aplomb.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.installer-debian] }
+ticket: { number: 2052, priority: haute, requester: hugo, service: direction }
+rewards:
+  xp: 70
+  skills: { linux: 7, securite: 3 }
+  sheets: [fiche-apt]
+dialogue:
+  intro: hugo#paquets-intro
+  outro: hugo#paquets-outro
+
+machines:
+  srv-web01:
+    base: debian-server
+    hostname: srv-web01
+    session: { user: stagiaire }
+    users: [stagiaire]
+    sudoers: [stagiaire]
+    groups: { adm: [stagiaire] }
+    services:
+      apache2: { state: active }
+    packages:
+      halfConfigured: [tree]
+      updates:
+        curl: { version: '7.88.1-10+deb12u12', suite: bookworm-security }
+        openssl: { version: '3.0.16-1~deb12u1', suite: bookworm-security }
+        libssl3: { version: '3.0.16-1~deb12u1', suite: bookworm-security }
+
+steps:
+  - id: reparer
+    type: terminal
+    sim: bash
+    machine: srv-web01
+    sheet: fiche-apt
+    goal: Termine l'installation interrompue, applique les mises à jour de sécurité, puis installe l'outil htop.
+    objectives:
+      - id: dpkg
+        label: Finir la configuration des paquets interrompue
+        when: { command: { matches: '^(sudo )?dpkg --configure -a$' } }
+      - id: listes
+        label: Mettre à jour la liste des paquets
+        when: { command: { matches: '^(sudo )?apt(-get)? update$' } }
+      - id: securite
+        label: Appliquer les mises à jour (curl et openssl)
+        when:
+          all:
+            - { package: { name: curl, upToDate: true } }
+            - { package: { name: openssl, upToDate: true } }
+      - id: htop
+        label: Installer htop
+        when: { package: { name: htop } }
+    hints:
+      - Lis le message d'erreur d'apt - il donne la commande à lancer.
+      - 'sudo dpkg --configure -a, puis sudo apt update, sudo apt upgrade (réponds O), sudo apt install htop.'
+      - 'Solution : sudo dpkg --configure -a ; sudo apt update ; apt list --upgradable ; sudo apt upgrade, O ; sudo apt install htop'
+    solution:
+      - sudo dpkg --configure -a
+      - sudo apt update
+      - apt list --upgradable
+      - sudo apt upgrade
+      - O
+      - sudo apt install htop
+
+  - id: depots
+    type: choice
+    sheet: fiche-apt
+    question: Où apt trouve-t-il la liste des dépôts à interroger ?
+    options:
+      - text: Dans /etc/apt/sources.list (et les fichiers de /etc/apt/sources.list.d)
+        correct: true
+      - text: Dans /var/log/apt/history.log
+        feedback: C'est l'historique de ce qu'apt a fait, pas sa configuration.
+      - text: Sur le site de Debian, à chaque commande
+        feedback: apt contacte bien les dépôts, mais leur adresse est écrite dans sources.list.
+      - text: Dans /etc/hosts
+        feedback: /etc/hosts associe des noms à des adresses IP.
+    explain: Sans la ligne bookworm-security dans sources.list, le serveur ne recevrait jamais les correctifs de sécurité.
+
+recap:
+  - 'sudo apt update (listes), apt list --upgradable, sudo apt upgrade, sudo apt install / remove / purge.'
+  - 'dpkg -l (paquets installés), dpkg -L paquet (ses fichiers), sudo dpkg --configure -a après une coupure.'
+  - Les dépôts sont dans /etc/apt/sources.list ; bookworm-security apporte les correctifs.

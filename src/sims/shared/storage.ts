@@ -365,7 +365,14 @@ export function partitionTypeName(type: string): string {
 export function initialStorage(
   hostname: string,
   mounted: readonly Disk[],
-  extraDisks: readonly { readonly name: string; readonly size: number }[],
+  extraDisks: readonly {
+    readonly name: string;
+    readonly size: number;
+    /** `ext4` : disque déjà partitionné (sdX1) et formaté. */
+    readonly format?: 'ext4' | undefined;
+    /** Étiquette du système de fichiers (`LABEL=…`). */
+    readonly fsLabel?: string | undefined;
+  }[],
   uuidOf: (device: string) => string,
 ): Storage {
   const sectors = (bytes: number) => Math.ceil(bytes / SECTOR);
@@ -411,13 +418,27 @@ export function initialStorage(
       diskId: `0x${seedFromString(`${hostname}:sda`).toString(16).padStart(8, '0')}`,
       partitions: partitions.sort((a, b) => a.number - b.number),
     },
-    ...extraDisks.map((d) => ({
-      name: d.name,
-      size: d.size,
-      label: null,
-      diskId: `0x${seedFromString(`${hostname}:${d.name}`).toString(16).padStart(8, '0')}`,
-      partitions: [],
-    })),
+    ...extraDisks.map((d) => {
+      const diskId = `0x${seedFromString(`${hostname}:${d.name}`).toString(16).padStart(8, '0')}`;
+      if (d.format !== 'ext4')
+        return { name: d.name, size: d.size, label: null, diskId, partitions: [] };
+      // Disque déjà en service : une partition Linux sur tout le disque, formatée en ext4.
+      const end = Math.floor(d.size / SECTOR) - 1;
+      const device = `/dev/${d.name}1`;
+      signatures[device] = {
+        type: 'ext4',
+        uuid: uuidOf(device),
+        ...(d.fsLabel ? { label: d.fsLabel } : {}),
+        size: (end - FIRST_SECTOR + 1) * SECTOR,
+      };
+      return {
+        name: d.name,
+        size: d.size,
+        label: 'dos' as const,
+        diskId,
+        partitions: [{ number: 1, start: FIRST_SECTOR, end, type: '83' }],
+      };
+    }),
   ];
   return { disks, signatures, pvs: [], vgs: [], lvs: [] };
 }

@@ -1,0 +1,110 @@
+id: linux-admin.ip-fixe
+chapter: linux-admin
+title: Adresse fixe
+summary: srv-fichiers a été installé en DHCP. Un serveur doit avoir une adresse fixe - sinon, les partages disparaissent au prochain bail.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.disque] }
+rewards:
+  xp: 90
+  skills: { linux: 8, reseau: 5 }
+  sheets: [fiche-reseau-linux]
+dialogue:
+  intro: hugo#ip-intro
+  outro: hugo#ip-outro
+
+machines:
+  srv-fichiers:
+    base: debian-server
+    hostname: srv-fichiers
+    session: { user: stagiaire }
+    users: [stagiaire]
+    sudoers: [stagiaire]
+    network: { dhcp: true, address: 192.168.10.105 }
+
+steps:
+  - id: constat
+    type: terminal
+    sim: bash
+    machine: srv-fichiers
+    sheet: fiche-reseau-linux
+    goal: Relève la configuration actuelle - adresse, passerelle, serveurs DNS.
+    objectives:
+      - id: adresse
+        label: Afficher l'adresse IP (ip a)
+        when: { command: { matches: '^(sudo )?ip (-4 )?(a|addr|address)( show.*)?$' } }
+      - id: route
+        label: Afficher la passerelle par défaut (ip r)
+        when: { command: { matches: '^(sudo )?ip (-4 )?(r|route)( show)?$' } }
+      - id: dns
+        label: Afficher les serveurs DNS (/etc/resolv.conf)
+        when: { command: { matches: '^(sudo )?(cat|less|more) /etc/resolv\.conf$' } }
+    hints:
+      - Trois commandes, trois informations.
+      - 'ip a, ip r, cat /etc/resolv.conf'
+      - 'Solution : ip a, ip r, cat /etc/resolv.conf'
+    solution:
+      - ip a
+      - ip r
+      - cat /etc/resolv.conf
+
+  - id: interfaces
+    type: editor
+    machine: srv-fichiers
+    file: /etc/network/interfaces
+    sudo: true
+    sheet: fiche-reseau-linux
+    goal: 'Remplace « iface ens33 inet dhcp » par une configuration statique : adresse 192.168.10.30/24, passerelle 192.168.10.254.'
+    objectives:
+      - id: statique
+        label: Déclarer ens33 en statique avec 192.168.10.30/24 et la passerelle 192.168.10.254
+        when:
+          all:
+            - { file: { path: /etc/network/interfaces, matches: '^iface ens33 inet static$' } }
+            - {
+                file:
+                  { path: /etc/network/interfaces, matches: '^\s+address 192\.168\.10\.30(/24)?$' },
+              }
+            - { file: { path: /etc/network/interfaces, matches: '^\s+gateway 192\.168\.10\.254$' } }
+    hints:
+      - 'Trois lignes : iface ens33 inet static, puis address et gateway, en retrait.'
+      - 'G va sur la dernière ligne, dd la supprime, o en ouvre une nouvelle.'
+      - 'Solution : G, dd, o, iface ens33 inet static, Entrée, address …, Entrée, gateway …, Échap, :wq'
+    solution:
+      - 'Gdd'
+      - 'o'
+      - "iface ens33 inet static<CR>\taddress 192.168.10.30/24<CR>\tgateway 192.168.10.254<Esc>"
+      - ':wq<CR>'
+
+  - id: appliquer
+    type: terminal
+    sim: bash
+    machine: srv-fichiers
+    sheet: fiche-reseau-linux
+    goal: Applique la nouvelle configuration et vérifie que le serveur joint encore la passerelle et le contrôleur de domaine.
+    objectives:
+      - id: active
+        label: L'adresse 192.168.10.30/24 est active et permanente
+        when:
+          { net: { iface: ens33, ip: 192.168.10.30/24, gateway: 192.168.10.254, persistent: true } }
+      - id: ping
+        label: Tester la passerelle et srv-dc01 avec ping
+        when:
+          all:
+            - { command: { matches: '^ping .*192\.168\.10\.254$' } }
+            - { command: { matches: '^ping .*srv-dc01' } }
+    hints:
+      - "Il faut relancer l'interface : la désactiver puis la réactiver (ifdown, ifup), ou relancer le service networking."
+      - 'sudo ifdown ens33 ; sudo ifup ens33 ; ip a ; ping -c 2 192.168.10.254'
+      - 'Solution : sudo ifdown ens33, sudo ifup ens33, ip a, ping -c 2 192.168.10.254, ping -c 2 srv-dc01'
+    solution:
+      - sudo ifdown ens33
+      - sudo ifup ens33
+      - ip -4 a show ens33
+      - ping -c 2 192.168.10.254
+      - ping -c 2 srv-dc01
+
+recap:
+  - 'ip a (adresses), ip r (routes), /etc/resolv.conf (DNS) ; ip addr add ne survit pas au redémarrage.'
+  - '/etc/network/interfaces : iface ens33 inet static, address 192.168.10.30/24, gateway 192.168.10.254.'
+  - sudo ifdown ens33 && sudo ifup ens33 (ou systemctl restart networking) pour appliquer ; ping pour vérifier.

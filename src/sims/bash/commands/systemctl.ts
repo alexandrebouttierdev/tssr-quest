@@ -99,6 +99,56 @@ export function renderStatus(
   return `${lines.join('\n')}\n`;
 }
 
+/** Cibles de démarrage connues. */
+const TARGETS = ['multi-user.target', 'graphical.target', 'rescue.target', 'emergency.target'];
+
+/** Lien qui désigne la cible de démarrage par défaut. */
+const DEFAULT_TARGET_LINK = '/etc/systemd/system/default.target';
+
+/**
+ * Cible de démarrage par défaut : le lien de /etc/systemd/system, sinon celle de Debian
+ * (graphical.target, même sans bureau installé).
+ *
+ * @param machine - Machine simulée.
+ * @returns Le nom de la cible.
+ */
+export function defaultTarget(machine: Machine): string {
+  const link = machine.fs[DEFAULT_TARGET_LINK];
+  return link?.type === 'symlink'
+    ? (link.target.split('/').pop() ?? 'graphical.target')
+    : 'graphical.target';
+}
+
+/** `systemctl set-default CIBLE`. */
+function setDefault(env: CommandEnv, name: string): CommandOutcome {
+  if (!name) return { stderr: 'Too few arguments.\n', exitCode: 1 };
+  const target = name.endsWith('.target') ? name : `${name}.target`;
+  if (env.user !== 'root')
+    return { stderr: 'Failed to set default target: Access denied\n', exitCode: 1 };
+  if (!TARGETS.includes(target))
+    return {
+      stderr: `Failed to set default target: Unit file ${target} does not exist.\n`,
+      exitCode: 1,
+    };
+  const removed = env.machine.fs[DEFAULT_TARGET_LINK] ? `Removed "${DEFAULT_TARGET_LINK}".\n` : '';
+  const fs = {
+    ...env.machine.fs,
+    [DEFAULT_TARGET_LINK]: {
+      type: 'symlink' as const,
+      owner: 'root',
+      group: 'root',
+      mode: 0o777,
+      mtime: env.ctx.now.getTime(),
+      target: `/lib/systemd/system/${target}`,
+    },
+  };
+  return {
+    machine: { ...env.machine, fs },
+    stdout: `${removed}Created symlink ${DEFAULT_TARGET_LINK} → /lib/systemd/system/${target}.\n`,
+    exitCode: 0,
+  };
+}
+
 /** Message de refus pour un compte non root. */
 function accessDenied(verb: string, unit: string): CommandOutcome {
   const target = verb === 'enable' || verb === 'disable' ? 'unit' : `${unit}.service`;
@@ -234,6 +284,10 @@ EXEMPLES
       return accessDenied(verb === 'reload' ? 'reload' : verb, units[0] ?? '');
     const now = env.ctx.now.getTime();
     switch (verb) {
+      case 'get-default':
+        return { stdout: `${defaultTarget(env.machine)}\n`, exitCode: 0 };
+      case 'set-default':
+        return setDefault(env, rest[0] ?? '');
       case 'status': {
         if (units.length === 0) {
           return {

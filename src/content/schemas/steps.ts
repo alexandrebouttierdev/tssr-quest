@@ -89,8 +89,14 @@ export const terminalStepSchema = z.strictObject({
   machine: slugSchema,
   goal: playerTextSchema,
   objectives: z.array(objectiveSchema).min(1),
-  /** Solution de référence, rejouée par `npm run test:content`. */
-  solution: z.array(z.string().min(1)).min(1),
+  /**
+   * Solution de référence, rejouée par `npm run test:content`. Une ligne vide est un
+   * simple appui sur Entrée (valeur par défaut d'une question de fdisk, par exemple).
+   */
+  solution: z
+    .array(z.string())
+    .min(1)
+    .refine((lines) => lines.some((l) => l.trim() !== ''), 'solution vide'),
 });
 
 /** Étape « éditeur » : modifier un fichier dans vim. */
@@ -99,6 +105,8 @@ export const editorStepSchema = z.strictObject({
   type: z.literal('editor'),
   machine: slugSchema,
   file: z.string().startsWith('/'),
+  /** Éditer avec les droits de root (`sudo vim`), pour les fichiers de /etc. */
+  sudo: z.boolean().optional(),
   goal: playerTextSchema,
   objectives: z.array(objectiveSchema).min(1),
   /** Touches de la solution (texte tel quel, `<Esc>`, `<CR>`…), rejouées par les tests. */

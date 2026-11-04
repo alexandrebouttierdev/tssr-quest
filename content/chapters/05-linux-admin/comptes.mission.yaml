@@ -1,0 +1,101 @@
+id: linux-admin.comptes
+chapter: linux-admin
+title: Nouveaux arrivants
+summary: Julie rejoint la comptabilité et Paul les commerciaux. Crée leurs comptes sur srv-fichiers, et ferme celui de Gégé.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.boot] }
+ticket: { number: 2058, priority: normale, requester: hugo, service: comptabilite }
+rewards:
+  xp: 80
+  skills: { linux: 8, securite: 3 }
+  reputation: { comptabilite: 3, commercial: 2 }
+  sheets: [fiche-comptes]
+dialogue:
+  intro: hugo#comptes-intro
+  outro: hugo#comptes-outro
+
+machines:
+  srv-fichiers:
+    base: debian-server
+    hostname: srv-fichiers
+    session: { user: stagiaire }
+    users:
+      - stagiaire
+      - { name: gege, gecos: 'Gérard Gégé Lemoine', password: 'azerty' }
+    sudoers: [stagiaire]
+    groups: { commercial: [] }
+
+steps:
+  - id: comptes
+    type: terminal
+    sim: bash
+    machine: srv-fichiers
+    sheet: fiche-comptes
+    goal: Crée le groupe compta, les comptes julie.martin (compta) et paul.durand (commercial) avec un dossier personnel et Bash, un mot de passe provisoire à changer à la première connexion, puis verrouille le compte de Gégé.
+    objectives:
+      - id: groupe
+        label: Créer le groupe compta
+        when: { group: { name: compta } }
+      - id: julie
+        label: Créer julie.martin, membre de compta, avec /home/julie.martin et /bin/bash
+        when:
+          user: { name: julie.martin, groups: [compta], home: /home/julie.martin, shell: /bin/bash }
+      - id: paul
+        label: Créer paul.durand, membre de commercial
+        when: { user: { name: paul.durand, groups: [commercial], shell: /bin/bash } }
+      - id: dossiers
+        label: Les dossiers personnels existent
+        when:
+          all:
+            - { file: { path: /home/julie.martin, owner: julie.martin } }
+            - { file: { path: /home/paul.durand, owner: paul.durand } }
+      - id: provisoires
+        label: Donner un mot de passe provisoire, à changer à la première connexion
+        when:
+          all:
+            - { user: { name: julie.martin, hasPassword: true, mustChangePassword: true } }
+            - { user: { name: paul.durand, hasPassword: true, mustChangePassword: true } }
+      - id: gege
+        label: Verrouiller le compte de Gégé (sans le supprimer)
+        when: { user: { name: gege, locked: true } }
+    hints:
+      - 'useradd -m crée le dossier personnel, -s choisit le shell, -G ajoute à des groupes ; passwd donne le mot de passe, chage -d 0 force son changement.'
+      - 'sudo groupadd compta ; sudo useradd -m -s /bin/bash -G compta julie.martin ; sudo passwd julie.martin ; sudo chage -d 0 julie.martin ; sudo usermod -L gege'
+      - 'Solution : groupadd, puis pour chacun useradd -m -s /bin/bash -G …, passwd (deux fois le mot de passe), chage -d 0 ; enfin sudo usermod -L gege'
+    solution:
+      - sudo groupadd compta
+      - sudo useradd -m -s /bin/bash -G compta julie.martin
+      - sudo passwd julie.martin
+      - Provisoire-2026
+      - Provisoire-2026
+      - sudo chage -d 0 julie.martin
+      - sudo useradd -m -s /bin/bash -G commercial paul.durand
+      - sudo passwd paul.durand
+      - Provisoire-2026
+      - Provisoire-2026
+      - sudo chage -d 0 paul.durand
+      - sudo usermod -L gege
+      - id julie.martin
+      - sudo chage -l paul.durand
+
+  - id: depart
+    type: choice
+    sheet: fiche-comptes
+    question: Pourquoi verrouiller le compte de Gégé plutôt que le supprimer tout de suite ?
+    options:
+      - text: Pour garder ses fichiers et les traces de ses actions le temps de vérifier ce qu'il a laissé
+        correct: true
+      - text: Parce qu'on ne peut pas supprimer un compte sous Linux
+        feedback: userdel le fait très bien (-r supprime aussi le dossier personnel).
+      - text: Pour qu'il puisse encore se connecter s'il revient
+        feedback: Justement non - verrouillé, le mot de passe ne fonctionne plus.
+      - text: Parce que verrouiller libère de la place sur le disque
+        feedback: Ça ne libère rien ; c'est une mesure de sécurité.
+    explain: Procédure de départ - verrouiller tout de suite, examiner (fichiers, tâches cron, clés SSH), supprimer ensuite. Le compte de Gégé n'a pas fini de faire parler de lui.
+
+recap:
+  - 'useradd -m -s /bin/bash -G groupe nom ; usermod -aG groupe nom (-a : sans retirer les autres groupes).'
+  - 'passwd nom ; chage -d 0 nom (changer à la prochaine connexion) ; chage -l nom pour vérifier.'
+  - 'Départ : usermod -L (verrouiller), puis userdel -r une fois tout vérifié.'
+  - Les comptes sont dans /etc/passwd, les mots de passe (hachés) dans /etc/shadow, les groupes dans /etc/group.

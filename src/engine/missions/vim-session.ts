@@ -7,15 +7,19 @@ import type { Machine } from '@sims/shared/types';
 import { openVim, vimKey, type VimState } from '@sims/vim';
 
 /**
- * Ouvre vim sur un fichier d'une machine, avec les droits du compte de la session :
- * fichier illisible, en lecture seule, ou nouveau.
+ * Ouvre vim sur un fichier d'une machine, avec les droits d'un compte (celui de la
+ * session, ou root pour `sudo vim`) : fichier illisible, en lecture seule, ou nouveau.
  *
  * @param machine - Machine simulée.
  * @param path - Chemin absolu du fichier.
+ * @param user - Compte qui édite (par défaut, celui de la session).
  * @returns L'état de l'éditeur.
  */
-export function openEditor(machine: Machine, path: string): VimState {
-  const user = machine.session.user;
+export function openEditor(
+  machine: Machine,
+  path: string,
+  user: string = machine.session.user,
+): VimState {
   const read = readFile(machine, path, user);
   if (!read.ok && read.error === 'EACCES') {
     return {
@@ -44,6 +48,7 @@ export interface EditorKeyResult {
  * @param editor - État de l'éditeur.
  * @param key - Touche.
  * @param now - Horodatage (ms).
+ * @param user - Compte qui écrit le fichier (par défaut, celui de la session).
  * @returns Le nouvel éditeur et la machine.
  */
 export function editorKey(
@@ -51,12 +56,13 @@ export function editorKey(
   editor: VimState,
   key: string,
   now: number,
+  user: string = machine.session.user,
 ): EditorKeyResult {
   let next = vimKey(editor, key);
   let current = machine;
   for (const effect of next.effects) {
     if (effect.type === 'write') {
-      const written = writeFile(current, editor.path, machine.session.user, effect.content, {
+      const written = writeFile(current, editor.path, user, effect.content, {
         now,
       });
       if (written.ok) current = written.value;

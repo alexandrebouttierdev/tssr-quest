@@ -202,3 +202,12 @@ describe('ifup et ifdown', () => {
     expect(runLine(machine, 'sudo ifup -a').stderr).toBe('ifup: interface lo already configured\n');
   });
 });
+
+describe('fichier interfaces selon la configuration de départ', () => {
+  it('écrit inet dhcp, ou une adresse sans passerelle', () => {
+    const dhcp = debianServer({ network: { dhcp: true } });
+    expect(runLine(dhcp, 'tail -1 /etc/network/interfaces').stdout).toBe('iface ens33 inet dhcp\n');
+    const bare = debianServer({ network: { noGateway: true } });
+    expect(runLine(bare, 'cat /etc/network/interfaces').stdout).not.toContain('gateway');
+  });
+});

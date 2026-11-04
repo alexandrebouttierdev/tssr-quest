@@ -4,7 +4,7 @@ title: L'intranet est tombé
 summary: Apache refuse de démarrer sur srv-web01. Trouver la cause et rétablir le service.
 giver: hugo
 zone: salle-serveurs
-requires: { missions: [linux.epreuve] }
+requires: { missions: [linux-admin.cron] }
 ticket: { number: 2046, priority: critique, requester: karim, service: commercial }
 rewards:
   xp: 150

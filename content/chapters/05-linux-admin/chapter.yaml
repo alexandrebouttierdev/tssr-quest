@@ -6,7 +6,16 @@ period: { from: '2026-11-09', to: '2026-11-20' }
 zones: [salle-serveurs]
 mentor: hugo
 unlocks: { zones: [], items: [badge-serveurs] }
-# Phase 0 : seule la mission de l'intranet est écrite ; les autres arrivent en phase 1.
 missions:
+  - linux-admin.installer-debian
+  - linux-admin.paquets
+  - linux-admin.boot
+  - linux-admin.comptes
+  - linux-admin.droits
+  - linux-admin.disque
+  - linux-admin.ip-fixe
+  - linux-admin.processus
+  - linux-admin.cron
   - linux-admin.intranet-down
+exam: linux-admin.epreuve-serveur-web
 badge: { id: badge-linux-admin, name: Badge Linux Admin }

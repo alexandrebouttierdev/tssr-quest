@@ -1,0 +1,95 @@
+id: linux-admin.processus
+chapter: linux-admin
+title: Le serveur rame
+summary: srv-web01 répond à peine. Un script de Paul dévore la mémoire et la sauvegarde de nuit tourne encore. Rends le serveur aux utilisateurs sans tout casser.
+giver: hugo
+zone: salle-serveurs
+requires: { missions: [linux-admin.ip-fixe] }
+ticket: { number: 2067, priority: haute, requester: karim, service: commercial }
+rewards:
+  xp: 80
+  skills: { linux: 8, support: 2 }
+  reputation: { commercial: 3 }
+  sheets: [fiche-ressources]
+dialogue:
+  intro: hugo#processus-admin-intro
+  outro: hugo#processus-admin-outro
+
+machines:
+  srv-web01:
+    base: debian-server
+    hostname: srv-web01
+    session: { user: stagiaire }
+    users: [stagiaire, paul.durand]
+    sudoers: [stagiaire]
+    services:
+      apache2: { state: active }
+    processes:
+      - {
+          user: paul.durand,
+          command: 'python3 /home/paul.durand/export-clients.py',
+          cpu: 12.4,
+          rss: 1572864,
+        }
+      - {
+          user: root,
+          command: 'tar czf /srv/sauvegardes/www-nuit.tar.gz /var/www',
+          cpu: 87.5,
+          rss: 6144,
+        }
+
+steps:
+  - id: diagnostic
+    type: terminal
+    sim: bash
+    machine: srv-web01
+    sheet: fiche-ressources
+    goal: Mesure la mémoire et la charge, arrête le script qui fuit, et ralentis la sauvegarde sans l'interrompre.
+    objectives:
+      - id: memoire
+        label: Consulter la mémoire disponible (free -h)
+        when: { command: { matches: '^(sudo )?free( -[a-z]+)*$' } }
+      - id: charge
+        label: Consulter la charge et les processus (uptime, top ou ps)
+        when:
+          any:
+            - { command: { matches: '^uptime$' } }
+            - { command: { matches: '^top\b' } }
+            - { command: { matches: '^(sudo )?ps .*(--sort|aux)' } }
+      - id: fuite
+        label: Arrêter le script export-clients.py
+        when: { process: { matches: 'export-clients\.py', running: false } }
+      - id: priorite
+        label: Baisser la priorité de la sauvegarde (nice 10 ou plus), sans l'arrêter
+        when: { process: { matches: 'www-nuit\.tar\.gz', niceAtLeast: 10 } }
+    hints:
+      - 'free -h et top montrent qui consomme quoi ; kill arrête un processus, renice change sa priorité (de -20, prioritaire, à 19, très gentil).'
+      - 'ps aux --sort=-%mem | head ; sudo kill PID ; sudo renice -n 15 -p PID'
+      - 'Solution : free -h, uptime, ps aux --sort=-%mem, sudo kill 1500, sudo renice -n 15 -p 1537'
+    solution:
+      - free -h
+      - uptime
+      - ps aux --sort=-%mem
+      - sudo kill 1500
+      - sudo renice -n 15 -p 1537
+      - free -h
+
+  - id: nice
+    type: choice
+    sheet: fiche-ressources
+    question: Paul relance son export demain. Comment le lancer sans gêner les autres ?
+    options:
+      - text: nice -n 15 python3 export-clients.py - il ne prend le processeur que quand les autres n'en ont pas besoin
+        correct: true
+      - text: nice -n -15 python3 export-clients.py
+        feedback: Une valeur négative le rend prioritaire, et seul root peut la donner.
+      - text: kill -9 avant qu'il démarre
+        feedback: On ne tue pas un processus qui n'existe pas encore.
+      - text: Le lancer avec sudo pour qu'il aille plus vite
+        feedback: Root n'accélère rien, et donner sudo à un script d'export est une mauvaise idée.
+    explain: Plus la valeur nice est haute, plus le processus est « gentil ». La fuite de mémoire, elle, est à corriger dans le script - Paul a une petite discussion qui l'attend.
+
+recap:
+  - 'free -h (mémoire et swap), uptime (charge), top (q pour quitter), ps aux --sort=-%mem.'
+  - "kill PID (SIGTERM) d'abord, kill -9 en dernier recours ; renice -n 15 -p PID ralentit sans arrêter."
+  - nice -n 15 commande pour lancer un traitement lourd en douceur.

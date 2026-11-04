@@ -7,7 +7,13 @@ export type SimEffect =
   /** Fermer la session (`exit`, `logout`). */
   | { readonly type: 'exit' }
   /** Ouvrir l'éditeur sur un fichier (`vim`, `crontab -e`). */
-  | { readonly type: 'open-editor'; readonly path: string; readonly onClose?: EditorHook };
+  | {
+      readonly type: 'open-editor';
+      readonly path: string;
+      /** Compte qui édite (root après `sudo vim`). */
+      readonly user?: string;
+      readonly onClose?: EditorHook;
+    };
 
 /**
  * Action à mener quand l'éditeur se ferme : `crontab -e` installe la table éditée

@@ -138,6 +138,8 @@ Les pages `man` sont **en français et simplifiées** (exception assumée à la 
 
 ### Points de fidélité importants
 
+- `systemctl get-default` / `set-default` (cibles), `journalctl -b` (depuis le démarrage) et `-p err` (priorités : les échecs de systemd sont en « err », la sortie des services en « info »). Au redémarrage, un montage raté est écrit dans le journal avec les noms d'unités de systemd (`srv-archives.mount`).
+- Saisie d'un mot de passe : le champ est masqué et la réponse n'est jamais réaffichée. `sudo vim` édite avec les droits de root.
 - `--help` : toute commande (sauf `echo`) affiche une aide courte tirée de sa page de manuel (ligne d'utilisation, options, exemples).
 - `ps aux | grep x` montre aussi la ligne du `grep` (les commandes d'un tube tournent en même temps).
 - `gzip` : un fichier texte décrit par sa seule taille (journal) se compresse d'environ 89 % ; un fichier déjà compressé (images, archives, PDF, bureautique) presque pas.

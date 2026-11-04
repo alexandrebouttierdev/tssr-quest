@@ -37,7 +37,7 @@ test('affiche le monde et le HUD de départ', async ({ page }) => {
 
 test("joue la mission d'Hugo de bout en bout", async ({ page }) => {
   await openGame(page);
-  // Le chapitre 4 est supposé fait : Hugo propose alors la panne de l'intranet.
+  // Les missions précédentes sont supposées faites : Hugo propose la panne de l'intranet.
   await page.evaluate(() => {
     window.__TSSR_DEBUG__?.completeMissions([
       'linux.decouverte',
@@ -51,6 +51,15 @@ test("joue la mission d'Hugo de bout en bout", async ({ page }) => {
       'linux.processus',
       'linux.archives',
       'linux.epreuve',
+      'linux-admin.installer-debian',
+      'linux-admin.paquets',
+      'linux-admin.boot',
+      'linux-admin.comptes',
+      'linux-admin.droits',
+      'linux-admin.disque',
+      'linux-admin.ip-fixe',
+      'linux-admin.processus',
+      'linux-admin.cron',
     ]);
   });
 
